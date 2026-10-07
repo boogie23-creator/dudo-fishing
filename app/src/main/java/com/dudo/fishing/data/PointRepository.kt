@@ -40,6 +40,8 @@ object PointRepository {
                 depthMax = o.optDouble("depthMax", 0.0),
                 bottom = o.optString("bottom"),
                 terrain = o.optString("terrain", "평면"),
+                target = o.optString("target"),
+                targetDistance = o.optInt("targetDistance", 10),
                 species = (0 until sp.length()).map { sp.getString(it) },
                 note = o.optString("note"),
                 coordVerified = o.optBoolean("coordVerified", false),

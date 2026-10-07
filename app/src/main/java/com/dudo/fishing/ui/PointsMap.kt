@@ -26,6 +26,7 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.CopyrightOverlay
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Polygon
 import org.osmdroid.views.overlay.Polyline
 import kotlin.math.cos
 import kotlin.math.sin
@@ -57,6 +58,8 @@ fun PointsMap(
     modifier: Modifier = Modifier,
     zoom: Double = 17.6,
     editMode: Boolean = false,
+    /** 선택 시간대의 조류가 흘러가는 방향(도). 있으면 공략 지점에 화살표로 표시 */
+    flowDeg: Int? = null,
     onPinClick: (String) -> Unit = {},
     onMapTap: (Double, Double) -> Unit = { _, _ -> },
 ) {
@@ -102,18 +105,39 @@ fun PointsMap(
             override fun longPressHelper(p: GeoPoint): Boolean = false
         })
         val selected = pins.firstOrNull { it.point.id == selectedId }
-        // 선택 포인트가 바라보는 방향 (갯바위에서 바다 쪽)
+        // 선택 포인트: 공략 방향 점선 → 공략 지점 원 → 조류 화살표
         selected?.let { s ->
             val p = s.point
-            val d = 45.0
-            val rad = Math.toRadians(p.facingDeg.toDouble())
-            val end = GeoPoint(p.lat + d * cos(rad) / 111_320.0, p.lng + d * sin(rad) / (111_320.0 * cos(Math.toRadians(p.lat))))
+            val start = GeoPoint(p.lat, p.lng)
+            val target = offset(start, p.facingDeg.toDouble(), p.targetDistance.toDouble())
             map.overlays += Polyline(map).apply {
-                setPoints(listOf(GeoPoint(p.lat, p.lng), end))
+                setPoints(listOf(start, target))
                 outlinePaint.color = Foam.toArgb()
-                outlinePaint.strokeWidth = 6f
-                outlinePaint.pathEffect = android.graphics.DashPathEffect(floatArrayOf(14f, 10f), 0f)
-                title = "바라보는 방향"
+                outlinePaint.strokeWidth = 5f
+                outlinePaint.pathEffect = android.graphics.DashPathEffect(floatArrayOf(12f, 9f), 0f)
+                title = "공략 방향"
+            }
+            map.overlays += Polygon(map).apply {
+                points = Polygon.pointsAsCircle(target, 3.5)
+                fillPaint.color = Coral.copy(alpha = 0.35f).toArgb()
+                outlinePaint.color = Coral.toArgb()
+                outlinePaint.strokeWidth = 4f
+                title = "공략 지점"
+            }
+            if (flowDeg != null) {
+                val from = offset(target, flowDeg + 180.0, 11.0)
+                val to = offset(target, flowDeg.toDouble(), 11.0)
+                val headL = offset(to, flowDeg + 155.0, 4.0)
+                val headR = offset(to, flowDeg - 155.0, 4.0)
+                listOf(listOf(from, to), listOf(headL, to, headR)).forEach { seg ->
+                    map.overlays += Polyline(map).apply {
+                        setPoints(seg)
+                        outlinePaint.color = Shallow.toArgb()
+                        outlinePaint.strokeWidth = 7f
+                        outlinePaint.strokeCap = android.graphics.Paint.Cap.ROUND
+                        title = "조류 방향"
+                    }
+                }
             }
         }
         // 선택 안 된 포인트를 먼저, 선택 포인트를 맨 위에
@@ -130,6 +154,15 @@ fun PointsMap(
         map.overlays += CopyrightOverlay(context).apply { setTextColor(android.graphics.Color.WHITE) }
         map.invalidate()
     })
+}
+
+/** 시작점에서 방위각(도)으로 거리(m)만큼 떨어진 지점 */
+private fun offset(from: GeoPoint, bearingDeg: Double, meters: Double): GeoPoint {
+    val rad = Math.toRadians(bearingDeg)
+    return GeoPoint(
+        from.latitude + meters * cos(rad) / 111_320.0,
+        from.longitude + meters * sin(rad) / (111_320.0 * cos(Math.toRadians(from.latitude)))
+    )
 }
 
 /** 번호가 적힌 원형 마커 이미지 */

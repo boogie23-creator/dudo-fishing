@@ -34,6 +34,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.EditLocationAlt
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.GpsFixed
+import androidx.compose.material.icons.filled.Phishing
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.SetMeal
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
@@ -79,6 +83,9 @@ import com.dudo.fishing.scoring.Reason
 import com.dudo.fishing.scoring.ScoreEngine
 import com.dudo.fishing.scoring.SlotScore
 import com.dudo.fishing.scoring.Species
+import com.dudo.fishing.scoring.Factors
+import com.dudo.fishing.scoring.Tactics
+import com.dudo.fishing.scoring.Tip
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -148,6 +155,9 @@ fun HomeScreen(vm: MainViewModel, onOpen: (String) -> Unit, onSettings: () -> Un
                         if (i == 0) TopPickCard(r) { onOpen(r.point.id) } else PointRow(i + 1, r) { onOpen(r.point.id) }
                     }
                 }
+
+                // 윈디 바람·파도 흐름 (보기 전용)
+                item { WindyCard(lat = 35.0488, lng = 129.0150, modifier = Modifier.padding(horizontal = 16.dp)) }
 
                 if (c.messages.isNotEmpty()) item {
                     Column(Modifier.padding(horizontal = 16.dp)) {
@@ -346,6 +356,11 @@ fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit, onOpen:
     var editMode by remember { mutableStateOf(false) }
     var moved by remember { mutableStateOf(false) }
     val slot = r.slots.first { it.slot == selected }
+    val cond = st.conditions
+    val flowDeg = cond?.let { c ->
+        val center = c.date.atTime(slot.slot.startHour, 0).plusMinutes(((slot.slot.endHour - slot.slot.startHour) * 30).toLong())
+        Factors.tideState(center, c.tides)?.takeIf { !it.nearSlack }?.let { if (it.incoming) Factors.FLOOD_FLOW_DEG else Factors.EBB_FLOW_DEG }
+    }
 
     Column(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
@@ -355,7 +370,7 @@ fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit, onOpen:
         Box(Modifier.fillMaxWidth().height(300.dp)) {
             PointsMap(
                 pins = st.results.map { MapPin(it.point, it.best.score) },
-                selectedId = pointId, editMode = editMode,
+                selectedId = pointId, editMode = editMode, flowDeg = flowDeg,
                 modifier = Modifier.fillMaxSize(),
                 onPinClick = { id -> if (!editMode && id != pointId) onOpen(id) },
                 onMapTap = { lat, lng -> vm.movePoint(pointId, lat, lng); moved = true },
@@ -385,7 +400,7 @@ fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit, onOpen:
                 if (editMode) Text(if (moved) "✅ 위치를 저장했어요. 다시 탭하면 또 옮겨져요." else "지도에서 실제 자리를 탭하세요",
                     color = Coral, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 Text(r.point.name, color = Foam, fontWeight = FontWeight.ExtraBold, fontSize = 24.sp)
-                Text("${r.point.area} · ${ScoreEngine.compass(r.point.facingDeg)}쪽을 바라봄 · 점선 = 바라보는 방향",
+                Text("${ScoreEngine.compass(r.point.facingDeg)}쪽 공략 · 점선 끝 원 = 공략 지점 · 하늘색 화살표 = ${slot.slot.label} 조류",
                     color = Foam.copy(alpha = 0.8f), fontSize = 12.sp)
             }
         }
@@ -417,7 +432,13 @@ fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit, onOpen:
                 InfoPill("바닥", r.point.bottom)
                 InfoPill("대표 어종", r.point.species.joinToString())
             }
-            if (!r.point.coordVerified) Notice("좌표가 대략적인 값이에요. 지도 위 '위치 수정'을 누르고 실제 자리를 탭하면 저장돼요.")
+            WindyButton(r.point.lat, r.point.lng)
+            if (!r.point.coordVerified) Notice("위성사진 해안선 기준 위치예요. 실제 자리와 다르면 지도 위 '위치 수정'을 누르고 탭하면 저장돼요.")
+
+            // ── 오늘의 공략법 ──
+            if (cond != null) SectionCard("${slot.slot.label} 공략법 · ${r.species.label}") {
+                Tactics.build(r.point, r.species, slot, cond).forEach { tip -> TipRow(tip) }
+            }
 
             // ── 시간대별 ──
             SectionCard("시간대별 입질 지수") {
@@ -457,6 +478,28 @@ private fun SectionCard(title: String?, content: @Composable () -> Unit) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             title?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
             content()
+        }
+    }
+}
+
+@Composable
+private fun TipRow(tip: Tip) {
+    val (icon, color) = when (tip.kind) {
+        Tip.Kind.SAFETY -> Icons.Default.Warning to Bad
+        Tip.Kind.SPOT -> Icons.Default.GpsFixed to Coral
+        Tip.Kind.CURRENT -> Icons.Default.Waves to Tide
+        Tip.Kind.RIG -> Icons.Default.Phishing to DeepSea
+        Tip.Kind.BAIT -> Icons.Default.SetMeal to Good
+        Tip.Kind.TIMING -> Icons.Default.Schedule to Mid
+    }
+    Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), verticalAlignment = Alignment.Top) {
+        Box(Modifier.size(30.dp).clip(CircleShape).background(color.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
+            Icon(icon, null, tint = color, modifier = Modifier.size(17.dp))
+        }
+        Spacer(Modifier.width(10.dp))
+        Column(Modifier.weight(1f)) {
+            Text(tip.title, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = if (tip.kind == Tip.Kind.SAFETY) Bad else MaterialTheme.colorScheme.onSurface)
+            Text(tip.text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

@@ -1,13 +1,13 @@
 {
-  "_comment": "두도 포인트 번호·수심은 '송도 은파낚시' 두도 포인트 지도 기준. 좌표와 바라보는 방향(facingDeg)은 지도 사진에서 추정한 값이라 현장에서 확인 후 수정하세요. species는 수심 기준 자동 배정(8m 이상 벵에돔, 5m 이하 시작 무늬오징어)이니 실제 경험대로 고쳐주세요. terrain(지형)은 지도 사진으로 추정: 곶부리=돌출부(조류가 갈라짐), 홈통=안쪽으로 들어간 곳(조류가 돌아 들어옴), 여밭=얕은 수중여 지대, 직벽=깊은 절벽. 현장과 다르면 고쳐주세요.",
+  "_comment": "두도 포인트 번호·수심은 '송도 은파낚시' 두도 포인트 지도 기준. 좌표는 위성사진(Esri) 해안선 위에 은파 포인트 지도 번호를 맞춰 찍은 값, 바라보는 방향은 섬(또는 부속섬) 중심에서 바깥쪽. 현장과 다르면 앱의 '위치 수정'으로 고치세요. species는 수심 기준 자동 배정(8m 이상 벵에돔, 5m 이하 시작 무늬오징어)이니 실제 경험대로 고쳐주세요. terrain(지형)은 지도 사진으로 추정: 곶부리=돌출부(조류가 갈라짐), 홈통=안쪽으로 들어간 곳(조류가 돌아 들어옴), 여밭=얕은 수중여 지대, 직벽=깊은 절벽. 현장과 다르면 고쳐주세요. facingDeg는 '공략 방향'(고기가 붙는 자리 쪽), targetDistance는 공략 지점까지 대략 거리(m), target은 공략 지점 설명.",
   "points": [
     {
       "id": "dudo_1",
       "name": "두도 1번",
       "area": "두도",
-      "lat": 35.05069,
-      "lng": 129.01388,
-      "facingDeg": 329,
+      "lat": 35.05028,
+      "lng": 129.014326,
+      "facingDeg": 300,
       "depthMin": 6,
       "depthMax": 10,
       "depth": "6~10m",
@@ -17,17 +17,19 @@
         "벵에돔",
         "볼락"
       ],
-      "note": "북서쪽을 바라봄 · 수심 6~10m",
+      "note": "북서쪽 공략 · 전방 약 10m · 수심 6~10m",
       "coordVerified": false,
-      "terrain": "곶부리"
+      "terrain": "곶부리",
+      "targetDistance": 10,
+      "target": "방파제(테트라포드)와 섬이 만나는 모서리 앞. 방파제를 따라 흐르는 조류와 섬을 돌아 나오는 조류가 만나는 조경지대"
     },
     {
       "id": "dudo_1_5",
       "name": "두도 1.5번",
       "area": "두도",
-      "lat": 35.05053,
-      "lng": 129.01368,
-      "facingDeg": 321,
+      "lat": 35.050118,
+      "lng": 129.014266,
+      "facingDeg": 285,
       "depthMin": 4,
       "depthMax": 8,
       "depth": "4~8m",
@@ -38,17 +40,19 @@
         "볼락",
         "무늬오징어"
       ],
-      "note": "북서쪽을 바라봄 · 수심 4~8m",
+      "note": "서쪽 공략 · 전방 약 12m · 수심 4~8m",
       "coordVerified": false,
-      "terrain": "여밭"
+      "terrain": "여밭",
+      "targetDistance": 12,
+      "target": "방파제 안쪽 홈. 날물 때 방파제에 막힌 물이 돌아 나가는 와류 지대"
     },
     {
       "id": "dudo_2",
       "name": "두도 2번",
       "area": "두도",
-      "lat": 35.05037,
-      "lng": 129.01346,
-      "facingDeg": 313,
+      "lat": 35.04997,
+      "lng": 129.014234,
+      "facingDeg": 275,
       "depthMin": 3,
       "depthMax": 6,
       "depth": "3~6m",
@@ -58,17 +62,19 @@
         "볼락",
         "무늬오징어"
       ],
-      "note": "북서쪽을 바라봄 · 수심 3~6m",
+      "note": "서쪽 공략 · 전방 약 12m · 수심 3~6m",
       "coordVerified": false,
-      "terrain": "여밭"
+      "terrain": "여밭",
+      "targetDistance": 12,
+      "target": "전방 10~15m 여밭 끝자락(수심 3~6m). 들물에 감성돔이 여밭 위로 올라붙는 자리"
     },
     {
       "id": "dudo_2_5",
       "name": "두도 2.5번",
       "area": "두도",
-      "lat": 35.05021,
-      "lng": 129.01337,
-      "facingDeg": 308,
+      "lat": 35.049741,
+      "lng": 129.014227,
+      "facingDeg": 270,
       "depthMin": 2.5,
       "depthMax": 6,
       "depth": "2.5~6m",
@@ -79,17 +85,19 @@
         "볼락",
         "무늬오징어"
       ],
-      "note": "북서쪽을 바라봄 · 수심 2.5~6m · 조행기에 자주 등장하는 자리",
+      "note": "서쪽 공략 · 전방 약 12m · 수심 2.5~6m",
       "coordVerified": false,
-      "terrain": "여밭"
+      "terrain": "여밭",
+      "targetDistance": 12,
+      "target": "전방 10~15m 수심 4~6m 여밭 – 조행기상 가을 감성돔 마릿수 자리. 여 사이 골창을 흘림"
     },
     {
       "id": "dudo_3",
       "name": "두도 3번",
       "area": "두도",
-      "lat": 35.05005,
-      "lng": 129.01329,
-      "facingDeg": 302,
+      "lat": 35.049634,
+      "lng": 129.014201,
+      "facingDeg": 265,
       "depthMin": 4,
       "depthMax": 8,
       "depth": "4~8m",
@@ -100,17 +108,19 @@
         "볼락",
         "무늬오징어"
       ],
-      "note": "북서쪽을 바라봄 · 수심 4~8m",
+      "note": "서쪽 공략 · 전방 약 13m · 수심 4~8m",
       "coordVerified": false,
-      "terrain": "여밭"
+      "terrain": "여밭",
+      "targetDistance": 13,
+      "target": "전방 10~15m 여밭과 모래 경계(수심 4~8m). 경계선을 따라 채비가 지나가게"
     },
     {
       "id": "dudo_4",
       "name": "두도 4번",
       "area": "두도",
-      "lat": 35.04965,
-      "lng": 129.0132,
-      "facingDeg": 289,
+      "lat": 35.04923,
+      "lng": 129.014095,
+      "facingDeg": 265,
       "depthMin": 4,
       "depthMax": 7,
       "depth": "4~7m",
@@ -120,17 +130,19 @@
         "볼락",
         "무늬오징어"
       ],
-      "note": "서쪽을 바라봄 · 수심 4~7m",
+      "note": "서쪽 공략 · 전방 약 10m · 수심 4~7m",
       "coordVerified": false,
-      "terrain": "평면"
+      "terrain": "평면",
+      "targetDistance": 10,
+      "target": "작은 돌출부 끝 – 발 앞 수중여 끝자락에서 조류가 꺾이는 지점"
     },
     {
       "id": "dudo_4_5",
       "name": "두도 4.5번",
       "area": "두도",
-      "lat": 35.04925,
-      "lng": 129.0132,
-      "facingDeg": 276,
+      "lat": 35.04892,
+      "lng": 129.014095,
+      "facingDeg": 250,
       "depthMin": 4.5,
       "depthMax": 6,
       "depth": "4.5~6m",
@@ -140,17 +152,19 @@
         "볼락",
         "무늬오징어"
       ],
-      "note": "서쪽을 바라봄 · 수심 4.5~6m",
+      "note": "서쪽 공략 · 전방 약 8m · 수심 4.5~6m",
       "coordVerified": false,
-      "terrain": "홈통"
+      "terrain": "홈통",
+      "targetDistance": 8,
+      "target": "서편 홈통 입구(수심 4.5~6m). 센 물때에 홈통 안으로 도는 반탄류"
     },
     {
       "id": "dudo_5",
       "name": "두도 5번",
       "area": "두도",
-      "lat": 35.04861,
-      "lng": 129.01329,
-      "facingDeg": 252,
+      "lat": 35.048153,
+      "lng": 129.013964,
+      "facingDeg": 225,
       "depthMin": 5,
       "depthMax": 8,
       "depth": "5~8m",
@@ -161,17 +175,19 @@
         "볼락",
         "무늬오징어"
       ],
-      "note": "서쪽을 바라봄 · 수심 5~8m",
+      "note": "남서쪽 공략 · 전방 약 12m · 수심 5~8m",
       "coordVerified": false,
-      "terrain": "평면"
+      "terrain": "평면",
+      "targetDistance": 12,
+      "target": "남서쪽 곶부리 끝 – 들물·날물이 갈라지는 본류대 가장자리, 곶부리 뒤 지류와의 경계"
     },
     {
       "id": "dudo_6",
       "name": "두도 6번",
       "area": "두도",
-      "lat": 35.04845,
-      "lng": 129.01388,
-      "facingDeg": 236,
+      "lat": 35.047951,
+      "lng": 129.014293,
+      "facingDeg": 200,
       "depthMin": 6,
       "depthMax": 12,
       "depth": "6~12m",
@@ -181,17 +197,19 @@
         "벵에돔",
         "볼락"
       ],
-      "note": "남서쪽을 바라봄 · 수심 6~12m",
+      "note": "남쪽 공략 · 전방 약 10m · 수심 6~12m",
       "coordVerified": false,
-      "terrain": "곶부리"
+      "terrain": "곶부리",
+      "targetDistance": 10,
+      "target": "본섬과 가운데 부속섬 사이 수로 입구(수심 6~12m). 수로로 빨려드는 조류의 가장자리"
     },
     {
       "id": "dudo_6_5",
       "name": "두도 6.5번",
       "area": "두도",
-      "lat": 35.04821,
-      "lng": 129.01388,
-      "facingDeg": 227,
+      "lat": 35.047878,
+      "lng": 129.014556,
+      "facingDeg": 175,
       "depthMin": 6,
       "depthMax": 11,
       "depth": "6~11m",
@@ -201,17 +219,19 @@
         "벵에돔",
         "볼락"
       ],
-      "note": "남서쪽을 바라봄 · 수심 6~11m",
+      "note": "남쪽 공략 · 전방 약 8m · 수심 6~11m",
       "coordVerified": false,
-      "terrain": "홈통"
+      "terrain": "홈통",
+      "targetDistance": 8,
+      "target": "수로 안쪽 직벽 아래(수심 6~11m). 수로를 통과하며 빨라진 물살 옆 완류대"
     },
     {
       "id": "dudo_7",
       "name": "두도 7번",
       "area": "두도",
-      "lat": 35.04813,
-      "lng": 129.0149,
-      "facingDeg": 180,
+      "lat": 35.047789,
+      "lng": 129.015023,
+      "facingDeg": 355,
       "depthMin": 6,
       "depthMax": 10,
       "depth": "6~10m",
@@ -221,17 +241,19 @@
         "벵에돔",
         "볼락"
       ],
-      "note": "남쪽을 바라봄 · 수심 6~10m",
+      "note": "북쪽 공략 · 전방 약 6m · 수심 6~10m",
       "coordVerified": false,
-      "terrain": "평면"
+      "terrain": "평면",
+      "targetDistance": 6,
+      "target": "가운데 부속섬 북쪽 – 본섬 사이 좁은 수로. 물돌이 직후 조류가 살아날 때 발밑~5m"
     },
     {
       "id": "dudo_8",
       "name": "두도 8번",
       "area": "두도",
-      "lat": 35.04794,
-      "lng": 129.01456,
-      "facingDeg": 196,
+      "lat": 35.047466,
+      "lng": 129.014901,
+      "facingDeg": 245,
       "depthMin": 6,
       "depthMax": 9,
       "depth": "6~9m",
@@ -241,17 +263,19 @@
         "벵에돔",
         "볼락"
       ],
-      "note": "남쪽을 바라봄 · 수심 6~9m",
+      "note": "남서쪽 공략 · 전방 약 10m · 수심 6~9m",
       "coordVerified": false,
-      "terrain": "평면"
+      "terrain": "평면",
+      "targetDistance": 10,
+      "target": "가운데 부속섬 서쪽 끝, 앞쪽 수중여(부표 쪽) 주변. 여 뒤편에 생기는 와류"
     },
     {
       "id": "dudo_9",
       "name": "두도 9번",
       "area": "두도",
-      "lat": 35.04784,
-      "lng": 129.01507,
-      "facingDeg": 173,
+      "lat": 35.047372,
+      "lng": 129.015164,
+      "facingDeg": 190,
       "depthMin": 6,
       "depthMax": 10,
       "depth": "6~10m",
@@ -261,17 +285,19 @@
         "벵에돔",
         "볼락"
       ],
-      "note": "남쪽을 바라봄 · 수심 6~10m",
+      "note": "남쪽 공략 · 전방 약 10m · 수심 6~10m",
       "coordVerified": false,
-      "terrain": "홈통"
+      "terrain": "홈통",
+      "targetDistance": 10,
+      "target": "가운데 부속섬 남쪽 – 외해 쪽 조류가 섬을 돌며 생기는 조경지대"
     },
     {
       "id": "dudo_wall",
       "name": "두도 직벽",
       "area": "두도",
-      "lat": 35.04778,
-      "lng": 129.01584,
-      "facingDeg": 146,
+      "lat": 35.047399,
+      "lng": 129.015503,
+      "facingDeg": 285,
       "depthMin": 11,
       "depthMax": 15,
       "depth": "11~15m",
@@ -281,16 +307,18 @@
         "벵에돔",
         "볼락"
       ],
-      "note": "남동쪽을 바라봄 · 수심 11~15m",
+      "note": "서쪽 공략 · 전방 약 6m · 수심 11~15m",
       "coordVerified": false,
-      "terrain": "직벽"
+      "terrain": "직벽",
+      "targetDistance": 6,
+      "target": "동남 부속섬 서쪽 직벽(수심 11~15m) – 두 부속섬 사이 수로로 흐르는 본류 옆. 직벽을 따라 바닥층"
     },
     {
       "id": "dudo_10",
       "name": "두도 10번",
       "area": "두도",
-      "lat": 35.04749,
-      "lng": 129.01635,
+      "lat": 35.047251,
+      "lng": 129.015905,
       "facingDeg": 140,
       "depthMin": 8,
       "depthMax": 12,
@@ -301,17 +329,19 @@
         "벵에돔",
         "볼락"
       ],
-      "note": "남동쪽을 바라봄 · 수심 8~12m",
+      "note": "남동쪽 공략 · 전방 약 10m · 수심 8~12m",
       "coordVerified": false,
-      "terrain": "곶부리"
+      "terrain": "곶부리",
+      "targetDistance": 10,
+      "target": "동남 부속섬 남동면 – 외해 본류가 직접 받히는 자리(수심 8~12m). 큰 씨알 회유로"
     },
     {
       "id": "dudo_11",
       "name": "두도 11번",
       "area": "두도",
-      "lat": 35.04733,
-      "lng": 129.01601,
-      "facingDeg": 149,
+      "lat": 35.047049,
+      "lng": 129.015609,
+      "facingDeg": 195,
       "depthMin": 8,
       "depthMax": 12,
       "depth": "8~12m",
@@ -321,17 +351,19 @@
         "벵에돔",
         "볼락"
       ],
-      "note": "남동쪽을 바라봄 · 수심 8~12m",
+      "note": "남쪽 공략 · 전방 약 12m · 수심 8~12m",
       "coordVerified": false,
-      "terrain": "곶부리"
+      "terrain": "곶부리",
+      "targetDistance": 12,
+      "target": "동남 부속섬 남쪽 끝 곶부리 – 본류와 지류가 만나는 조경지대"
     },
     {
       "id": "dudo_12",
       "name": "두도 12번",
       "area": "두도",
-      "lat": 35.04794,
-      "lng": 129.01651,
-      "facingDeg": 127,
+      "lat": 35.047453,
+      "lng": 129.01597,
+      "facingDeg": 80,
       "depthMin": 8,
       "depthMax": 12,
       "depth": "8~12m",
@@ -341,17 +373,19 @@
         "벵에돔",
         "볼락"
       ],
-      "note": "남동쪽을 바라봄 · 수심 8~12m",
+      "note": "동쪽 공략 · 전방 약 10m · 수심 8~12m",
       "coordVerified": false,
-      "terrain": "곶부리"
+      "terrain": "곶부리",
+      "targetDistance": 10,
+      "target": "동남 부속섬 동쪽 – 들물 북동류가 붙어 흐르는 자리(수심 8~12m)"
     },
     {
       "id": "dudo_12_5",
       "name": "두도 12.5번",
       "area": "두도",
-      "lat": 35.04805,
-      "lng": 129.01686,
-      "facingDeg": 119,
+      "lat": 35.047601,
+      "lng": 129.015954,
+      "facingDeg": 50,
       "depthMin": 8,
       "depthMax": 12,
       "depth": "8~12m",
@@ -361,17 +395,19 @@
         "벵에돔",
         "볼락"
       ],
-      "note": "남동쪽을 바라봄 · 수심 8~12m",
+      "note": "북동쪽 공략 · 전방 약 10m · 수심 8~12m",
       "coordVerified": false,
-      "terrain": "곶부리"
+      "terrain": "곶부리",
+      "targetDistance": 10,
+      "target": "동남 부속섬 북동 모서리 – 조류가 꺾이며 생기는 반탄류"
     },
     {
       "id": "dudo_13",
       "name": "두도 13번",
       "area": "두도",
-      "lat": 35.04821,
-      "lng": 129.0166,
-      "facingDeg": 119,
+      "lat": 35.047668,
+      "lng": 129.015773,
+      "facingDeg": 350,
       "depthMin": 8,
       "depthMax": 10,
       "depth": "8~10m",
@@ -381,17 +417,19 @@
         "벵에돔",
         "볼락"
       ],
-      "note": "남동쪽을 바라봄 · 수심 8~10m",
+      "note": "북쪽 공략 · 전방 약 8m · 수심 8~10m",
       "coordVerified": false,
-      "terrain": "평면"
+      "terrain": "평면",
+      "targetDistance": 8,
+      "target": "동남 부속섬 북쪽 – 본섬과의 수로(수심 8~10m). 물돌이 전후 수로 안 완류"
     },
     {
       "id": "dudo_13_5",
       "name": "두도 13.5번",
       "area": "두도",
-      "lat": 35.04842,
-      "lng": 129.01592,
-      "facingDeg": 125,
+      "lat": 35.047943,
+      "lng": 129.01574,
+      "facingDeg": 165,
       "depthMin": 8,
       "depthMax": 10,
       "depth": "8~10m",
@@ -401,17 +439,19 @@
         "벵에돔",
         "볼락"
       ],
-      "note": "남동쪽을 바라봄 · 수심 8~10m",
+      "note": "남쪽 공략 · 전방 약 8m · 수심 8~10m",
       "coordVerified": false,
-      "terrain": "홈통"
+      "terrain": "홈통",
+      "targetDistance": 8,
+      "target": "본섬 남동 모서리 – 동남 부속섬 쪽 수로 입구"
     },
     {
       "id": "dudo_14",
       "name": "두도 14번",
       "area": "두도",
-      "lat": 35.04861,
-      "lng": 129.01651,
-      "facingDeg": 108,
+      "lat": 35.048288,
+      "lng": 129.015888,
+      "facingDeg": 115,
       "depthMin": 4,
       "depthMax": 8,
       "depth": "4~8m",
@@ -422,17 +462,19 @@
         "볼락",
         "무늬오징어"
       ],
-      "note": "동쪽을 바라봄 · 수심 4~8m",
+      "note": "남동쪽 공략 · 전방 약 10m · 수심 4~8m",
       "coordVerified": false,
-      "terrain": "평면"
+      "terrain": "평면",
+      "targetDistance": 10,
+      "target": "동편 직선 갯바위 앞 – 들물 북동류가 갯바위를 따라 흐르는 띠(수심 4~8m)"
     },
     {
       "id": "dudo_14_5",
       "name": "두도 14.5번",
       "area": "두도",
-      "lat": 35.04909,
-      "lng": 129.01677,
-      "facingDeg": 90,
+      "lat": 35.048705,
+      "lng": 129.01597,
+      "facingDeg": 95,
       "depthMin": 4,
       "depthMax": 9,
       "depth": "4~9m",
@@ -443,17 +485,19 @@
         "볼락",
         "무늬오징어"
       ],
-      "note": "동쪽을 바라봄 · 수심 4~9m",
+      "note": "동쪽 공략 · 전방 약 12m · 수심 4~9m",
       "coordVerified": false,
-      "terrain": "곶부리"
+      "terrain": "곶부리",
+      "targetDistance": 12,
+      "target": "동편 돌출부 끝 – 조류가 가장 잘 받히는 곶부리. 약한 물때 1순위"
     },
     {
       "id": "dudo_15",
       "name": "두도 15번",
       "area": "두도",
-      "lat": 35.04965,
-      "lng": 129.01635,
-      "facingDeg": 68,
+      "lat": 35.04927,
+      "lng": 129.015724,
+      "facingDeg": 65,
       "depthMin": 6,
       "depthMax": 9,
       "depth": "6~9m",
@@ -463,17 +507,19 @@
         "벵에돔",
         "볼락"
       ],
-      "note": "동쪽을 바라봄 · 수심 6~9m",
+      "note": "북동쪽 공략 · 전방 약 10m · 수심 6~9m",
       "coordVerified": false,
-      "terrain": "평면"
+      "terrain": "평면",
+      "targetDistance": 10,
+      "target": "동편 홈 – 곶부리 뒤로 생기는 지류·와류(수심 6~9m)"
     },
     {
       "id": "dudo_16",
       "name": "두도 16번",
       "area": "두도",
-      "lat": 35.05005,
-      "lng": 129.01609,
-      "facingDeg": 49,
+      "lat": 35.049607,
+      "lng": 129.015625,
+      "facingDeg": 45,
       "depthMin": 5,
       "depthMax": 8,
       "depth": "5~8m",
@@ -484,17 +530,19 @@
         "볼락",
         "무늬오징어"
       ],
-      "note": "북동쪽을 바라봄 · 수심 5~8m",
+      "note": "북동쪽 공략 · 전방 약 10m · 수심 5~8m",
       "coordVerified": false,
-      "terrain": "평면"
+      "terrain": "평면",
+      "targetDistance": 10,
+      "target": "북동 돌출부 – 날물 남서류가 돌아 나가는 조경지대"
     },
     {
       "id": "dudo_16_5",
       "name": "두도 16.5번",
       "area": "두도",
-      "lat": 35.05024,
-      "lng": 129.01592,
-      "facingDeg": 40,
+      "lat": 35.049822,
+      "lng": 129.015411,
+      "facingDeg": 30,
       "depthMin": 6,
       "depthMax": 9,
       "depth": "6~9m",
@@ -504,17 +552,19 @@
         "벵에돔",
         "볼락"
       ],
-      "note": "북동쪽을 바라봄 · 수심 6~9m",
+      "note": "북동쪽 공략 · 전방 약 10m · 수심 6~9m",
       "coordVerified": false,
-      "terrain": "홈통"
+      "terrain": "홈통",
+      "targetDistance": 10,
+      "target": "북동 홈통 – 조행기상 감성돔·벵에돔 조과 자리. 홈통 안 완류에 밑밥을 가둠"
     },
     {
       "id": "dudo_17",
       "name": "두도 17번",
       "area": "두도",
-      "lat": 35.0505,
-      "lng": 129.01558,
-      "facingDeg": 24,
+      "lat": 35.050105,
+      "lng": 129.015148,
+      "facingDeg": 15,
       "depthMin": 5,
       "depthMax": 9,
       "depth": "5~9m",
@@ -525,17 +575,19 @@
         "볼락",
         "무늬오징어"
       ],
-      "note": "북동쪽을 바라봄 · 수심 5~9m",
+      "note": "북쪽 공략 · 전방 약 10m · 수심 5~9m",
       "coordVerified": false,
-      "terrain": "평면"
+      "terrain": "평면",
+      "targetDistance": 10,
+      "target": "북동 갯바위 앞 여밭(수심 5~9m)"
     },
     {
       "id": "dudo_17_5",
       "name": "두도 17.5번",
       "area": "두도",
-      "lat": 35.05069,
-      "lng": 129.01533,
-      "facingDeg": 14,
+      "lat": 35.050253,
+      "lng": 129.015049,
+      "facingDeg": 5,
       "depthMin": 4,
       "depthMax": 7,
       "depth": "4~7m",
@@ -545,17 +597,19 @@
         "볼락",
         "무늬오징어"
       ],
-      "note": "북쪽을 바라봄 · 수심 4~7m",
+      "note": "북쪽 공략 · 전방 약 8m · 수심 4~7m",
       "coordVerified": false,
-      "terrain": "평면"
+      "terrain": "평면",
+      "targetDistance": 8,
+      "target": "북쪽 – 방파제 동쪽 홈(수심 4~7m)"
     },
     {
       "id": "dudo_18",
       "name": "두도 18번",
       "area": "두도",
-      "lat": 35.05077,
-      "lng": 129.0149,
-      "facingDeg": 0,
+      "lat": 35.050401,
+      "lng": 129.014819,
+      "facingDeg": 350,
       "depthMin": 3,
       "depthMax": 6,
       "depth": "3~6m",
@@ -565,9 +619,11 @@
         "볼락",
         "무늬오징어"
       ],
-      "note": "북쪽을 바라봄 · 수심 3~6m",
+      "note": "북쪽 공략 · 전방 약 8m · 수심 3~6m",
       "coordVerified": false,
-      "terrain": "곶부리"
+      "terrain": "곶부리",
+      "targetDistance": 8,
+      "target": "북쪽 끝 방파제 동쪽 모서리 – 방파제를 타고 흐르는 조류"
     }
   ]
 }

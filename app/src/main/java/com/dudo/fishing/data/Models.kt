@@ -18,6 +18,10 @@ data class FishingPoint(
     val bottom: String,
     /** 지형: 곶부리(돌출부) / 홈통(만입부) / 여밭(얕은 수중여) / 직벽 / 평면 */
     val terrain: String,
+    /** 공략 지점 설명 (고기가 붙는 자리) */
+    val target: String = "",
+    /** 공략 지점까지 대략 거리 (m) */
+    val targetDistance: Int = 10,
     val species: List<String>,
     val note: String,
     val coordVerified: Boolean,

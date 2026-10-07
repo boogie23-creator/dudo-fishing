@@ -14,8 +14,8 @@ class ConditionsRepository(
     private val zone = ZoneId.of("Asia/Seoul")
 
     // 송도 두도(부산 서구 암남동) 대표 좌표 – 기상 격자·일출 계산용
-    private val areaLat = 35.0491
-    private val areaLng = 129.0149
+    private val areaLat = 35.0488
+    private val areaLng = 129.0150
 
     /** 부산 연안 월별 평균 표층 수온(근사값, °C) */
     private val monthlyWaterTemp = doubleArrayOf(
