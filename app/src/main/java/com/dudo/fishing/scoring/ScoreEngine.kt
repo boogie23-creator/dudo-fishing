@@ -89,7 +89,7 @@ object ScoreEngine {
         when {
             f < 0.25 -> r += Reason("${c.mulName} – 물 흐름 약함(조금 무렵)", -5)
             f in 0.4..0.8 -> r += Reason("${c.mulName} – 적당한 조류", 8)
-            f > 0.9 -> r += Reason("${c.mulName} – 사리 무렵, 조류 강함", if (p.depth.contains("깊")) 0 else -3)
+            f > 0.9 -> r += Reason("${c.mulName} – 사리 무렵, 조류 강함", if (p.depthMax >= 10) 0 else -3)
             else -> r += Reason("${c.mulName}", 2)
         }
 

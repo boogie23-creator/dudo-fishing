@@ -24,18 +24,47 @@ object KmaApi {
      * 오늘 02시 발표분을 요청하면 오늘 03시~모레까지 시간별 예보가 들어있다.
      * 새벽 2시 10분 이전이면 어제 23시 발표분을 사용한다.
      */
-    fun fetch(key: String, lat: Double, lng: Double, now: LocalDateTime): List<HourWeather> {
+    data class Result(val hours: List<HourWeather>, val issued: String, val grid: String, val hasWave: Boolean)
+
+    fun fetch(key: String, lat: Double, lng: Double, now: LocalDateTime): Result {
         val (nx, ny) = toGrid(lat, lng)
         val useYesterday = now.toLocalTime().isBefore(LocalTime.of(2, 10))
         val baseDate = if (useYesterday) now.toLocalDate().minusDays(1) else now.toLocalDate()
         val baseTime = if (useYesterday) "2300" else "0200"
+        var hours = request(key, baseDate, baseTime, nx, ny)
+
+        // 파고(WAV)는 바다 격자에만 나온다. 해안 격자라 파고가 없으면 바로 남쪽(바다) 격자에서 받아 합친다.
+        if (hours.none { it.wave != null }) {
+            val sea = runCatching { request(key, baseDate, baseTime, nx, ny - 1) }.getOrDefault(emptyList())
+            val waveByTime = sea.associate { it.time to it.wave }
+            hours = hours.map { h -> h.copy(wave = waveByTime[h.time]) }
+        }
+        val issued = "${baseDate.monthValue}/${baseDate.dayOfMonth} ${baseTime.substring(0, 2)}시 발표"
+        return Result(hours, issued, "$nx,$ny", hours.any { it.wave != null })
+    }
+
+    private fun request(key: String, baseDate: LocalDate, baseTime: String, nx: Int, ny: Int): List<HourWeather> {
         val url = "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst" +
-                "?serviceKey=${Http.encodeKey(key)}&pageNo=1&numOfRows=1500&dataType=JSON" +
+                "?serviceKey=${Http.encodeKey(key)}&pageNo=1&numOfRows=2000&dataType=JSON" +
                 "&base_date=${baseDate.format(D)}&base_time=$baseTime&nx=$nx&ny=$ny"
         return parse(Http.get(url))
     }
 
+    /** 인증키 오류 등은 JSON 요청이어도 XML로 응답하므로 따로 해석한다 */
+    private fun xmlError(body: String): String {
+        val auth = Regex("<returnAuthMsg>(.*?)</returnAuthMsg>").find(body)?.groupValues?.get(1)
+        val msg = Regex("<resultMsg>(.*?)</resultMsg>").find(body)?.groupValues?.get(1)
+        val text = auth ?: msg ?: "알 수 없는 응답"
+        return when {
+            text.contains("NOT_REGISTERED") -> "인증키가 등록되지 않았어요. 활용신청 승인 후 1~2시간 뒤에 사용할 수 있어요."
+            text.contains("LIMITED_NUMBER") -> "오늘 호출 한도를 넘었어요."
+            text.contains("DEADLINE") -> "인증키 사용 기간이 끝났어요."
+            else -> "기상청 응답 오류: $text"
+        }
+    }
+
     internal fun parse(body: String): List<HourWeather> {
+        if (body.trimStart().startsWith("<")) error(xmlError(body))
         val root = JSONObject(body).getJSONObject("response")
         val code = root.getJSONObject("header").getString("resultCode")
         if (code != "00") error("기상청 응답 오류: " + root.getJSONObject("header").optString("resultMsg"))

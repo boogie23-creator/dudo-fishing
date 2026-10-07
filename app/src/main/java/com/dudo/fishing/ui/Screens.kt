@@ -232,7 +232,7 @@ fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit) {
             Modifier.fillMaxSize().padding(pad).verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("${r.point.area} · ${r.point.depth} · ${r.point.bottom}", style = MaterialTheme.typography.bodyMedium)
+            Text("${r.point.area} · 수심 ${r.point.depth} · ${r.point.bottom}", style = MaterialTheme.typography.bodyMedium)
             Text("대표 어종: ${r.point.species.joinToString()}", style = MaterialTheme.typography.bodyMedium)
             Text("바라보는 방향: ${ScoreEngine.compass(r.point.facingDeg)}쪽 · ${r.point.note}", style = MaterialTheme.typography.bodySmall)
             if (!r.point.coordVerified) Notice("이 포인트 좌표는 대략적인 값이에요. points.json에서 실제 위치로 고쳐주세요.")
@@ -289,9 +289,10 @@ private fun SlotBar(s: SlotScore, selected: Boolean, onClick: () -> Unit) {
 
 @Composable
 fun SettingsScreen(settings: Settings, onDone: () -> Unit) {
-    var kma by remember { mutableStateOf(settings.dataGoKrKey) }
+    var kma by remember { mutableStateOf(settings.userKmaKey) }
     var khoa by remember { mutableStateOf(settings.khoaKey) }
     var temp by remember { mutableStateOf(settings.manualWaterTemp?.toString() ?: "") }
+    var beach by remember { mutableStateOf(settings.beachNum?.toString() ?: "") }
     Scaffold(topBar = {
         TopAppBar(
             title = { Text("설정") },
@@ -303,11 +304,21 @@ fun SettingsScreen(settings: Settings, onDone: () -> Unit) {
         ) {
             Text("기상청 단기예보 (공공데이터포털 인증키)", fontWeight = FontWeight.Bold)
             Text("data.go.kr에서 '기상청_단기예보 조회서비스' 활용신청 후 받은 일반 인증키", style = MaterialTheme.typography.bodySmall)
+            if (settings.hasBuiltInKmaKey)
+                Text("✅ 앱에 기본 키가 들어 있어요. 비워두면 기본 키를 써요.", style = MaterialTheme.typography.bodySmall, color = Good)
             OutlinedTextField(kma, { kma = it }, Modifier.fillMaxWidth(), singleLine = true, label = { Text("인증키") })
 
             Text("조석예보 (바다누리 인증키)", fontWeight = FontWeight.Bold)
             Text("국립해양조사원 바다누리 해양정보 서비스에서 발급. 없으면 달 위치로 추정해요.", style = MaterialTheme.typography.bodySmall)
             OutlinedTextField(khoa, { khoa = it }, Modifier.fillMaxWidth(), singleLine = true, label = { Text("인증키") })
+
+            Text("수온 관측 해수욕장 번호", fontWeight = FontWeight.Bold)
+            Text("기상청 해수욕장 날씨 서비스(같은 인증키)에서 실측 수온을 받아요. 비워두면 두도와 가장 가까운 해수욕장을 자동으로 찾아요.", style = MaterialTheme.typography.bodySmall)
+            OutlinedTextField(
+                beach, { beach = it }, Modifier.fillMaxWidth(), singleLine = true,
+                label = { Text("해수욕장 번호 (자동)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
 
             Text("현장 수온 직접 입력 (선택)", fontWeight = FontWeight.Bold)
             Text("비워두면 부산 연안 월평균 수온으로 계산해요.", style = MaterialTheme.typography.bodySmall)
@@ -321,6 +332,11 @@ fun SettingsScreen(settings: Settings, onDone: () -> Unit) {
                 settings.dataGoKrKey = kma
                 settings.khoaKey = khoa
                 settings.manualWaterTemp = temp.toDoubleOrNull()
+                val newBeach = beach.toIntOrNull()
+                if (newBeach != settings.beachNum) {
+                    settings.beachNum = newBeach
+                    settings.beachProbeDay = ""   // 비우면 다시 자동 찾기
+                }
                 onDone()
             }, Modifier.fillMaxWidth()) { Text("저장") }
         }

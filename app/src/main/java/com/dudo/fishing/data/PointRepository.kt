@@ -18,6 +18,8 @@ object PointRepository {
                 lng = o.getDouble("lng"),
                 facingDeg = o.getInt("facingDeg"),
                 depth = o.optString("depth"),
+                depthMin = o.optDouble("depthMin", 0.0),
+                depthMax = o.optDouble("depthMax", 0.0),
                 bottom = o.optString("bottom"),
                 species = (0 until sp.length()).map { sp.getString(it) },
                 note = o.optString("note"),

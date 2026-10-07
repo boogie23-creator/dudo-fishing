@@ -13,6 +13,8 @@ data class FishingPoint(
     /** 갯바위가 바다를 바라보는 방향 (0=북, 90=동, 180=남, 270=서) */
     val facingDeg: Int,
     val depth: String,
+    val depthMin: Double,
+    val depthMax: Double,
     val bottom: String,
     val species: List<String>,
     val note: String,

@@ -1,88 +1,524 @@
 {
-  "_comment": "좌표는 대략적인 추정값입니다(coordVerified=false). 현장/지도에서 확인 후 수정하세요. facingDeg = 갯바위가 바다를 바라보는 방향(0=북, 90=동, 180=남, 270=서).",
+  "_comment": "두도 포인트 번호·수심은 '송도 은파낚시' 두도 포인트 지도 기준. 좌표와 바라보는 방향(facingDeg)은 지도 사진에서 추정한 값이라 현장에서 확인 후 수정하세요. species는 수심 기준 자동 배정(8m 이상 벵에돔, 5m 이하 시작 무늬오징어)이니 실제 경험대로 고쳐주세요.",
   "points": [
     {
-      "id": "dudo_n",
-      "name": "두도 북쪽 갯바위",
+      "id": "dudo_1",
+      "name": "두도 1번",
       "area": "두도",
-      "lat": 35.0340, "lng": 128.9780,
-      "facingDeg": 0,
-      "depth": "중간 수심",
-      "bottom": "암반·수중여",
-      "species": ["감성돔", "볼락", "무늬오징어"],
-      "note": "몰운대를 마주보는 면. 남풍 계열 바람에 비교적 등지고 낚시 가능.",
-      "coordVerified": false
-    },
-    {
-      "id": "dudo_e",
-      "name": "두도 동쪽 직벽",
-      "area": "두도",
-      "lat": 35.0325, "lng": 128.9800,
-      "facingDeg": 90,
-      "depth": "깊은 수심",
-      "bottom": "직벽·암반",
-      "species": ["감성돔", "벵에돔", "무늬오징어"],
-      "note": "조류 소통이 좋은 면. 동풍·너울에 취약.",
-      "coordVerified": false
-    },
-    {
-      "id": "dudo_s",
-      "name": "두도 남쪽 끝",
-      "area": "두도",
-      "lat": 35.0305, "lng": 128.9785,
-      "facingDeg": 180,
-      "depth": "깊은 수심",
-      "bottom": "암반·수중여",
-      "species": ["감성돔", "벵에돔", "볼락"],
-      "note": "외해 방향. 조류가 강하고 남쪽 너울을 직접 받음.",
-      "coordVerified": false
-    },
-    {
-      "id": "dudo_w",
-      "name": "두도 서쪽 갯바위",
-      "area": "두도",
-      "lat": 35.0322, "lng": 128.9765,
-      "facingDeg": 270,
-      "depth": "중간 수심",
-      "bottom": "암반·자갈",
-      "species": ["감성돔", "볼락"],
-      "note": "낙동강 방향. 북동풍에 등지고 낚시 가능.",
-      "coordVerified": false
-    },
-    {
-      "id": "morun_hwason",
-      "name": "몰운대 화손대 갯바위",
-      "area": "몰운대",
-      "lat": 35.0400, "lng": 128.9745,
-      "facingDeg": 135,
-      "depth": "중간 수심",
+      "lat": 35.05069,
+      "lng": 129.01388,
+      "facingDeg": 329,
+      "depthMin": 6,
+      "depthMax": 10,
+      "depth": "6~10m",
       "bottom": "암반",
-      "species": ["감성돔", "볼락", "무늬오징어"],
-      "note": "도보 진입 포인트. 두도를 마주봄.",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락"
+      ],
+      "note": "북서쪽을 바라봄 · 수심 6~10m",
       "coordVerified": false
     },
     {
-      "id": "morun_s",
-      "name": "몰운대 남단 갯바위",
-      "area": "몰운대",
-      "lat": 35.0385, "lng": 128.9690,
-      "facingDeg": 190,
-      "depth": "얕음~중간",
-      "bottom": "암반·자갈",
-      "species": ["감성돔", "볼락"],
-      "note": "도보 진입. 서풍 계열에 취약.",
+      "id": "dudo_1_5",
+      "name": "두도 1.5번",
+      "area": "두도",
+      "lat": 35.05053,
+      "lng": 129.01368,
+      "facingDeg": 321,
+      "depthMin": 4,
+      "depthMax": 8,
+      "depth": "4~8m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락",
+        "무늬오징어"
+      ],
+      "note": "북서쪽을 바라봄 · 수심 4~8m",
       "coordVerified": false
     },
     {
-      "id": "dusong_tip",
-      "name": "두송반도 끝 갯바위",
-      "area": "두송반도",
-      "lat": 35.0430, "lng": 128.9850,
-      "facingDeg": 160,
-      "depth": "중간~깊음",
-      "bottom": "암반·수중여",
-      "species": ["감성돔", "벵에돔", "무늬오징어"],
-      "note": "외해 쪽 돌출부. 조류 소통 좋음.",
+      "id": "dudo_2",
+      "name": "두도 2번",
+      "area": "두도",
+      "lat": 35.05037,
+      "lng": 129.01346,
+      "facingDeg": 313,
+      "depthMin": 3,
+      "depthMax": 6,
+      "depth": "3~6m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "볼락",
+        "무늬오징어"
+      ],
+      "note": "북서쪽을 바라봄 · 수심 3~6m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_3",
+      "name": "두도 3번",
+      "area": "두도",
+      "lat": 35.05005,
+      "lng": 129.01329,
+      "facingDeg": 302,
+      "depthMin": 4,
+      "depthMax": 8,
+      "depth": "4~8m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락",
+        "무늬오징어"
+      ],
+      "note": "북서쪽을 바라봄 · 수심 4~8m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_4",
+      "name": "두도 4번",
+      "area": "두도",
+      "lat": 35.04965,
+      "lng": 129.0132,
+      "facingDeg": 289,
+      "depthMin": 4,
+      "depthMax": 7,
+      "depth": "4~7m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "볼락",
+        "무늬오징어"
+      ],
+      "note": "서쪽을 바라봄 · 수심 4~7m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_4_5",
+      "name": "두도 4.5번",
+      "area": "두도",
+      "lat": 35.04925,
+      "lng": 129.0132,
+      "facingDeg": 276,
+      "depthMin": 4.5,
+      "depthMax": 6,
+      "depth": "4.5~6m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "볼락",
+        "무늬오징어"
+      ],
+      "note": "서쪽을 바라봄 · 수심 4.5~6m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_5",
+      "name": "두도 5번",
+      "area": "두도",
+      "lat": 35.04861,
+      "lng": 129.01329,
+      "facingDeg": 252,
+      "depthMin": 5,
+      "depthMax": 8,
+      "depth": "5~8m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락",
+        "무늬오징어"
+      ],
+      "note": "서쪽을 바라봄 · 수심 5~8m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_6",
+      "name": "두도 6번",
+      "area": "두도",
+      "lat": 35.04845,
+      "lng": 129.01388,
+      "facingDeg": 236,
+      "depthMin": 6,
+      "depthMax": 12,
+      "depth": "6~12m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락"
+      ],
+      "note": "남서쪽을 바라봄 · 수심 6~12m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_6_5",
+      "name": "두도 6.5번",
+      "area": "두도",
+      "lat": 35.04821,
+      "lng": 129.01388,
+      "facingDeg": 227,
+      "depthMin": 6,
+      "depthMax": 11,
+      "depth": "6~11m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락"
+      ],
+      "note": "남서쪽을 바라봄 · 수심 6~11m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_7",
+      "name": "두도 7번",
+      "area": "두도",
+      "lat": 35.04813,
+      "lng": 129.0149,
+      "facingDeg": 180,
+      "depthMin": 6,
+      "depthMax": 10,
+      "depth": "6~10m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락"
+      ],
+      "note": "남쪽을 바라봄 · 수심 6~10m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_8",
+      "name": "두도 8번",
+      "area": "두도",
+      "lat": 35.04794,
+      "lng": 129.01456,
+      "facingDeg": 196,
+      "depthMin": 6,
+      "depthMax": 9,
+      "depth": "6~9m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락"
+      ],
+      "note": "남쪽을 바라봄 · 수심 6~9m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_9",
+      "name": "두도 9번",
+      "area": "두도",
+      "lat": 35.04784,
+      "lng": 129.01507,
+      "facingDeg": 173,
+      "depthMin": 6,
+      "depthMax": 10,
+      "depth": "6~10m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락"
+      ],
+      "note": "남쪽을 바라봄 · 수심 6~10m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_wall",
+      "name": "두도 직벽",
+      "area": "두도",
+      "lat": 35.04778,
+      "lng": 129.01584,
+      "facingDeg": 146,
+      "depthMin": 11,
+      "depthMax": 15,
+      "depth": "11~15m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락"
+      ],
+      "note": "남동쪽을 바라봄 · 수심 11~15m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_10",
+      "name": "두도 10번",
+      "area": "두도",
+      "lat": 35.04749,
+      "lng": 129.01635,
+      "facingDeg": 140,
+      "depthMin": 8,
+      "depthMax": 12,
+      "depth": "8~12m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락"
+      ],
+      "note": "남동쪽을 바라봄 · 수심 8~12m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_11",
+      "name": "두도 11번",
+      "area": "두도",
+      "lat": 35.04733,
+      "lng": 129.01601,
+      "facingDeg": 149,
+      "depthMin": 8,
+      "depthMax": 12,
+      "depth": "8~12m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락"
+      ],
+      "note": "남동쪽을 바라봄 · 수심 8~12m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_12",
+      "name": "두도 12번",
+      "area": "두도",
+      "lat": 35.04794,
+      "lng": 129.01651,
+      "facingDeg": 127,
+      "depthMin": 8,
+      "depthMax": 12,
+      "depth": "8~12m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락"
+      ],
+      "note": "남동쪽을 바라봄 · 수심 8~12m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_12_5",
+      "name": "두도 12.5번",
+      "area": "두도",
+      "lat": 35.04805,
+      "lng": 129.01686,
+      "facingDeg": 119,
+      "depthMin": 8,
+      "depthMax": 12,
+      "depth": "8~12m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락"
+      ],
+      "note": "남동쪽을 바라봄 · 수심 8~12m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_13",
+      "name": "두도 13번",
+      "area": "두도",
+      "lat": 35.04821,
+      "lng": 129.0166,
+      "facingDeg": 119,
+      "depthMin": 8,
+      "depthMax": 10,
+      "depth": "8~10m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락"
+      ],
+      "note": "남동쪽을 바라봄 · 수심 8~10m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_13_5",
+      "name": "두도 13.5번",
+      "area": "두도",
+      "lat": 35.04842,
+      "lng": 129.01592,
+      "facingDeg": 125,
+      "depthMin": 8,
+      "depthMax": 10,
+      "depth": "8~10m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락"
+      ],
+      "note": "남동쪽을 바라봄 · 수심 8~10m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_14",
+      "name": "두도 14번",
+      "area": "두도",
+      "lat": 35.04861,
+      "lng": 129.01651,
+      "facingDeg": 108,
+      "depthMin": 4,
+      "depthMax": 8,
+      "depth": "4~8m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락",
+        "무늬오징어"
+      ],
+      "note": "동쪽을 바라봄 · 수심 4~8m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_14_5",
+      "name": "두도 14.5번",
+      "area": "두도",
+      "lat": 35.04909,
+      "lng": 129.01677,
+      "facingDeg": 90,
+      "depthMin": 4,
+      "depthMax": 9,
+      "depth": "4~9m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락",
+        "무늬오징어"
+      ],
+      "note": "동쪽을 바라봄 · 수심 4~9m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_15",
+      "name": "두도 15번",
+      "area": "두도",
+      "lat": 35.04965,
+      "lng": 129.01635,
+      "facingDeg": 68,
+      "depthMin": 6,
+      "depthMax": 9,
+      "depth": "6~9m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락"
+      ],
+      "note": "동쪽을 바라봄 · 수심 6~9m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_16",
+      "name": "두도 16번",
+      "area": "두도",
+      "lat": 35.05005,
+      "lng": 129.01609,
+      "facingDeg": 49,
+      "depthMin": 5,
+      "depthMax": 8,
+      "depth": "5~8m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락",
+        "무늬오징어"
+      ],
+      "note": "북동쪽을 바라봄 · 수심 5~8m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_16_5",
+      "name": "두도 16.5번",
+      "area": "두도",
+      "lat": 35.05024,
+      "lng": 129.01592,
+      "facingDeg": 40,
+      "depthMin": 6,
+      "depthMax": 9,
+      "depth": "6~9m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락"
+      ],
+      "note": "북동쪽을 바라봄 · 수심 6~9m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_17",
+      "name": "두도 17번",
+      "area": "두도",
+      "lat": 35.0505,
+      "lng": 129.01558,
+      "facingDeg": 24,
+      "depthMin": 5,
+      "depthMax": 9,
+      "depth": "5~9m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락",
+        "무늬오징어"
+      ],
+      "note": "북동쪽을 바라봄 · 수심 5~9m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_17_5",
+      "name": "두도 17.5번",
+      "area": "두도",
+      "lat": 35.05069,
+      "lng": 129.01533,
+      "facingDeg": 14,
+      "depthMin": 4,
+      "depthMax": 7,
+      "depth": "4~7m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "볼락",
+        "무늬오징어"
+      ],
+      "note": "북쪽을 바라봄 · 수심 4~7m",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_18",
+      "name": "두도 18번",
+      "area": "두도",
+      "lat": 35.05077,
+      "lng": 129.0149,
+      "facingDeg": 0,
+      "depthMin": 3,
+      "depthMax": 6,
+      "depth": "3~6m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "볼락",
+        "무늬오징어"
+      ],
+      "note": "북쪽을 바라봄 · 수심 3~6m",
       "coordVerified": false
     }
   ]
