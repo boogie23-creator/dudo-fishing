@@ -130,35 +130,24 @@ object Factors {
         var best: Pair<CatchRecord, Double>? = null
         var pointRecords = 0
 
+        var poorTotal = 0.0
+        var poorCount = 0
         for (rec in ctx.history) {
+            val poor = s.label in rec.poorSpecies
             val n = rec.catches[s.label] ?: continue
-            if (n <= 0) continue
+            if (n <= 0 && !poor) continue
             val pw = pointWeight(p, rec, ctx)
             if (pw <= 0.05) continue
-            if (rec.pointId == p.id) pointRecords++
+            if (rec.pointId == p.id && !poor) pointRecords++
+            val sim = similarity(rec, c, slot, nowMul, wind, windDir, wave)
+            if (sim <= 0.0) continue
 
-            val recAge = Astro.moonAge(rec.date.atTime(12, 0).atZone(ZONE))
-            val mul = when (cyclicDiff(nowMul, mulIndex(recAge), 15)) { 0 -> 1.0; 1 -> 0.85; 2 -> 0.6; 3 -> 0.35; else -> 0.0 }
-            val season = when (cyclicDiff(c.date.monthValue, rec.date.monthValue, 12)) { 0 -> 1.0; 1 -> 0.7; 2 -> 0.3; else -> 0.0 }
-            if (mul == 0.0 || season == 0.0) continue
-
-            val parts = mutableListOf<Double>()
-            val overlap = min(slot.endHour, rec.endHour) - maxOf(slot.startHour, rec.startHour)
-            parts += if (overlap > 0) 1.0 else 0.5
-            rec.windSpeed?.let { w ->
-                var v = when { abs(w - wind) <= 2 -> 1.0; abs(w - wind) <= 4 -> 0.6; else -> 0.2 }
-                if (wind > 4 && rec.windDir != null && angleDiff(rec.windDir, windDir) > 90) v *= 0.7
-                parts += v
+            if (poor) {
+                // 비슷한 조건에서 조황이 부진했던 날 → 감점 근거
+                val neg = sim * pw
+                if (neg >= 0.05) { poorTotal += neg; poorCount++ }
+                continue
             }
-            if (rec.wave != null && wave != null) {
-                val d = abs(rec.wave - wave)
-                parts += when { d <= 0.3 -> 1.0; d <= 0.6 -> 0.6; else -> 0.2 }
-            }
-            rec.waterTemp?.let { t ->
-                val d = abs(t - c.waterTemp)
-                parts += when { d <= 1.5 -> 1.0; d <= 3.0 -> 0.6; else -> 0.2 }
-            }
-            val sim = mul * season * parts.average()
             val mag = ln(1.0 + n) / ln(16.0)
             val contrib = sim * pw * mag
             if (contrib < 0.05) continue
@@ -172,13 +161,60 @@ object Factors {
             val b = best.first
             val where = b.pointId?.let { ctx.pointsById[it]?.name?.removePrefix("두도 ") } ?: b.sideFacingDeg?.let { ScoreEngine.compass(it) + "편" } ?: "두도"
             out += Reason(
-                "비슷한 물때·조건 조과 ${count}건 (예: ${b.date} $where ${s.label} ${b.catches[s.label]}마리)",
+                "비슷한 물때·조건 조과 ${count}건 (예: ${b.date} $where ${s.label} ${qtyText(b, s.label)})",
                 min(18, (total * 14).roundToInt()).coerceAtLeast(2)
             )
         } else if (pointRecords > 0) {
             out += Reason("이 포인트 ${s.label} 조과 기록 ${pointRecords}건", 3)
         }
+        if (poorCount > 0) {
+            out += Reason("비슷한 물때·조건에 ${s.label} 조황 부진 기록 ${poorCount}건", -min(8, (poorTotal * 12).roundToInt()).coerceAtLeast(2))
+        }
         return out
+    }
+
+    /** 과거 기록 하루와 지금 조건의 유사도 0~1 (물때·계절이 멀면 0) */
+    private fun similarity(
+        rec: CatchRecord, c: DayConditions, slot: TimeSlot, nowMul: Int,
+        wind: Double, windDir: Int, wave: Double?,
+    ): Double {
+        val recAge = Astro.moonAge(rec.date.atTime(12, 0).atZone(ZONE))
+        val mul = when (cyclicDiff(nowMul, mulIndex(recAge), 15)) { 0 -> 1.0; 1 -> 0.85; 2 -> 0.6; 3 -> 0.35; else -> 0.0 }
+        val season = when (cyclicDiff(c.date.monthValue, rec.date.monthValue, 12)) { 0 -> 1.0; 1 -> 0.7; 2 -> 0.3; else -> 0.0 }
+        if (mul == 0.0 || season == 0.0) return 0.0
+
+        val parts = mutableListOf<Double>()
+        val overlap = min(slot.endHour, rec.endHour) - maxOf(slot.startHour, rec.startHour)
+        parts += if (overlap > 0) 1.0 else 0.5
+        val rw = rec.windSpeed
+        if (rw != null) {
+            var v = when { abs(rw - wind) <= 2 -> 1.0; abs(rw - wind) <= 4 -> 0.6; else -> 0.2 }
+            val rd = rec.windDir
+            if (wind > 4 && rd != null && angleDiff(rd, windDir) > 90) v *= 0.7
+            parts += v
+        }
+        val rwave = rec.wave
+        if (rwave != null && wave != null) {
+            val d = abs(rwave - wave)
+            parts += when { d <= 0.3 -> 1.0; d <= 0.6 -> 0.6; else -> 0.2 }
+        }
+        val rt = rec.waterTemp
+        if (rt != null) {
+            val d = abs(rt - c.waterTemp)
+            parts += when { d <= 1.5 -> 1.0; d <= 3.0 -> 0.6; else -> 0.2 }
+        }
+        return mul * season * parts.average()
+    }
+
+    /** 밴드 조황 기록은 마릿수가 아니라 등급이므로 글로 표시 */
+    fun qtyText(r: CatchRecord, label: String): String {
+        val n = r.catches[label] ?: 0
+        return if (r.id.startsWith("band_")) when {
+            label in r.poorSpecies -> "조황 부진"
+            n >= 12 -> "조황 좋음"
+            n >= 6 -> "조과 있음"
+            else -> "조황 저조"
+        } else "${n}마리"
     }
 
     private fun pointWeight(p: FishingPoint, rec: CatchRecord, ctx: ScoreContext): Double {

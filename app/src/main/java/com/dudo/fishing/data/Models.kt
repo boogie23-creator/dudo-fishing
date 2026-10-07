@@ -55,6 +55,8 @@ data class CatchRecord(
     val windDir: Int? = null,
     val wave: Double? = null,
     val waterTemp: Double? = null,
+    /** 조황이 부진했던 어종 (밴드 조황 등급 -1). 비슷한 조건이면 감점 근거로 쓴다 */
+    val poorSpecies: Set<String> = emptySet(),
 ) {
     val hasConditions get() = windSpeed != null || wave != null || waterTemp != null
 }

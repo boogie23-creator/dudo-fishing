@@ -114,6 +114,8 @@ object ScoreEngine {
             wind >= 2.5 -> r += Reason("$dirText 바람 %.1fm/s – 적당한 물결".format(wind), 4)
             else -> r += Reason("바람 거의 없음 %.1fm/s".format(wind), if (s.likesSomeWave) -3 else 2)
         }
+        // 은파낚시 밴드 조황: 남서풍이 불면 수온이 내려가고 조황이 떨어진 날이 많았음
+        if (wind >= 4 && windDir in 200..250) r += Reason("남서풍 – 두도 수온 하강·조황 저하 경향 (밴드 조황)", -3)
 
         // 8. 파고
         if (wave != null) {
@@ -135,6 +137,13 @@ object ScoreEngine {
 
         // 11. 어종별 수심·지형 적합도
         r += Factors.depthTerrainReasons(p, s)
+
+        // 12-0. 물돌이(만조·간조)가 이 시간대에 들어 있는지 – 두도 대물 감성돔은 물돌이 전후 입질 (밴드 조황 다수)
+        if (s == Species.GAMSEONG) {
+            val turn = c.tides.firstOrNull { it.time.toLocalDate() == c.date && it.time.hour in slot.startHour until slot.endHour }
+            if (turn != null) r += Reason("물돌이(%s %02d:%02d) 포함 – 대물 입질 시간 (밴드 조황)".format(
+                if (turn.isHigh) "만조" else "간조", turn.time.hour, turn.time.minute), 7)
+        }
 
         // 12. 과거 조과 기록 – 비슷한 물때·계절·바람·파고·수온일 때 가점
         r += Factors.historyReasons(p, s, c, slot, wind, windDir, wave, ctx)
@@ -181,6 +190,7 @@ object ScoreEngine {
         if (nearSlack) {
             val which = if ((p < 0.5) == prev.isHigh) "만조" else "간조"
             if (which == "만조" && s.likesIncoming) reasons += Reason("만조 전후 – 감성돔류 입질 기대", 8)
+            else if (s == Species.GAMSEONG) reasons += Reason("$which 물돌이 무렵", 0)   // 두도 조황상 감성돔은 물돌이에 입질 → 감점 안 함
             else reasons += Reason("$which 정조 – 물 흐름 멈춤", -6)
         } else if (incoming) {
             reasons += when {

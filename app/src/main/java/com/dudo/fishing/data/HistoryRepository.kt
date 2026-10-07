@@ -54,13 +54,22 @@ class HistoryRepository(private val context: Context) {
 
     /** 모든 기록. 조행기 기록은 저장된 과거 날씨가 있으면 붙이고, 없으면 받아온다(실패하면 날씨 없이 사용). */
     suspend fun all(): List<CatchRecord> = withContext(Dispatchers.IO) {
-        val enriched = bundled().map { r ->
-            cached(r.id)?.let { c -> return@map withConditions(r, c) }
-            val c = runCatching { fetchPast(r) }.getOrNull() ?: return@map r
-            prefs.edit().putString("cond_${r.id}", c.toString()).apply()
-            withConditions(r, c)
+        val records = bundled()
+        val missing = records.filter { cached(it.id) == null && !prefs.contains("fail_${it.id}") }
+        // 날짜가 가까운 기록끼리 묶어서(60일 이내) 기간 단위로 한 번에 받는다
+        clusters(missing).forEach { group -> runCatching { fetchCluster(group) } }
+        records.map { r -> cached(r.id)?.let { withConditions(r, it) } ?: r } + userRecords()
+    }
+
+    private fun clusters(list: List<CatchRecord>): List<List<CatchRecord>> {
+        val sorted = list.sortedBy { it.date }
+        val out = mutableListOf<MutableList<CatchRecord>>()
+        for (r in sorted) {
+            val last = out.lastOrNull()
+            if (last != null && java.time.temporal.ChronoUnit.DAYS.between(last.first().date, r.date) <= 60) last += r
+            else out += mutableListOf(r)
         }
-        enriched + userRecords()
+        return out
     }
 
     private fun cached(id: String): JSONObject? = prefs.getString("cond_$id", null)?.let { JSONObject(it) }
@@ -72,39 +81,51 @@ class HistoryRepository(private val context: Context) {
         waterTemp = c.optDouble("waterTemp").takeIf { !it.isNaN() },
     )
 
-    /** Open-Meteo 과거 바람(archive) + 파고·수온(marine) → 낚시 시간대 요약 */
-    private fun fetchPast(r: CatchRecord): JSONObject {
-        val d = r.date.toString()
-        val hours = r.startHour until r.endHour.coerceAtLeast(r.startHour + 1)
-        val out = JSONObject()
-
-        val wx = JSONObject(Http.get(
-            "https://archive-api.open-meteo.com/v1/archive?latitude=$lat&longitude=$lng" +
-                    "&start_date=$d&end_date=$d&hourly=wind_speed_10m,wind_direction_10m" +
-                    "&wind_speed_unit=ms&timezone=Asia%2FSeoul"
-        )).getJSONObject("hourly")
-        val ws = values(wx, "wind_speed_10m", hours)
-        val wd = values(wx, "wind_direction_10m", hours)
-        if (ws.isNotEmpty()) out.put("windSpeed", (ws.average() * 10).roundToInt() / 10.0)
-        if (wd.isNotEmpty()) out.put("windDir", meanDirection(wd))
-
-        runCatching {
-            val sea = JSONObject(Http.get(
+    /** Open-Meteo 과거 바람(archive) + 파고·수온(marine)을 기간 단위로 받아 각 기록의 낚시 시간대로 요약 */
+    private fun fetchCluster(group: List<CatchRecord>) {
+        val start = group.first().date
+        val end = group.last().date
+        val wx = runCatching {
+            JSONObject(Http.get(
+                "https://archive-api.open-meteo.com/v1/archive?latitude=$lat&longitude=$lng" +
+                        "&start_date=$start&end_date=$end&hourly=wind_speed_10m,wind_direction_10m" +
+                        "&wind_speed_unit=ms&timezone=Asia%2FSeoul"
+            )).getJSONObject("hourly")
+        }.getOrNull()
+        val sea = runCatching {
+            JSONObject(Http.get(
                 "https://marine-api.open-meteo.com/v1/marine?latitude=$seaLat&longitude=$seaLng" +
-                        "&start_date=$d&end_date=$d&hourly=wave_height,sea_surface_temperature" +
+                        "&start_date=$start&end_date=$end&hourly=wave_height,sea_surface_temperature" +
                         "&timezone=Asia%2FSeoul"
             )).getJSONObject("hourly")
-            values(sea, "wave_height", hours).maxOrNull()?.let { out.put("wave", (it * 10).roundToInt() / 10.0) }
-            values(sea, "sea_surface_temperature", hours).takeIf { it.isNotEmpty() }
-                ?.let { out.put("waterTemp", (it.average() * 10).roundToInt() / 10.0) }
+        }.getOrNull()
+        if (wx == null && sea == null) return
+
+        val edit = prefs.edit()
+        for (r in group) {
+            val dayOffset = java.time.temporal.ChronoUnit.DAYS.between(start, r.date).toInt()
+            val hours = (r.startHour until r.endHour.coerceAtLeast(r.startHour + 1)).map { dayOffset * 24 + it }
+            val out = JSONObject()
+            if (wx != null) {
+                val ws = values(wx, "wind_speed_10m", hours)
+                val wd = values(wx, "wind_direction_10m", hours)
+                if (ws.isNotEmpty()) out.put("windSpeed", (ws.average() * 10).roundToInt() / 10.0)
+                if (wd.isNotEmpty()) out.put("windDir", meanDirection(wd))
+            }
+            if (sea != null) {
+                values(sea, "wave_height", hours).maxOrNull()?.let { out.put("wave", (it * 10).roundToInt() / 10.0) }
+                values(sea, "sea_surface_temperature", hours).takeIf { it.isNotEmpty() }
+                    ?.let { out.put("waterTemp", (it.average() * 10).roundToInt() / 10.0) }
+            }
+            // 자료가 없는 날(최근 며칠 등)은 표시만 해 두고 다시 요청하지 않는다
+            if (out.length() > 0) edit.putString("cond_${r.id}", out.toString()) else edit.putBoolean("fail_${r.id}", true)
         }
-        if (out.length() == 0) error("과거 자료 없음")
-        return out
+        edit.apply()
     }
 
-    private fun values(hourly: JSONObject, key: String, hours: IntRange): List<Double> {
+    private fun values(hourly: JSONObject, key: String, hours: List<Int>): List<Double> {
         val arr = hourly.optJSONArray(key) ?: return emptyList()
-        return hours.filter { it < arr.length() }.mapNotNull { h -> arr.optDouble(h).takeIf { !it.isNaN() } }
+        return hours.filter { it < arr.length() && !arr.isNull(it) }.mapNotNull { h -> arr.optDouble(h).takeIf { !it.isNaN() } }
     }
 
     private fun meanDirection(degs: List<Double>): Int {
@@ -115,6 +136,8 @@ class HistoryRepository(private val context: Context) {
 
     private fun fromJson(o: JSONObject, byUser: Boolean): CatchRecord {
         val c = o.getJSONObject("catches")
+        val rating = o.optJSONObject("rating")
+        val poor = if (rating == null) emptySet() else rating.keys().asSequence().filter { k -> rating.optInt(k, 0) < 0 }.toSet()
         return CatchRecord(
             id = o.getString("id"),
             date = LocalDate.parse(o.getString("date")),
@@ -131,6 +154,7 @@ class HistoryRepository(private val context: Context) {
             windDir = o.optInt("windDir", -1).takeIf { it >= 0 },
             wave = o.optDouble("wave").takeIf { !it.isNaN() },
             waterTemp = o.optDouble("waterTemp").takeIf { !it.isNaN() },
+            poorSpecies = poor,
         )
     }
 

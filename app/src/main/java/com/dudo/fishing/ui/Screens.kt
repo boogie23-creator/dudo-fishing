@@ -305,7 +305,7 @@ private fun RecordRow(rec: CatchRecord, onDelete: (() -> Unit)?) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text("${rec.date} · %02d~%02d시 · ${rec.source}".format(rec.startHour, rec.endHour),
                 style = MaterialTheme.typography.labelMedium, color = Color.Gray)
-            Text(rec.catches.entries.joinToString { "${it.key} ${it.value}마리" }, fontWeight = FontWeight.SemiBold)
+            Text(rec.catches.keys.joinToString { "$it ${com.dudo.fishing.scoring.Factors.qtyText(rec, it)}" }, fontWeight = FontWeight.SemiBold)
             val cond = listOfNotNull(
                 rec.windSpeed?.let { "바람 %.1fm/s".format(it) },
                 rec.wave?.let { "파고 %.1fm".format(it) },
