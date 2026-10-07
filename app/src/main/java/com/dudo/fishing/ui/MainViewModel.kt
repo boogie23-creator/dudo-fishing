@@ -35,7 +35,7 @@ data class UiState(
 class MainViewModel(app: Application) : AndroidViewModel(app) {
     val settings = Settings(app)
     private val repo = ConditionsRepository(settings, BeachApi.loadBeaches(app))
-    private val points: List<FishingPoint> = PointRepository.load(app)
+    private var points: List<FishingPoint> = PointRepository.load(app)
     private val historyRepo = HistoryRepository(app)
     private var history: List<CatchRecord> = emptyList()
 
@@ -84,6 +84,19 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         historyRepo.addUserRecord(rec)
         history = history + rec
         rank(c)
+    }
+
+    /** 지도에서 탭한 위치로 포인트 좌표를 옮겨 저장 */
+    fun movePoint(id: String, lat: Double, lng: Double) {
+        PointRepository.saveLocation(getApplication(), id, lat, lng)
+        points = PointRepository.load(getApplication())
+        _state.value.conditions?.let { rank(it) }
+    }
+
+    fun resetPoint(id: String) {
+        PointRepository.resetLocation(getApplication(), id)
+        points = PointRepository.load(getApplication())
+        _state.value.conditions?.let { rank(it) }
     }
 
     fun deleteCatch(id: String) {

@@ -2,6 +2,8 @@ package com.dudo.fishing
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.getValue
@@ -18,6 +20,8 @@ import com.dudo.fishing.ui.SettingsScreen
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // 바다색 헤더가 상태바 뒤까지 이어지도록 (상태바 아이콘은 흰색)
+        enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT))
         setContent {
             DudoTheme {
                 val vm: MainViewModel = viewModel()
@@ -27,7 +31,7 @@ class MainActivity : ComponentActivity() {
                 when (screen) {
                     "home" -> HomeScreen(vm, onOpen = { screen = it }, onSettings = { screen = "settings" })
                     "settings" -> SettingsScreen(vm.settings, onDone = { screen = "home"; vm.refresh() })
-                    else -> DetailScreen(vm, pointId = screen, onBack = { screen = "home" })
+                    else -> DetailScreen(vm, pointId = screen, onBack = { screen = "home" }, onOpen = { screen = it })
                 }
             }
         }

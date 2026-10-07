@@ -3,7 +3,9 @@
 package com.dudo.fishing.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,11 +17,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,19 +31,24 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.EditLocationAlt
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Thermostat
+import androidx.compose.material.icons.filled.ViewList
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Waves
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -53,224 +62,449 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dudo.fishing.data.CatchRecord
 import com.dudo.fishing.data.DayConditions
 import com.dudo.fishing.data.Settings
 import com.dudo.fishing.scoring.PointResult
+import com.dudo.fishing.scoring.Reason
 import com.dudo.fishing.scoring.ScoreEngine
 import com.dudo.fishing.scoring.SlotScore
 import com.dudo.fishing.scoring.Species
+import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 private val HM = DateTimeFormatter.ofPattern("HH:mm")
 private val MD = DateTimeFormatter.ofPattern("M월 d일 (E)")
+private fun nowSeoul() = LocalDateTime.now(ZoneId.of("Asia/Seoul"))
 
 // ───────────────────────── 홈 ─────────────────────────
 
 @Composable
 fun HomeScreen(vm: MainViewModel, onOpen: (String) -> Unit, onSettings: () -> Unit) {
     val st by vm.state.collectAsState()
-    Scaffold(topBar = {
-        TopAppBar(
-            title = { Text("두도 포인트", fontWeight = FontWeight.Bold) },
-            actions = {
-                IconButton(onClick = vm::refresh) { Icon(Icons.Default.Refresh, "새로고침") }
-                IconButton(onClick = onSettings) { Icon(Icons.Default.Settings, "설정") }
-            })
-    }) { pad ->
+    var mapMode by remember { mutableStateOf(false) }
+    var showNotices by remember { mutableStateOf(false) }
+
+    Scaffold(containerColor = MaterialTheme.colorScheme.background) { pad ->
         LazyColumn(
-            Modifier.fillMaxSize().padding(pad),
-            contentPadding = PaddingValues(16.dp),
+            Modifier.fillMaxSize().padding(bottom = pad.calculateBottomPadding()),
+            contentPadding = PaddingValues(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            item { HomeHeader(st.conditions, st.dayOffset, vm::setDay, vm::refresh, onSettings) }
+
             item {
-                // 날짜 선택 (오늘/내일/모레)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf("오늘", "내일", "모레").forEachIndexed { i, label ->
-                        FilterChip(st.dayOffset == i, { vm.setDay(i) }, { Text(label) })
+                Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("대상어", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.width(10.dp))
+                    Row(Modifier.weight(1f).horizontalScrollSafe(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        SeaChip("최적", st.species == null) { vm.setSpecies(null) }
+                        Species.entries.forEach { s -> SeaChip(s.label, st.species == s, speciesIcon(s)) { vm.setSpecies(s) } }
                     }
                 }
             }
-            item {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(st.species == null, { vm.setSpecies(null) }, { Text("최적 어종") })
-                    Species.entries.forEach { s ->
-                        FilterChip(st.species == s, { vm.setSpecies(s) }, { Text(s.label) })
-                    }
-                }
-            }
+
             if (st.loading) item {
-                Box(Modifier.fillMaxWidth().padding(32.dp), Alignment.Center) { CircularProgressIndicator() }
+                Box(Modifier.fillMaxWidth().padding(40.dp), Alignment.Center) { CircularProgressIndicator(color = Tide) }
             }
-            st.error?.let { e -> item { Text("오류: $e", color = Bad) } }
-            st.conditions?.let { c ->
-                if (!st.loading) {
-                    item { ConditionsCard(c) }
-                    c.messages.forEach { m -> item { Notice(m) } }
-                    item { Text("오늘의 추천 순위", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
-                    items(st.results, key = { it.point.id }) { r -> PointRow(r) { onOpen(r.point.id) } }
-                    item {
-                        Text(
-                            "※ 점수는 공공 데이터와 일반적인 경험칙으로 계산한 참고값입니다. 갯바위 출조 전 기상특보·현장 상황을 반드시 확인하세요.",
-                            style = MaterialTheme.typography.bodySmall, color = Color.Gray
-                        )
+            st.error?.let { e -> item { Text("오류: $e", color = Bad, modifier = Modifier.padding(horizontal = 16.dp)) } }
+
+            val c = st.conditions
+            if (c != null && !st.loading) {
+                item {
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text("추천 포인트", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                        SeaChip("목록", !mapMode, Icons.Default.ViewList) { mapMode = false }
+                        Spacer(Modifier.width(6.dp))
+                        SeaChip("지도", mapMode, Icons.Default.Map) { mapMode = true }
                     }
                 }
-            }
-        }
-    }
-}
+                if (mapMode) {
+                    item {
+                        Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(440.dp), shape = RoundedCornerShape(20.dp)) {
+                            PointsMap(
+                                pins = st.results.map { MapPin(it.point, it.best.score) },
+                                selectedId = null, zoom = 17.2,
+                                modifier = Modifier.fillMaxSize(),
+                                onPinClick = onOpen,
+                            )
+                        }
+                        Text("숫자는 포인트 번호, 색은 점수 (주황 강력추천 · 초록 좋음 · 노랑 보통 · 빨강 비추천)",
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp))
+                    }
+                } else {
+                    itemsIndexed(st.results, key = { _, r -> r.point.id }) { i, r ->
+                        if (i == 0) TopPickCard(r) { onOpen(r.point.id) } else PointRow(i + 1, r) { onOpen(r.point.id) }
+                    }
+                }
 
-@Composable
-private fun ConditionsCard(c: DayConditions) {
-    val noon = c.weather.firstOrNull { it.time.toLocalDate() == c.date && it.time.hour == 12 } ?: c.weather.firstOrNull()
-    val dayTides = c.tides.filter { it.time.toLocalDate() == c.date }
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(c.date.format(MD), fontWeight = FontWeight.Bold, fontSize = 18.sp)
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Stat("물때", c.mulName + if (c.tideIsEstimated) "*" else "")
-                Stat("수온", "%.1f°C".format(c.waterTemp) + if (c.waterTempIsEstimated) "*" else "")
-                noon?.let {
-                    Stat("바람(정오)", "${ScoreEngine.compass(it.windDir)} %.1fm/s".format(it.windSpeed))
-                    it.wave?.let { w -> Stat("파고", "%.1fm".format(w)) }
+                if (c.messages.isNotEmpty()) item {
+                    Column(Modifier.padding(horizontal = 16.dp)) {
+                        Row(Modifier.clickable { showNotices = !showNotices }.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text("데이터 연결 상태 (${c.messages.size})", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Icon(if (showNotices) Icons.Default.ExpandLess else Icons.Default.ExpandMore, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+                        }
+                        if (showNotices) c.messages.forEach { Notice(it) }
+                    }
+                }
+                item {
+                    Text(
+                        "※ 점수는 공공 데이터·조행기·밴드 조황으로 계산한 참고값입니다. 갯바위 출조 전 기상특보와 현장 상황을 꼭 확인하세요.",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
                 }
             }
-            Text(
-                "만조 " + dayTides.filter { it.isHigh }.joinToString(", ") { it.time.format(HM) } +
-                        "   간조 " + dayTides.filter { !it.isHigh }.joinToString(", ") { it.time.format(HM) },
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text("일출 ${c.sunrise.format(HM)} · 일몰 ${c.sunset.format(HM)}", style = MaterialTheme.typography.bodyMedium)
-            if (c.tideIsEstimated || c.waterTempIsEstimated)
-                Text("* 추정값", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+        }
+    }
+}
+
+/** 가로로 넘칠 때 스크롤되도록 */
+@Composable
+private fun Modifier.horizontalScrollSafe(): Modifier = this.then(Modifier.horizontalScroll(rememberScrollState()))
+
+@Composable
+private fun HomeHeader(c: DayConditions?, dayOffset: Int, onDay: (Int) -> Unit, onRefresh: () -> Unit, onSettings: () -> Unit) {
+    WaveHeader {
+        Column(Modifier.statusBarsPadding().padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 34.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("두도 포인트", style = MaterialTheme.typography.headlineSmall, color = Foam)
+                    Text("부산 송도 두도 · 갯바위 찌낚시", color = Shallow, fontSize = 13.sp)
+                }
+                IconButton(onClick = onRefresh) { Icon(Icons.Default.Refresh, "새로고침", tint = Foam) }
+                IconButton(onClick = onSettings) { Icon(Icons.Default.Settings, "설정", tint = Foam) }
+            }
+            Spacer(Modifier.height(14.dp))
+            // 날짜 선택
+            Row(
+                Modifier.padding(end = 12.dp).clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.10f)).padding(4.dp)
+            ) {
+                listOf("오늘", "내일", "모레").forEachIndexed { i, label ->
+                    val sel = dayOffset == i
+                    Box(
+                        Modifier.weight(1f).clip(RoundedCornerShape(50))
+                            .background(if (sel) Foam else Color.Transparent)
+                            .clickable { onDay(i) }.padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) { Text(label, color = if (sel) Abyss else Foam, fontWeight = FontWeight.Bold, fontSize = 14.sp) }
+                }
+            }
+            if (c != null) {
+                Spacer(Modifier.height(14.dp))
+                Text(c.date.format(MD) + " · " + c.mulName + if (c.tideIsEstimated) " (추정)" else "", color = Foam, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Spacer(Modifier.height(10.dp))
+                val noon = c.weather.firstOrNull { it.time.toLocalDate() == c.date && it.time.hour == 12 } ?: c.weather.firstOrNull()
+                Row(Modifier.padding(end = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    GlassStat("수온", "%.1f°".format(c.waterTemp) + if (c.waterTempIsEstimated) "*" else "", Modifier.weight(1f)) {
+                        Icon(Icons.Default.Thermostat, null, tint = Shallow, modifier = Modifier.size(16.dp))
+                    }
+                    noon?.let { w ->
+                        GlassStat("바람(정오)", "%.1f".format(w.windSpeed) + "m/s", Modifier.weight(1.2f)) { WindArrow(w.windDir, Shallow) }
+                        GlassStat("파고", w.wave?.let { "%.1fm".format(it) } ?: "-", Modifier.weight(1f)) {
+                            Icon(Icons.Default.Waves, null, tint = Shallow, modifier = Modifier.size(16.dp))
+                        }
+                    }
+                }
+                Spacer(Modifier.height(14.dp))
+                TideChart(c.tides, c.date, nowSeoul(), Modifier.padding(end = 12.dp))
+                val dayTides = c.tides.filter { it.time.toLocalDate() == c.date }
+                Text(
+                    "만조 " + dayTides.filter { it.isHigh }.joinToString(" · ") { it.time.format(HM) } +
+                            "   간조 " + dayTides.filter { !it.isHigh }.joinToString(" · ") { it.time.format(HM) } +
+                            "   일출 ${c.sunrise.format(HM)} 일몰 ${c.sunset.format(HM)}",
+                    color = Foam.copy(alpha = 0.8f), fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp)
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun Stat(label: String, value: String) {
-    Column {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-        Text(value, fontWeight = FontWeight.SemiBold)
+private fun SeaChip(label: String, selected: Boolean, icon: ImageVector? = null, onClick: () -> Unit) {
+    val bg = if (selected) Tide else MaterialTheme.colorScheme.surface
+    val fg = if (selected) Color.White else MaterialTheme.colorScheme.onSurface
+    Row(
+        Modifier.clip(RoundedCornerShape(50)).background(bg)
+            .border(1.dp, if (selected) Tide else MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(50))
+            .clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (icon != null) { Icon(icon, null, tint = fg, modifier = Modifier.size(15.dp)); Spacer(Modifier.width(4.dp)) }
+        Text(label, color = fg, fontSize = 13.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium)
     }
 }
 
 @Composable
 private fun Notice(text: String) {
     Row(
-        Modifier.fillMaxWidth().background(Mid.copy(alpha = 0.12f), RoundedCornerShape(8.dp)).padding(10.dp),
+        Modifier.fillMaxWidth().padding(vertical = 3.dp).clip(RoundedCornerShape(10.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant).padding(10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("ⓘ ", color = Mid)
+        Text("ⓘ ", color = Tide)
         Text(text, style = MaterialTheme.typography.bodySmall)
     }
 }
 
+/** 오늘의 1순위: 크게 강조 */
 @Composable
-private fun PointRow(r: PointResult, onClick: () -> Unit) {
+private fun TopPickCard(r: PointResult, onClick: () -> Unit) {
     val b = r.best
-    Card(Modifier.fillMaxWidth().clickable(onClick = onClick)) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            ScoreBadge(b.score)
-            Spacer(Modifier.width(14.dp))
-            Column(Modifier.weight(1f)) {
-                Text(r.point.name, fontWeight = FontWeight.Bold)
-                Text(
-                    "${r.species.label} · ${b.slot.label}(${b.slot.rangeText}) · ${b.tidePhase}",
-                    style = MaterialTheme.typography.bodySmall
-                )
-                b.reasons.maxByOrNull { it.delta }?.let {
-                    Text("👍 ${it.text}", style = MaterialTheme.typography.bodySmall, color = Good)
-                }
-                b.danger?.let {
+    Card(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp).clickable(onClick = onClick),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+    ) {
+        Box(Modifier.background(Brush.linearGradient(listOf(Tide, DeepSea))).padding(18.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("오늘의 1순위", color = Coral, fontWeight = FontWeight.ExtraBold, fontSize = 12.sp)
+                    Text(r.point.name, color = Foam, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
+                    Spacer(Modifier.height(4.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Warning, null, tint = Bad, modifier = Modifier.size(14.dp))
-                        Text(" $it", style = MaterialTheme.typography.bodySmall, color = Bad)
+                        Icon(speciesIcon(r.species), null, tint = Shallow, modifier = Modifier.size(16.dp))
+                        Text(" ${r.species.label} · ${b.slot.label} ${b.slot.rangeText} · ${b.tidePhase}", color = Foam.copy(alpha = 0.9f), fontSize = 13.sp)
                     }
+                    topReason(b)?.let { Text("👍 ${it.text}", color = Foam.copy(alpha = 0.85f), fontSize = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp)) }
+                    b.danger?.let { DangerLine(it, Coral) }
                 }
+                Box(Modifier.clip(CircleShape).background(MaterialTheme.colorScheme.surface).padding(4.dp)) { ScoreGauge(b.score, 70.dp, 7.dp, showLabel = true) }
             }
         }
     }
 }
 
 @Composable
-private fun ScoreBadge(score: Int, size: Int = 52) {
-    Box(
-        Modifier.size(size.dp).background(scoreColor(score), CircleShape),
-        contentAlignment = Alignment.Center
+private fun PointRow(rank: Int, r: PointResult, onClick: () -> Unit) {
+    val b = r.best
+    Card(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp).clickable(onClick = onClick),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Text("$score", color = Color.White, fontWeight = FontWeight.Bold, fontSize = (size / 2.6).sp)
+        Row(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("$rank", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold, modifier = Modifier.width(24.dp))
+            ScoreGauge(b.score, 50.dp, 5.dp)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(r.point.name, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.width(6.dp))
+                    TerrainTag(r.point.terrain)
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(speciesIcon(r.species), null, tint = Tide, modifier = Modifier.size(14.dp))
+                    Text(" ${r.species.label} · ${b.slot.label} ${b.slot.rangeText} · ${b.tidePhase}",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                topReason(b)?.let { Text(it.text, style = MaterialTheme.typography.bodySmall, color = Good, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                b.danger?.let { DangerLine(it, Bad) }
+            }
+            WindArrow(b.windDir, MaterialTheme.colorScheme.onSurfaceVariant, 18.dp)
+        }
     }
+}
+
+private fun topReason(s: SlotScore): Reason? = s.reasons.filter { it.delta > 0 }.maxByOrNull { it.delta }
+
+@Composable
+private fun DangerLine(text: String, color: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+        Icon(Icons.Default.Warning, null, tint = color, modifier = Modifier.size(14.dp))
+        Text(" $text", style = MaterialTheme.typography.bodySmall, color = color, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+private fun TerrainTag(terrain: String) {
+    Text(
+        terrain, fontSize = 10.sp, color = Tide, fontWeight = FontWeight.Bold,
+        modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(Tide.copy(alpha = 0.12f)).padding(horizontal = 6.dp, vertical = 1.dp)
+    )
 }
 
 // ───────────────────────── 상세 ─────────────────────────
 
 @Composable
-fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit) {
+fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit, onOpen: (String) -> Unit) {
     val st by vm.state.collectAsState()
-    val r = st.results.firstOrNull { it.point.id == pointId }
-    Scaffold(topBar = {
-        TopAppBar(
-            title = { Text(r?.point?.name ?: "") },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "뒤로") } })
-    }) { pad ->
-        if (r == null) return@Scaffold
-        var selected by remember(pointId) { mutableStateOf(r.best.slot) }
-        val slot = r.slots.first { it.slot == selected }
-        Column(
-            Modifier.fillMaxSize().padding(pad).verticalScroll(rememberScrollState()).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text("${r.point.area} · 수심 ${r.point.depth} · ${r.point.bottom}", style = MaterialTheme.typography.bodyMedium)
-            Text("대표 어종: ${r.point.species.joinToString()}", style = MaterialTheme.typography.bodyMedium)
-            Text("바라보는 방향: ${ScoreEngine.compass(r.point.facingDeg)}쪽 · 지형: ${r.point.terrain} · ${r.point.note}", style = MaterialTheme.typography.bodySmall)
-            if (!r.point.coordVerified) Notice("이 포인트 좌표는 대략적인 값이에요. points.json에서 실제 위치로 고쳐주세요.")
+    val r = st.results.firstOrNull { it.point.id == pointId } ?: return
+    var selected by remember(pointId) { mutableStateOf(r.best.slot) }
+    var editMode by remember { mutableStateOf(false) }
+    var moved by remember { mutableStateOf(false) }
+    val slot = r.slots.first { it.slot == selected }
 
-            HorizontalDivider()
-            Text("${r.species.label} 시간대별 점수", fontWeight = FontWeight.Bold)
-            r.slots.forEach { s -> SlotBar(s, s.slot == selected) { selected = s.slot } }
-
-            HorizontalDivider()
-            Text("${slot.slot.label}(${slot.slot.rangeText}) 점수 근거", fontWeight = FontWeight.Bold)
-            slot.danger?.let { Text("⚠ $it", color = Bad, fontWeight = FontWeight.Bold) }
-            Text(
-                "바람 ${ScoreEngine.compass(slot.windDir)} %.1fm/s".format(slot.windSpeed) +
-                        (slot.wave?.let { " · 파고 %.1fm".format(it) } ?: "") + " · ${slot.tidePhase}",
-                style = MaterialTheme.typography.bodyMedium
+    Column(
+        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
+            .verticalScroll(rememberScrollState(), enabled = !editMode).navigationBarsPadding()
+    ) {
+        // ── 위성지도 ──
+        Box(Modifier.fillMaxWidth().height(300.dp)) {
+            PointsMap(
+                pins = st.results.map { MapPin(it.point, it.best.score) },
+                selectedId = pointId, editMode = editMode,
+                modifier = Modifier.fillMaxSize(),
+                onPinClick = { id -> if (!editMode && id != pointId) onOpen(id) },
+                onMapTap = { lat, lng -> vm.movePoint(pointId, lat, lng); moved = true },
             )
-            Text("가감 합계 %+d → %d점".format(slot.reasons.sumOf { it.delta }, slot.score) + if (slot.danger != null) " (위험 조건으로 15점 제한)" else "", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-            slot.reasons.forEach { reason ->
-                Row(Modifier.fillMaxWidth()) {
-                    Text(reason.text, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-                    val d = reason.delta
-                    Text(
-                        if (d > 0) "+$d" else "$d",
-                        color = if (d > 0) Good else if (d < 0) Bad else Color.Gray,
-                        fontWeight = FontWeight.SemiBold
-                    )
+            // 위쪽 그림자 + 뒤로가기
+            Box(Modifier.fillMaxWidth().height(90.dp).background(Brush.verticalGradient(listOf(Abyss.copy(alpha = 0.7f), Color.Transparent))))
+            Row(Modifier.statusBarsPadding().padding(8.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onBack, modifier = Modifier.clip(CircleShape).background(Abyss.copy(alpha = 0.55f))) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "뒤로", tint = Foam)
+                }
+                Spacer(Modifier.weight(1f))
+                Row(
+                    Modifier.clip(RoundedCornerShape(50)).background(if (editMode) Coral else Abyss.copy(alpha = 0.55f))
+                        .clickable { editMode = !editMode; moved = false }.padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.EditLocationAlt, null, tint = Foam, modifier = Modifier.size(16.dp))
+                    Text(if (editMode) " 완료" else " 위치 수정", color = Foam, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            // 아래쪽 이름표
+            Column(
+                Modifier.align(Alignment.BottomStart).fillMaxWidth()
+                    .background(Brush.verticalGradient(listOf(Color.Transparent, Abyss.copy(alpha = 0.85f))))
+                    .padding(start = 16.dp, end = 16.dp, top = 28.dp, bottom = 12.dp)
+            ) {
+                if (editMode) Text(if (moved) "✅ 위치를 저장했어요. 다시 탭하면 또 옮겨져요." else "지도에서 실제 자리를 탭하세요",
+                    color = Coral, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                Text(r.point.name, color = Foam, fontWeight = FontWeight.ExtraBold, fontSize = 24.sp)
+                Text("${r.point.area} · ${ScoreEngine.compass(r.point.facingDeg)}쪽을 바라봄 · 점선 = 바라보는 방향",
+                    color = Foam.copy(alpha = 0.8f), fontSize = 12.sp)
+            }
+        }
+
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            // ── 점수 요약 ──
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ScoreGauge(slot.score, 92.dp, 8.dp, showLabel = true)
+                Spacer(Modifier.width(16.dp))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(speciesIcon(r.species), null, tint = Tide, modifier = Modifier.size(18.dp))
+                        Text(" ${r.species.label}", fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                    }
+                    Text("${slot.slot.label} ${slot.slot.rangeText} · ${slot.tidePhase}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        WindArrow(slot.windDir, Tide)
+                        Text(" ${ScoreEngine.compass(slot.windDir)} %.1fm/s".format(slot.windSpeed) + (slot.wave?.let { " · 파고 %.1fm".format(it) } ?: ""),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+                    }
+                    slot.danger?.let { DangerLine(it, Bad) }
                 }
             }
 
-            HorizontalDivider()
-            CatchLogForm(r.point.species, slot) { catches, note -> vm.addCatch(r.point, slot, catches, note) }
+            // ── 포인트 정보 ──
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                InfoPill("수심", r.point.depth)
+                InfoPill("지형", r.point.terrain)
+                InfoPill("바닥", r.point.bottom)
+                InfoPill("대표 어종", r.point.species.joinToString())
+            }
+            if (!r.point.coordVerified) Notice("좌표가 대략적인 값이에요. 지도 위 '위치 수정'을 누르고 실제 자리를 탭하면 저장돼요.")
 
-            HorizontalDivider()
+            // ── 시간대별 ──
+            SectionCard("시간대별 입질 지수") {
+                r.slots.forEach { s -> SlotBar(s, s.slot == selected) { selected = s.slot } }
+            }
+
+            // ── 근거 ──
+            SectionCard("${slot.slot.label} 점수 근거") {
+                Text("가감 합계 %+d → %d점".format(slot.reasons.sumOf { it.delta }, slot.score) +
+                        if (slot.danger != null) " (위험 조건으로 15점 제한)" else "",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                slot.reasons.sortedByDescending { it.delta }.forEach { reason -> ReasonRow(reason) }
+            }
+
+            SectionCard(null) {
+                CatchLogForm(r.point.species, slot) { catches, note -> vm.addCatch(r.point, slot, catches, note) }
+            }
+
             val records = vm.recordsFor(r.point)
-            Text("이 포인트 조과 기록 (${records.size}건)", fontWeight = FontWeight.Bold)
+            Text("이 포인트 조과 기록 (${records.size}건)", style = MaterialTheme.typography.titleMedium)
             if (records.isEmpty()) Text("아직 기록이 없어요. 낚시 후 위에서 기록을 남기면 다음부터 비슷한 조건일 때 점수에 반영돼요.",
-                style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             records.forEach { rec -> RecordRow(rec, onDelete = if (rec.byUser) ({ vm.deleteCatch(rec.id) }) else null) }
+            if (r.point.coordVerified) Text("지도 위치 원래대로", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp,
+                modifier = Modifier.clickable { vm.resetPoint(r.point.id) }.padding(vertical = 8.dp))
         }
     }
 }
 
-/** 낚시 후 조과를 남기는 입력칸. 저장할 때 지금 시간대의 바람·파고·수온이 함께 기록된다. */
+@Composable
+private fun SectionCard(title: String?, content: @Composable () -> Unit) {
+    Card(
+        Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            title?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
+            content()
+        }
+    }
+}
+
+@Composable
+private fun InfoPill(label: String, value: String) {
+    Row(
+        Modifier.clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.surfaceVariant).padding(horizontal = 10.dp, vertical = 6.dp)
+    ) {
+        Text("$label ", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+private fun ReasonRow(reason: Reason) {
+    val d = reason.delta
+    val color = if (d > 0) Good else if (d < 0) Bad else MaterialTheme.colorScheme.onSurfaceVariant
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(8.dp).clip(CircleShape).background(color))
+        Spacer(Modifier.width(8.dp))
+        Text(reason.text, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+        Text(if (d > 0) "+$d" else "$d", color = color, fontWeight = FontWeight.Bold)
+    }
+}
+
+/** 시간대 막대: 점수만큼 물이 차오르는 느낌 */
+@Composable
+private fun SlotBar(s: SlotScore, selected: Boolean, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+            .background(if (selected) Tide.copy(alpha = 0.10f) else Color.Transparent)
+            .clickable(onClick = onClick).padding(horizontal = 8.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(Modifier.width(78.dp)) {
+            Text(s.slot.label, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text(s.slot.rangeText, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Box(Modifier.weight(1f).height(14.dp).clip(RoundedCornerShape(7.dp)).background(MaterialTheme.colorScheme.surfaceVariant)) {
+            Box(Modifier.fillMaxWidth(s.score / 100f).height(14.dp).clip(RoundedCornerShape(7.dp))
+                .background(Brush.horizontalGradient(listOf(Shallow, scoreColor(s.score)))))
+        }
+        Text("${s.score}", Modifier.width(40.dp).padding(start = 8.dp), fontWeight = FontWeight.ExtraBold, color = scoreColor(s.score))
+        if (s.danger != null) Icon(Icons.Default.Warning, s.danger, tint = Bad, modifier = Modifier.size(16.dp))
+    }
+}
+
 @Composable
 private fun CatchLogForm(speciesLabels: List<String>, slot: SlotScore, onSave: (Map<String, Int>, String) -> Unit) {
     val all = (speciesLabels + Species.entries.map { it.label }).distinct()
@@ -316,26 +550,6 @@ private fun RecordRow(rec: CatchRecord, onDelete: (() -> Unit)?) {
             if (onDelete != null) Text("삭제", color = Bad, style = MaterialTheme.typography.labelMedium,
                 modifier = Modifier.clickable(onClick = onDelete).padding(top = 4.dp))
         }
-    }
-}
-
-@Composable
-private fun SlotBar(s: SlotScore, selected: Boolean, onClick: () -> Unit) {
-    Row(
-        Modifier.fillMaxWidth()
-            .background(if (selected) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent, RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick).padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text("${s.slot.label}", Modifier.width(44.dp), fontWeight = FontWeight.SemiBold)
-        Text(s.slot.rangeText, Modifier.width(72.dp), style = MaterialTheme.typography.bodySmall)
-        LinearProgressIndicator(
-            progress = { s.score / 100f },
-            modifier = Modifier.weight(1f).height(10.dp),
-            color = scoreColor(s.score),
-            trackColor = Color.LightGray.copy(alpha = 0.4f),
-        )
-        Text("  ${s.score}", Modifier.width(40.dp), fontWeight = FontWeight.Bold)
     }
 }
 

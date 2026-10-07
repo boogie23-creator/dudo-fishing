@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 찌(구멍찌)가 파도 위에 떠 있는 모양 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- 찌 몸통 아래(흰색) -->
+    <path android:fillColor="#F2FBFC"
+        android:pathData="M54,30 C66,30 72,42 72,52 C72,62 64,70 54,70 C44,70 36,62 36,52 C36,42 42,30 54,30 Z"/>
+    <!-- 찌 몸통 위(주황) -->
+    <path android:fillColor="#FF7A4F"
+        android:pathData="M54,30 C66,30 72,42 72,50 L36,50 C36,42 42,30 54,30 Z"/>
+    <!-- 찌톱 -->
+    <path android:fillColor="#FF7A4F" android:pathData="M52.5,18 L55.5,18 L55.5,31 L52.5,31 Z"/>
+    <!-- 원줄 -->
+    <path android:strokeColor="#5FC6C9" android:strokeWidth="1.2" android:pathData="M54,70 L54,84"/>
+    <!-- 파도 -->
+    <path android:fillColor="#0E7C8C"
+        android:pathData="M18,64 C26,58 34,58 42,64 C50,70 58,70 66,64 C74,58 82,58 90,64 L90,92 L18,92 Z"/>
+    <path android:fillColor="#5FC6C9" android:fillAlpha="0.55"
+        android:pathData="M18,70 C26,65 34,65 42,70 C50,75 58,75 66,70 C74,65 82,65 90,70 L90,74 C82,69 74,69 66,74 C58,79 50,79 42,74 C34,69 26,69 18,74 Z"/>
+</vector>
