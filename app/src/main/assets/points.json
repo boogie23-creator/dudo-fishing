@@ -1,0 +1,89 @@
+{
+  "_comment": "좌표는 대략적인 추정값입니다(coordVerified=false). 현장/지도에서 확인 후 수정하세요. facingDeg = 갯바위가 바다를 바라보는 방향(0=북, 90=동, 180=남, 270=서).",
+  "points": [
+    {
+      "id": "dudo_n",
+      "name": "두도 북쪽 갯바위",
+      "area": "두도",
+      "lat": 35.0340, "lng": 128.9780,
+      "facingDeg": 0,
+      "depth": "중간 수심",
+      "bottom": "암반·수중여",
+      "species": ["감성돔", "볼락", "무늬오징어"],
+      "note": "몰운대를 마주보는 면. 남풍 계열 바람에 비교적 등지고 낚시 가능.",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_e",
+      "name": "두도 동쪽 직벽",
+      "area": "두도",
+      "lat": 35.0325, "lng": 128.9800,
+      "facingDeg": 90,
+      "depth": "깊은 수심",
+      "bottom": "직벽·암반",
+      "species": ["감성돔", "벵에돔", "무늬오징어"],
+      "note": "조류 소통이 좋은 면. 동풍·너울에 취약.",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_s",
+      "name": "두도 남쪽 끝",
+      "area": "두도",
+      "lat": 35.0305, "lng": 128.9785,
+      "facingDeg": 180,
+      "depth": "깊은 수심",
+      "bottom": "암반·수중여",
+      "species": ["감성돔", "벵에돔", "볼락"],
+      "note": "외해 방향. 조류가 강하고 남쪽 너울을 직접 받음.",
+      "coordVerified": false
+    },
+    {
+      "id": "dudo_w",
+      "name": "두도 서쪽 갯바위",
+      "area": "두도",
+      "lat": 35.0322, "lng": 128.9765,
+      "facingDeg": 270,
+      "depth": "중간 수심",
+      "bottom": "암반·자갈",
+      "species": ["감성돔", "볼락"],
+      "note": "낙동강 방향. 북동풍에 등지고 낚시 가능.",
+      "coordVerified": false
+    },
+    {
+      "id": "morun_hwason",
+      "name": "몰운대 화손대 갯바위",
+      "area": "몰운대",
+      "lat": 35.0400, "lng": 128.9745,
+      "facingDeg": 135,
+      "depth": "중간 수심",
+      "bottom": "암반",
+      "species": ["감성돔", "볼락", "무늬오징어"],
+      "note": "도보 진입 포인트. 두도를 마주봄.",
+      "coordVerified": false
+    },
+    {
+      "id": "morun_s",
+      "name": "몰운대 남단 갯바위",
+      "area": "몰운대",
+      "lat": 35.0385, "lng": 128.9690,
+      "facingDeg": 190,
+      "depth": "얕음~중간",
+      "bottom": "암반·자갈",
+      "species": ["감성돔", "볼락"],
+      "note": "도보 진입. 서풍 계열에 취약.",
+      "coordVerified": false
+    },
+    {
+      "id": "dusong_tip",
+      "name": "두송반도 끝 갯바위",
+      "area": "두송반도",
+      "lat": 35.0430, "lng": 128.9850,
+      "facingDeg": 160,
+      "depth": "중간~깊음",
+      "bottom": "암반·수중여",
+      "species": ["감성돔", "벵에돔", "무늬오징어"],
+      "note": "외해 쪽 돌출부. 조류 소통 좋음.",
+      "coordVerified": false
+    }
+  ]
+}

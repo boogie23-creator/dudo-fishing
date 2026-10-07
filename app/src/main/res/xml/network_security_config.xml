@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- 국립해양조사원(바다누리) 구 OpenAPI가 http로만 제공되는 경우가 있어 이 도메인만 평문 통신 허용 -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">khoa.go.kr</domain>
+    </domain-config>
+</network-security-config>
