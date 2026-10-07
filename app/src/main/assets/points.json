@@ -1,5 +1,5 @@
 {
-  "_comment": "두도 포인트 번호·수심은 '송도 은파낚시' 두도 포인트 지도 기준. 좌표와 바라보는 방향(facingDeg)은 지도 사진에서 추정한 값이라 현장에서 확인 후 수정하세요. species는 수심 기준 자동 배정(8m 이상 벵에돔, 5m 이하 시작 무늬오징어)이니 실제 경험대로 고쳐주세요.",
+  "_comment": "두도 포인트 번호·수심은 '송도 은파낚시' 두도 포인트 지도 기준. 좌표와 바라보는 방향(facingDeg)은 지도 사진에서 추정한 값이라 현장에서 확인 후 수정하세요. species는 수심 기준 자동 배정(8m 이상 벵에돔, 5m 이하 시작 무늬오징어)이니 실제 경험대로 고쳐주세요. terrain(지형)은 지도 사진으로 추정: 곶부리=돌출부(조류가 갈라짐), 홈통=안쪽으로 들어간 곳(조류가 돌아 들어옴), 여밭=얕은 수중여 지대, 직벽=깊은 절벽. 현장과 다르면 고쳐주세요.",
   "points": [
     {
       "id": "dudo_1",
@@ -18,7 +18,8 @@
         "볼락"
       ],
       "note": "북서쪽을 바라봄 · 수심 6~10m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "곶부리"
     },
     {
       "id": "dudo_1_5",
@@ -30,7 +31,7 @@
       "depthMin": 4,
       "depthMax": 8,
       "depth": "4~8m",
-      "bottom": "암반",
+      "bottom": "암반·여밭",
       "species": [
         "감성돔",
         "벵에돔",
@@ -38,7 +39,8 @@
         "무늬오징어"
       ],
       "note": "북서쪽을 바라봄 · 수심 4~8m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "여밭"
     },
     {
       "id": "dudo_2",
@@ -50,14 +52,36 @@
       "depthMin": 3,
       "depthMax": 6,
       "depth": "3~6m",
-      "bottom": "암반",
+      "bottom": "암반·여밭",
       "species": [
         "감성돔",
         "볼락",
         "무늬오징어"
       ],
       "note": "북서쪽을 바라봄 · 수심 3~6m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "여밭"
+    },
+    {
+      "id": "dudo_2_5",
+      "name": "두도 2.5번",
+      "area": "두도",
+      "lat": 35.05021,
+      "lng": 129.01337,
+      "facingDeg": 308,
+      "depthMin": 2.5,
+      "depthMax": 6,
+      "depth": "2.5~6m",
+      "bottom": "암반·여밭",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락",
+        "무늬오징어"
+      ],
+      "note": "북서쪽을 바라봄 · 수심 2.5~6m · 조행기에 자주 등장하는 자리",
+      "coordVerified": false,
+      "terrain": "여밭"
     },
     {
       "id": "dudo_3",
@@ -69,7 +93,7 @@
       "depthMin": 4,
       "depthMax": 8,
       "depth": "4~8m",
-      "bottom": "암반",
+      "bottom": "암반·여밭",
       "species": [
         "감성돔",
         "벵에돔",
@@ -77,7 +101,8 @@
         "무늬오징어"
       ],
       "note": "북서쪽을 바라봄 · 수심 4~8m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "여밭"
     },
     {
       "id": "dudo_4",
@@ -96,7 +121,8 @@
         "무늬오징어"
       ],
       "note": "서쪽을 바라봄 · 수심 4~7m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "평면"
     },
     {
       "id": "dudo_4_5",
@@ -115,7 +141,8 @@
         "무늬오징어"
       ],
       "note": "서쪽을 바라봄 · 수심 4.5~6m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "홈통"
     },
     {
       "id": "dudo_5",
@@ -135,7 +162,8 @@
         "무늬오징어"
       ],
       "note": "서쪽을 바라봄 · 수심 5~8m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "평면"
     },
     {
       "id": "dudo_6",
@@ -154,7 +182,8 @@
         "볼락"
       ],
       "note": "남서쪽을 바라봄 · 수심 6~12m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "곶부리"
     },
     {
       "id": "dudo_6_5",
@@ -173,7 +202,8 @@
         "볼락"
       ],
       "note": "남서쪽을 바라봄 · 수심 6~11m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "홈통"
     },
     {
       "id": "dudo_7",
@@ -192,7 +222,8 @@
         "볼락"
       ],
       "note": "남쪽을 바라봄 · 수심 6~10m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "평면"
     },
     {
       "id": "dudo_8",
@@ -211,7 +242,8 @@
         "볼락"
       ],
       "note": "남쪽을 바라봄 · 수심 6~9m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "평면"
     },
     {
       "id": "dudo_9",
@@ -230,7 +262,8 @@
         "볼락"
       ],
       "note": "남쪽을 바라봄 · 수심 6~10m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "홈통"
     },
     {
       "id": "dudo_wall",
@@ -249,7 +282,8 @@
         "볼락"
       ],
       "note": "남동쪽을 바라봄 · 수심 11~15m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "직벽"
     },
     {
       "id": "dudo_10",
@@ -268,7 +302,8 @@
         "볼락"
       ],
       "note": "남동쪽을 바라봄 · 수심 8~12m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "곶부리"
     },
     {
       "id": "dudo_11",
@@ -287,7 +322,8 @@
         "볼락"
       ],
       "note": "남동쪽을 바라봄 · 수심 8~12m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "곶부리"
     },
     {
       "id": "dudo_12",
@@ -306,7 +342,8 @@
         "볼락"
       ],
       "note": "남동쪽을 바라봄 · 수심 8~12m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "곶부리"
     },
     {
       "id": "dudo_12_5",
@@ -325,7 +362,8 @@
         "볼락"
       ],
       "note": "남동쪽을 바라봄 · 수심 8~12m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "곶부리"
     },
     {
       "id": "dudo_13",
@@ -344,7 +382,8 @@
         "볼락"
       ],
       "note": "남동쪽을 바라봄 · 수심 8~10m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "평면"
     },
     {
       "id": "dudo_13_5",
@@ -363,7 +402,8 @@
         "볼락"
       ],
       "note": "남동쪽을 바라봄 · 수심 8~10m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "홈통"
     },
     {
       "id": "dudo_14",
@@ -383,7 +423,8 @@
         "무늬오징어"
       ],
       "note": "동쪽을 바라봄 · 수심 4~8m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "평면"
     },
     {
       "id": "dudo_14_5",
@@ -403,7 +444,8 @@
         "무늬오징어"
       ],
       "note": "동쪽을 바라봄 · 수심 4~9m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "곶부리"
     },
     {
       "id": "dudo_15",
@@ -422,7 +464,8 @@
         "볼락"
       ],
       "note": "동쪽을 바라봄 · 수심 6~9m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "평면"
     },
     {
       "id": "dudo_16",
@@ -442,7 +485,8 @@
         "무늬오징어"
       ],
       "note": "북동쪽을 바라봄 · 수심 5~8m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "평면"
     },
     {
       "id": "dudo_16_5",
@@ -461,7 +505,8 @@
         "볼락"
       ],
       "note": "북동쪽을 바라봄 · 수심 6~9m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "홈통"
     },
     {
       "id": "dudo_17",
@@ -481,7 +526,8 @@
         "무늬오징어"
       ],
       "note": "북동쪽을 바라봄 · 수심 5~9m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "평면"
     },
     {
       "id": "dudo_17_5",
@@ -500,7 +546,8 @@
         "무늬오징어"
       ],
       "note": "북쪽을 바라봄 · 수심 4~7m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "평면"
     },
     {
       "id": "dudo_18",
@@ -519,7 +566,8 @@
         "무늬오징어"
       ],
       "note": "북쪽을 바라봄 · 수심 3~6m",
-      "coordVerified": false
+      "coordVerified": false,
+      "terrain": "곶부리"
     }
   ]
 }

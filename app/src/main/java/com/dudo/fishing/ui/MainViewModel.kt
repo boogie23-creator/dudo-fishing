@@ -3,13 +3,18 @@ package com.dudo.fishing.ui
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.dudo.fishing.data.BeachApi
+import com.dudo.fishing.data.CatchRecord
+import com.dudo.fishing.data.HistoryRepository
 import com.dudo.fishing.data.ConditionsRepository
 import com.dudo.fishing.data.DayConditions
 import com.dudo.fishing.data.FishingPoint
 import com.dudo.fishing.data.PointRepository
 import com.dudo.fishing.data.Settings
 import com.dudo.fishing.scoring.PointResult
+import com.dudo.fishing.scoring.ScoreContext
 import com.dudo.fishing.scoring.ScoreEngine
+import com.dudo.fishing.scoring.SlotScore
 import com.dudo.fishing.scoring.Species
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,8 +34,10 @@ data class UiState(
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
     val settings = Settings(app)
-    private val repo = ConditionsRepository(settings)
+    private val repo = ConditionsRepository(settings, BeachApi.loadBeaches(app))
     private val points: List<FishingPoint> = PointRepository.load(app)
+    private val historyRepo = HistoryRepository(app)
+    private var history: List<CatchRecord> = emptyList()
 
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state
@@ -49,6 +56,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         _state.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
             try {
+                if (history.isEmpty()) history = runCatching { historyRepo.all() }.getOrElse { historyRepo.bundled() + historyRepo.userRecords() }
                 rank(repo.load(date))
             } catch (e: Exception) {
                 _state.update { it.copy(loading = false, error = e.message ?: "알 수 없는 오류") }
@@ -56,10 +64,39 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** 이 포인트(또는 같은 방향) 관련 조과 기록 */
+    fun recordsFor(point: FishingPoint): List<CatchRecord> =
+        history.filter { it.pointId == point.id || (it.pointId == null && it.sideFacingDeg != null &&
+                com.dudo.fishing.scoring.Factors.angleDiff(it.sideFacingDeg, point.facingDeg) <= 60) }
+            .sortedByDescending { it.date }
+
+    /** 지금 조건과 함께 내 조과를 저장하고 점수를 다시 계산 */
+    fun addCatch(point: FishingPoint, slot: SlotScore, catches: Map<String, Int>, note: String) {
+        val c = _state.value.conditions ?: return
+        val rec = CatchRecord(
+            id = "user_" + System.currentTimeMillis(),
+            date = c.date, startHour = slot.slot.startHour, endHour = slot.slot.endHour,
+            pointId = point.id, sideFacingDeg = null, catches = catches.filterValues { it > 0 },
+            note = note, source = "내 기록", url = null, byUser = true,
+            windSpeed = slot.windSpeed, windDir = slot.windDir, wave = slot.wave, waterTemp = c.waterTemp,
+        )
+        if (rec.catches.isEmpty()) return
+        historyRepo.addUserRecord(rec)
+        history = history + rec
+        rank(c)
+    }
+
+    fun deleteCatch(id: String) {
+        historyRepo.deleteUserRecord(id)
+        history = history.filterNot { it.id == id }
+        _state.value.conditions?.let { rank(it) }
+    }
+
     private fun rank(c: DayConditions) {
         val sp = _state.value.species
+        val ctx = ScoreContext(history, points.associateBy { it.id })
         val results = points.map { p ->
-            if (sp == null) ScoreEngine.bestForPoint(p, c) else ScoreEngine.evaluate(p, sp, c)
+            if (sp == null) ScoreEngine.bestForPoint(p, c, ctx) else ScoreEngine.evaluate(p, sp, c, ctx)
         }.sortedByDescending { it.best.score }
         _state.update { it.copy(loading = false, conditions = c, results = results) }
     }

@@ -19,8 +19,9 @@ enum class Species(
     val waveLimit: Double,
 ) {
     GAMSEONG(
-        "감성돔", 13.0..20.0, 10.0..23.0,
-        intArrayOf(3, 3, 2, 2, 2, 1, 0, 0, 1, 2, 3, 3),
+        "감성돔", 15.0..22.0, 11.0..25.0,
+        // 두도 조행기: 7~9월에도 마릿수 조과 → 여름 0점이던 값을 올림
+        intArrayOf(3, 3, 2, 2, 2, 1, 1, 2, 3, 3, 3, 3),
         Activity.TWILIGHT, likesIncoming = true, likesSomeWave = true, waveLimit = 1.5
     ),
     BENGAE(

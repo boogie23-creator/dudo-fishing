@@ -1,5 +1,6 @@
 package com.dudo.fishing.data
 
+import org.json.JSONArray
 import org.json.JSONObject
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -18,6 +19,49 @@ object TideApi {
     const val BUSAN_OBS_CODE = "DT_0005"
     private val D = DateTimeFormatter.ofPattern("yyyyMMdd")
     private val DT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+
+    /**
+     * 국립해양조사원 조석예보(고, 저조) – 공공데이터포털 버전 (활용가이드 2025-12 기준, 단기예보와 같은 인증키)
+     * https://apis.data.go.kr/1192136/tideFcstHghLw/GetTideFcstHghLwApiService
+     * 요청: obsCode, reqDate(yyyyMMdd), type=json
+     * 응답: predcDt("yyyy-MM-dd HH:mm"), predcTdlvVl(cm), extrSe(1 오전고조, 2 오전저조, 3 오후고조, 4 오후저조)
+     */
+    fun fetchDataGoKr(key: String, date: LocalDate, obsCode: String = BUSAN_OBS_CODE): List<TideEvent> {
+        return listOf(date.minusDays(1), date, date.plusDays(1)).flatMap { d ->
+            val url = "https://apis.data.go.kr/1192136/tideFcstHghLw/GetTideFcstHghLwApiService" +
+                    "?serviceKey=${Http.encodeKey(key)}&obsCode=$obsCode&reqDate=${d.format(D)}" +
+                    "&type=json&numOfRows=20&pageNo=1"
+            parseDataGoKr(Http.get(url))
+        }.sortedBy { it.time }.distinctBy { it.time }
+    }
+
+    private val PREDC = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+
+    internal fun parseDataGoKr(body: String): List<TideEvent> {
+        if (body.trimStart().startsWith("<")) {
+            val msg = Regex("<returnAuthMsg>(.*?)</returnAuthMsg>|<resultMsg>(.*?)</resultMsg>").find(body)
+                ?.groupValues?.drop(1)?.firstOrNull { it.isNotBlank() } ?: "알 수 없는 응답"
+            error(if (msg.contains("NOT_REGISTERED")) "조석예보 활용신청이 안 됐거나 아직 승인 대기 중이에요" else msg)
+        }
+        val root = JSONObject(body)
+        val res = root.optJSONObject("response") ?: root
+        val code = res.optJSONObject("header")?.optString("resultCode") ?: "00"
+        if (code != "00" && code != "0") error(res.optJSONObject("header")?.optString("resultMsg") ?: "조석예보 오류")
+        val bodyObj = res.optJSONObject("body") ?: res
+        val itemsAny = bodyObj.opt("items")
+        val arr: JSONArray = when (itemsAny) {
+            is JSONArray -> itemsAny
+            is JSONObject -> itemsAny.optJSONArray("item") ?: itemsAny.optJSONObject("item")?.let { JSONArray().put(it) } ?: JSONArray()
+            else -> JSONArray()
+        }
+        return (0 until arr.length()).mapNotNull { i ->
+            val o = arr.getJSONObject(i)
+            val t = runCatching { LocalDateTime.parse(o.optString("predcDt").take(16), PREDC) }.getOrNull()
+                ?: return@mapNotNull null
+            val se = o.optString("extrSe").trim()
+            TideEvent(t, isHigh = se == "1" || se == "3", levelCm = o.optString("predcTdlvVl").toDoubleOrNull()?.toInt())
+        }
+    }
 
     fun fetchKhoa(key: String, date: LocalDate): List<TideEvent> {
         // 앞뒤 날짜까지 받아야 자정 근처 물 흐름을 계산할 수 있다

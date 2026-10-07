@@ -30,10 +30,6 @@ class Settings(context: Context) {
         get() = prefs.getInt("beachNum", -1).takeIf { it > 0 }
         set(v) = prefs.edit().putInt("beachNum", v ?: -1).apply()
 
-    /** 해수욕장 자동 찾기를 마지막으로 시도한 날 (실패 시 하루 한 번만 재시도) */
-    var beachProbeDay: String
-        get() = prefs.getString("beachProbeDay", "") ?: ""
-        set(v) = prefs.edit().putString("beachProbeDay", v).apply()
 
     /** 현장 수온을 알면 직접 입력 (빈 값이면 월별 평균으로 추정) */
     var manualWaterTemp: Double?

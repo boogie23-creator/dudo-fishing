@@ -1,0 +1,67 @@
+{
+  "_comment": "두도 조과 기록 (공개 조행기에서 날짜·포인트·어종·마릿수만 추린 것). pointId가 없으면 sideFacingDeg(서편=270 등)로 방향만 표시. 물때는 날짜로 앱이 계산하고, 바람·파고·수온은 앱이 Open-Meteo 과거자료로 채운다.",
+  "records": [
+    {
+      "id": "innak_131033",
+      "date": "2023-07-26", "startHour": 8, "endHour": 14,
+      "pointId": "dudo_2_5",
+      "catches": { "벵에돔": 20, "감성돔": 10 },
+      "note": "너울 심함·흙탕물, 00 구멍찌 전유동, 수심 2.5~6m",
+      "source": "인낚 조행기 (2023.07.29)",
+      "url": "https://innak.kr/bbs/board.php?bo_table=C02_post&wr_id=131033"
+    },
+    {
+      "id": "innak_131102",
+      "date": "2023-08-13", "startHour": 5, "endHour": 11,
+      "pointId": "dudo_16_5",
+      "catches": { "감성돔": 10, "벵에돔": 10 },
+      "note": "만조 지나 물돌이 무렵, 00찌 무봉돌 전층, 45cm급 감성돔 포함",
+      "source": "인낚 조행기 (2023.08.14)",
+      "url": "https://innak.kr/bbs/board.php?bo_table=C02_post&wr_id=131102"
+    },
+    {
+      "id": "innak_131248_a",
+      "date": "2023-09-14", "startHour": 7, "endHour": 13,
+      "sideFacingDeg": 270,
+      "catches": { "감성돔": 15 },
+      "note": "서편 포인트, 낮 시간 조황 우세, 전방 10~15m 수심 4~6m 여밭, 0호 구멍찌",
+      "source": "인낚 조행기 (2023.09.15, 2일 출조 중 1일차)",
+      "url": "https://innak.kr/bbs/board.php?bo_table=C02_post&wr_id=131248"
+    },
+    {
+      "id": "innak_131248_b",
+      "date": "2023-09-15", "startHour": 7, "endHour": 13,
+      "sideFacingDeg": 270,
+      "catches": { "감성돔": 15 },
+      "note": "서편 포인트, 30cm급 위주, 얕은 여밭이 깊은 곳보다 효율적",
+      "source": "인낚 조행기 (2023.09.15, 2일 출조 중 2일차)",
+      "url": "https://innak.kr/bbs/board.php?bo_table=C02_post&wr_id=131248"
+    },
+    {
+      "id": "innak_134368",
+      "date": "2026-09-12", "startHour": 7, "endHour": 13,
+      "pointId": "dudo_2_5",
+      "catches": { "감성돔": 15 },
+      "note": "가을 첫 출조, 수심 4~6m, B찌+G2 수중찌 전유동",
+      "source": "인낚 조행기 (2026.09.13)",
+      "url": "https://innak.kr/bbs/board.php?bo_table=C02_post&wr_id=134368"
+    },
+    {
+      "id": "innak_staff_5051",
+      "date": "2018-09-03", "startHour": 6, "endHour": 12,
+      "catches": { "감성돔": 1 },
+      "note": "대물급 감성돔 확인 (포인트·마릿수 미기재)",
+      "source": "인낚 스태프 조행기 (2018.09.03)",
+      "url": "https://innak.kr/bbs/board.php?bo_table=C03_staff&wr_id=5051"
+    },
+    {
+      "id": "fs_14714",
+      "date": "2021-07-31", "startHour": 13, "endHour": 17,
+      "pointId": "dudo_1",
+      "catches": { "무늬오징어": 10 },
+      "note": "두도 북쪽 방파제 인근(추정), 14물 만조→초썰물, 에기 3호",
+      "source": "월간낚시21 기사 (2021.07.31 출조)",
+      "url": "https://fishingseasons.co.kr/contents_view_detail.asp?b_no=14714"
+    }
+  ]
+}

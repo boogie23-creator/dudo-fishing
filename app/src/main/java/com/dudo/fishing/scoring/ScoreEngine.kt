@@ -34,21 +34,28 @@ data class PointResult(
 
 /**
  * 규칙 기반 점수 계산 (1단계).
- * 기본 50점에서 요인별로 가감 → 0~100점. 위험 조건이면 15점 이하로 제한.
+ * 요인별 가감을 합산한 뒤 곡선으로 0~100점 변환. 위험 조건이면 15점 이하로 제한.
  * 모든 가감 내역을 Reason 으로 남겨 "왜 이 점수인지" 앱에서 보여준다.
  */
 object ScoreEngine {
 
-    fun evaluate(point: FishingPoint, species: Species, c: DayConditions): PointResult =
-        PointResult(point, species, TimeSlot.entries.map { scoreSlot(point, species, c, it) })
+    fun evaluate(point: FishingPoint, species: Species, c: DayConditions, ctx: ScoreContext = ScoreContext()): PointResult =
+        PointResult(point, species, TimeSlot.entries.map { scoreSlot(point, species, c, it, ctx) })
 
     /** 해당 포인트 대표 어종 중 가장 점수가 높은 결과 */
-    fun bestForPoint(point: FishingPoint, c: DayConditions): PointResult {
+    fun bestForPoint(point: FishingPoint, c: DayConditions, ctx: ScoreContext = ScoreContext()): PointResult {
         val candidates = point.species.mapNotNull { Species.byLabel(it) }.ifEmpty { Species.entries }
-        return candidates.map { evaluate(point, it, c) }.maxBy { it.best.score }
+        return candidates.map { evaluate(point, it, c, ctx) }.maxBy { it.best.score }
     }
 
-    private fun scoreSlot(p: FishingPoint, s: Species, c: DayConditions, slot: TimeSlot): SlotScore {
+    /**
+     * 가감 합계를 0~100 점수로 바꾼다. 요인이 많아 단순 합산하면 대부분 상한에 몰리므로
+     * 부드러운 곡선(tanh)으로 눌러서 좋은 날·좋은 포인트 사이 차이가 보이게 한다.
+     * 합계 +38 ≈ 50점, +60 ≈ 72점, +80 ≈ 86점, +15 ≈ 30점.
+     */
+    fun toScore(sum: Int): Int = (50 + 48 * kotlin.math.tanh((sum - 38) / 28.0)).roundToInt().coerceIn(0, 100)
+
+    private fun scoreSlot(p: FishingPoint, s: Species, c: DayConditions, slot: TimeSlot, ctx: ScoreContext): SlotScore {
         val r = mutableListOf<Reason>()
         val start = c.date.atTime(slot.startHour, 0)
         val center = start.plusMinutes(((slot.endHour - slot.startHour) * 30).toLong())
@@ -123,7 +130,16 @@ object ScoreEngine {
         // 9. 비
         if (rainy) r += Reason("강수 예보", -4)
 
-        var score = (50 + r.sumOf { it.delta }).coerceIn(0, 100)
+        // 10. 찌낚시 조류·지형 (포인트가 바라보는 방향 vs 들물/날물 흐름)
+        r += Factors.currentReasons(p, Factors.tideState(center, c.tides), c.tideRangeFactor)
+
+        // 11. 어종별 수심·지형 적합도
+        r += Factors.depthTerrainReasons(p, s)
+
+        // 12. 과거 조과 기록 – 비슷한 물때·계절·바람·파고·수온일 때 가점
+        r += Factors.historyReasons(p, s, c, slot, wind, windDir, wave, ctx)
+
+        var score = toScore(r.sumOf { it.delta })
         if (danger != null) score = score.coerceAtMost(15)
         return SlotScore(slot, score, r, danger, wind, windDir, wave, phaseText)
     }

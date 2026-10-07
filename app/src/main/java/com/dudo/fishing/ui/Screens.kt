@@ -43,9 +43,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -61,6 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dudo.fishing.data.CatchRecord
 import com.dudo.fishing.data.DayConditions
 import com.dudo.fishing.data.Settings
 import com.dudo.fishing.scoring.PointResult
@@ -91,13 +89,10 @@ fun HomeScreen(vm: MainViewModel, onOpen: (String) -> Unit, onSettings: () -> Un
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
-                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                // 날짜 선택 (오늘/내일/모레)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf("오늘", "내일", "모레").forEachIndexed { i, label ->
-                        SegmentedButton(
-                            selected = st.dayOffset == i,
-                            onClick = { vm.setDay(i) },
-                            shape = SegmentedButtonDefaults.itemShape(i, 3)
-                        ) { Text(label) }
+                        FilterChip(st.dayOffset == i, { vm.setDay(i) }, { Text(label) })
                     }
                 }
             }
@@ -234,7 +229,7 @@ fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit) {
         ) {
             Text("${r.point.area} · 수심 ${r.point.depth} · ${r.point.bottom}", style = MaterialTheme.typography.bodyMedium)
             Text("대표 어종: ${r.point.species.joinToString()}", style = MaterialTheme.typography.bodyMedium)
-            Text("바라보는 방향: ${ScoreEngine.compass(r.point.facingDeg)}쪽 · ${r.point.note}", style = MaterialTheme.typography.bodySmall)
+            Text("바라보는 방향: ${ScoreEngine.compass(r.point.facingDeg)}쪽 · 지형: ${r.point.terrain} · ${r.point.note}", style = MaterialTheme.typography.bodySmall)
             if (!r.point.coordVerified) Notice("이 포인트 좌표는 대략적인 값이에요. points.json에서 실제 위치로 고쳐주세요.")
 
             HorizontalDivider()
@@ -249,7 +244,7 @@ fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit) {
                         (slot.wave?.let { " · 파고 %.1fm".format(it) } ?: "") + " · ${slot.tidePhase}",
                 style = MaterialTheme.typography.bodyMedium
             )
-            Text("기본 50점", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+            Text("가감 합계 %+d → %d점".format(slot.reasons.sumOf { it.delta }, slot.score) + if (slot.danger != null) " (위험 조건으로 15점 제한)" else "", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
             slot.reasons.forEach { reason ->
                 Row(Modifier.fillMaxWidth()) {
                     Text(reason.text, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
@@ -261,6 +256,65 @@ fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit) {
                     )
                 }
             }
+
+            HorizontalDivider()
+            CatchLogForm(r.point.species, slot) { catches, note -> vm.addCatch(r.point, slot, catches, note) }
+
+            HorizontalDivider()
+            val records = vm.recordsFor(r.point)
+            Text("이 포인트 조과 기록 (${records.size}건)", fontWeight = FontWeight.Bold)
+            if (records.isEmpty()) Text("아직 기록이 없어요. 낚시 후 위에서 기록을 남기면 다음부터 비슷한 조건일 때 점수에 반영돼요.",
+                style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+            records.forEach { rec -> RecordRow(rec, onDelete = if (rec.byUser) ({ vm.deleteCatch(rec.id) }) else null) }
+        }
+    }
+}
+
+/** 낚시 후 조과를 남기는 입력칸. 저장할 때 지금 시간대의 바람·파고·수온이 함께 기록된다. */
+@Composable
+private fun CatchLogForm(speciesLabels: List<String>, slot: SlotScore, onSave: (Map<String, Int>, String) -> Unit) {
+    val all = (speciesLabels + Species.entries.map { it.label }).distinct()
+    var counts by remember(slot) { mutableStateOf(all.associateWith { "" }) }
+    var note by remember(slot) { mutableStateOf("") }
+    var saved by remember(slot) { mutableStateOf(false) }
+    Text("내 조과 기록하기 (${slot.slot.label} ${slot.slot.rangeText})", fontWeight = FontWeight.Bold)
+    Text("오늘 이 포인트에서 잡은 마릿수를 넣고 저장하세요. 지금의 물때·바람·파고·수온이 함께 저장돼서, 비슷한 조건이 오면 이 포인트 점수가 올라가요.",
+        style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        all.forEach { label ->
+            OutlinedTextField(
+                value = counts[label] ?: "",
+                onValueChange = { v -> counts = counts + (label to v.filter { it.isDigit() }.take(3)) },
+                modifier = Modifier.width(110.dp), singleLine = true,
+                label = { Text(label) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+        }
+    }
+    OutlinedTextField(note, { note = it }, Modifier.fillMaxWidth(), singleLine = true, label = { Text("메모 (채비·미끼 등, 선택)") })
+    Button(onClick = {
+        val m = counts.mapValues { it.value.toIntOrNull() ?: 0 }.filterValues { it > 0 }
+        if (m.isNotEmpty()) { onSave(m, note); saved = true; counts = all.associateWith { "" }; note = "" }
+    }, Modifier.fillMaxWidth()) { Text("조과 저장") }
+    if (saved) Text("✅ 저장했어요. 점수에 바로 반영됐어요.", color = Good, style = MaterialTheme.typography.bodySmall)
+}
+
+@Composable
+private fun RecordRow(rec: CatchRecord, onDelete: (() -> Unit)?) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text("${rec.date} · %02d~%02d시 · ${rec.source}".format(rec.startHour, rec.endHour),
+                style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+            Text(rec.catches.entries.joinToString { "${it.key} ${it.value}마리" }, fontWeight = FontWeight.SemiBold)
+            val cond = listOfNotNull(
+                rec.windSpeed?.let { "바람 %.1fm/s".format(it) },
+                rec.wave?.let { "파고 %.1fm".format(it) },
+                rec.waterTemp?.let { "수온 %.1f°C".format(it) },
+            )
+            if (cond.isNotEmpty()) Text(cond.joinToString(" · "), style = MaterialTheme.typography.bodySmall)
+            if (rec.note.isNotBlank()) Text(rec.note, style = MaterialTheme.typography.bodySmall)
+            if (onDelete != null) Text("삭제", color = Bad, style = MaterialTheme.typography.labelMedium,
+                modifier = Modifier.clickable(onClick = onDelete).padding(top = 4.dp))
         }
     }
 }
@@ -308,12 +362,12 @@ fun SettingsScreen(settings: Settings, onDone: () -> Unit) {
                 Text("✅ 앱에 기본 키가 들어 있어요. 비워두면 기본 키를 써요.", style = MaterialTheme.typography.bodySmall, color = Good)
             OutlinedTextField(kma, { kma = it }, Modifier.fillMaxWidth(), singleLine = true, label = { Text("인증키") })
 
-            Text("조석예보 (바다누리 인증키)", fontWeight = FontWeight.Bold)
-            Text("국립해양조사원 바다누리 해양정보 서비스에서 발급. 없으면 달 위치로 추정해요.", style = MaterialTheme.typography.bodySmall)
+            Text("바다누리 인증키 (보통 필요 없음)", fontWeight = FontWeight.Bold)
+            Text("만조·간조는 공공데이터포털 키로 국립해양조사원 조석예보(부산)를 먼저 받아요. 구 바다누리 키가 있을 때만 넣으세요.", style = MaterialTheme.typography.bodySmall)
             OutlinedTextField(khoa, { khoa = it }, Modifier.fillMaxWidth(), singleLine = true, label = { Text("인증키") })
 
             Text("수온 관측 해수욕장 번호", fontWeight = FontWeight.Bold)
-            Text("기상청 해수욕장 날씨 서비스(같은 인증키)에서 실측 수온을 받아요. 비워두면 두도와 가장 가까운 해수욕장을 자동으로 찾아요.", style = MaterialTheme.typography.bodySmall)
+            Text("기상청 해수욕장 날씨 서비스(같은 인증키)에서 실측 수온과 만조·간조를 받아요. 비워두면 두도에서 가장 가까운 송도해수욕장(268번)부터 차례로 써요.", style = MaterialTheme.typography.bodySmall)
             OutlinedTextField(
                 beach, { beach = it }, Modifier.fillMaxWidth(), singleLine = true,
                 label = { Text("해수욕장 번호 (자동)") },
@@ -332,11 +386,7 @@ fun SettingsScreen(settings: Settings, onDone: () -> Unit) {
                 settings.dataGoKrKey = kma
                 settings.khoaKey = khoa
                 settings.manualWaterTemp = temp.toDoubleOrNull()
-                val newBeach = beach.toIntOrNull()
-                if (newBeach != settings.beachNum) {
-                    settings.beachNum = newBeach
-                    settings.beachProbeDay = ""   // 비우면 다시 자동 찾기
-                }
+                settings.beachNum = beach.toIntOrNull()
                 onDone()
             }, Modifier.fillMaxWidth()) { Text("저장") }
         }

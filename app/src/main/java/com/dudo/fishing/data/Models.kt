@@ -16,6 +16,8 @@ data class FishingPoint(
     val depthMin: Double,
     val depthMax: Double,
     val bottom: String,
+    /** 지형: 곶부리(돌출부) / 홈통(만입부) / 여밭(얕은 수중여) / 직벽 / 평면 */
+    val terrain: String,
     val species: List<String>,
     val note: String,
     val coordVerified: Boolean,
@@ -31,6 +33,31 @@ data class HourWeather(
     val precipType: Int,     // 0 없음, 1 비, 2 비/눈, 3 눈, 4 소나기
     val temp: Double?,
 )
+
+/**
+ * 조과 기록 한 건 (공개 조행기 또는 사용자가 앱에서 직접 남긴 기록).
+ * 그날의 조건(바람·파고·수온)은 기록 당시 값이거나, 과거 기상자료로 채운 값이다.
+ */
+data class CatchRecord(
+    val id: String,
+    val date: LocalDate,
+    val startHour: Int,
+    val endHour: Int,
+    val pointId: String?,
+    /** 포인트 번호를 모르고 방향만 알 때 (서편=270 등) */
+    val sideFacingDeg: Int?,
+    val catches: Map<String, Int>,
+    val note: String,
+    val source: String,
+    val url: String?,
+    val byUser: Boolean,
+    val windSpeed: Double? = null,
+    val windDir: Int? = null,
+    val wave: Double? = null,
+    val waterTemp: Double? = null,
+) {
+    val hasConditions get() = windSpeed != null || wave != null || waterTemp != null
+}
 
 data class TideEvent(
     val time: LocalDateTime,
