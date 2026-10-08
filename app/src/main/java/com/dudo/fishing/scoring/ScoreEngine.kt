@@ -22,6 +22,9 @@ data class SlotScore(
     val windDir: Int,
     val wave: Double?,
     val tidePhase: String,
+    /** 이 시간에 옮겨 서는 자리(있으면). 위치·방향이 바뀐 포인트 */
+    val spot: FishingPoint? = null,
+    val spotLabel: String? = null,
 )
 
 data class PointResult(
@@ -69,7 +72,31 @@ object ScoreEngine {
     /** 가감 합계 → 0~100 (로지스틱). 합계 +44 ≈ 50점, +62 ≈ 80점, +26 ≈ 20점 */
     fun toScore(sum: Int): Int = (100.0 / (1.0 + kotlin.math.exp(-(sum - 44) / 13.0))).roundToInt().coerceIn(1, 99)
 
+    /** 물때별 자리 이동: altSpots 중 그 시간 물때에 맞는 자리도 계산해 더 나은 쪽을 쓴다 */
     private fun scoreSlot(p: FishingPoint, s: Species, c: DayConditions, slot: TimeSlot, ctx: ScoreContext): SlotScore {
+        val base = scoreSlotAt(p, s, c, slot, ctx)
+        if (p.altSpots.isEmpty()) return base
+        val ts = Factors.tideState(c.date.atTime(slot.startHour, 30), c.tides) ?: return base
+        if (ts.nearSlack) return base
+        var best = base
+        for (a in p.altSpots) {
+            if (a.isFlood != ts.incoming) continue
+            val v = p.copy(
+                lat = a.lat, lng = a.lng, facingDeg = a.facingDeg,
+                terrain = a.terrain ?: p.terrain, targetDistance = a.targetDistance ?: p.targetDistance,
+                target = a.target ?: p.target, altSpots = emptyList(),
+            )
+            val r = scoreSlotAt(v, s, c, slot, ctx)
+            val moved = r.copy(
+                reasons = listOf(Reason("${if (ts.incoming) "들물" else "날물"} – ${a.label}(으)로 옮겨 서기", 0)) + r.reasons,
+                spot = v, spotLabel = a.label,
+            )
+            if (moved.score > best.score) best = moved
+        }
+        return best
+    }
+
+    private fun scoreSlotAt(p: FishingPoint, s: Species, c: DayConditions, slot: TimeSlot, ctx: ScoreContext): SlotScore {
         val r = mutableListOf<Reason>()
         val prof = PointModel.profile(p)
         val at = c.date.atTime(slot.startHour, 30)
