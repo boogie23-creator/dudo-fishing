@@ -22,6 +22,8 @@ object MarineApi {
         val seaLevel: List<Pair<LocalDateTime, Double>>,
     )
 
+    private const val TIDE_LAG_MIN = 24L
+
     // 두도 남쪽 바다 격자
     private const val LAT = 35.035
     private const val LNG = 129.03
@@ -66,29 +68,42 @@ object MarineApi {
             if (!hi && !lo) continue
             val den = a - 2 * b + c
             val off = if (den != 0.0) 0.5 * (a - c) / den else 0.0
-            out += TideEvent(lv[i].first.plusMinutes((off * 60).toLong()), hi, (b * 100).toInt())
+            // 해수면 예보 격자는 부산 조위관측소보다 약 24분 빠르게 나와서 보정 (바다타임·국립해양조사원과 대조)
+            out += TideEvent(lv[i].first.plusMinutes((off * 60).toLong() + TIDE_LAG_MIN), hi, (b * 100).toInt())
         }
         return out
     }
 
-    /** 들물·날물 중간(진행 20~80%) 시간의 해류를 벡터 평균 → 그 기간 실제 들물/날물 흐름 방향 */
-    data class Flow(val floodDeg: Int, val ebbDeg: Int, val vRef: Double)
+    /**
+     * 해류 예보 = 조류(들물·날물로 방향이 바뀜) + 해류(대마난류, 늘 북동쪽).
+     * 들물/날물 '포인트 성격'에 쓸 조석 성분 방향은 전체 평균(해류)을 빼서 구한다.
+     * 들물·날물이 대략 반대가 아니면 믿지 않고 감천항 실측 기본값을 쓴다.
+     */
+    data class Flow(val floodDeg: Int, val ebbDeg: Int, val vRef: Double, val fromForecast: Boolean, val residDeg: Int, val residKmh: Double)
 
     fun flowDirections(currents: Map<LocalDateTime, Current>, tides: List<TideEvent>): Flow? {
         if (currents.isEmpty() || tides.size < 5) return null
+        val all = DoubleArray(3)
         val acc = mapOf(true to DoubleArray(3), false to DoubleArray(3))
         for ((t, c) in currents) {
+            val r = Math.toRadians(c.dirDeg.toDouble())
+            val vx = c.speedKmh * sin(r); val vy = c.speedKmh * cos(r)
+            all[0] += vx; all[1] += vy; all[2] += 1.0
             val ts = com.dudo.fishing.scoring.Factors.tideState(t, tides) ?: continue
             if (ts.progress < 0.2 || ts.progress > 0.8) continue
             val a = acc.getValue(ts.incoming)
-            val r = Math.toRadians(c.dirDeg.toDouble())
-            a[0] += c.speedKmh * sin(r); a[1] += c.speedKmh * cos(r); a[2] += 1.0
+            a[0] += vx; a[1] += vy; a[2] += 1.0
         }
-        fun dir(a: DoubleArray) = if (a[2] == 0.0 || hypot(a[0], a[1]) == 0.0) null
-            else ((Math.toDegrees(atan2(a[0], a[1])) + 360) % 360).toInt()
-        val f = dir(acc.getValue(true)) ?: return null
-        val e = dir(acc.getValue(false)) ?: return null
+        val fa = acc.getValue(true); val ea = acc.getValue(false)
+        if (all[2] == 0.0 || fa[2] == 0.0 || ea[2] == 0.0) return null
+        val rx = all[0] / all[2]; val ry = all[1] / all[2]
+        fun dir(x: Double, y: Double) = ((Math.toDegrees(atan2(x, y)) + 360) % 360).toInt()
+        val fx = fa[0] / fa[2] - rx; val fy = fa[1] / fa[2] - ry
+        val ex = ea[0] / ea[2] - rx; val ey = ea[1] / ea[2] - ry
+        var f = dir(fx, fy); var e = dir(ex, ey)
+        val ok = com.dudo.fishing.scoring.Factors.angleDiff(f, e) >= 120 && hypot(fx, fy) >= 0.15 && hypot(ex, ey) >= 0.15
+        if (!ok) { f = com.dudo.fishing.scoring.Factors.DEFAULT_FLOOD_DEG; e = com.dudo.fishing.scoring.Factors.DEFAULT_EBB_DEG }
         val vs = currents.values.map { it.speedKmh }.sorted()
-        return Flow(f, e, maxOf(0.2, vs[(vs.size * 0.8).toInt().coerceAtMost(vs.size - 1)]))
+        return Flow(f, e, maxOf(0.2, vs[(vs.size * 0.8).toInt().coerceAtMost(vs.size - 1)]), ok, dir(rx, ry), hypot(rx, ry))
     }
 }

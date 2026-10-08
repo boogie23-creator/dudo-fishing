@@ -94,7 +94,10 @@ class ConditionsRepository(
         val flow = marine?.let { MarineApi.flowDirections(it.currents, levelTides.ifEmpty { tides }) }
         Factors.FLOOD_FLOW_DEG = flow?.floodDeg ?: Factors.DEFAULT_FLOOD_DEG
         Factors.EBB_FLOW_DEG = flow?.ebbDeg ?: Factors.DEFAULT_EBB_DEG
-        flow?.let { msgs += "조류 방향(해류 예보): 들물 ${it.floodDeg}° · 날물 ${it.ebbDeg}°" }
+        flow?.let {
+            msgs += if (it.fromForecast) "조류 방향(조석 성분): 들물 ${it.floodDeg}° · 날물 ${it.ebbDeg}° – 해류가 ${it.residDeg}° 쪽으로 %.1fkn 더해짐".format(it.residKmh / 1.852)
+            else "해류 예보로 들물·날물 방향을 가르지 못해 기본값(들물 250°, 날물 60°)을 썼어요"
+        }
         val currents = marine?.currents.orEmpty().filterKeys { it.toLocalDate() == date }.mapKeys { it.key.hour }
         val waveDir = marine?.waveDir.orEmpty().filterKeys { it.toLocalDate() == date }.mapKeys { it.key.hour }
 
