@@ -358,8 +358,9 @@ private fun HourStrip(r: PointResult, light: Boolean) {
     Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.Bottom) {
         r.slots.forEach { s ->
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(Modifier.width(16.dp).height((4 + s.score * 0.22).dp).clip(RoundedCornerShape(3.dp))
-                    .background(if (s.danger != null) Bad else scoreColor(s.score)))
+                val after = s.slot.startHour >= com.dudo.fishing.scoring.TimeSlot.FISHING_END
+                Box(Modifier.width(11.dp).height((4 + s.score * 0.22).dp).clip(RoundedCornerShape(3.dp))
+                    .background((if (s.danger != null) Bad else scoreColor(s.score)).copy(alpha = if (after) 0.4f else 1f)))
                 Text("${s.slot.startHour}", fontSize = 8.sp,
                     color = if (light) Foam.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -480,7 +481,8 @@ fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit, onOpen:
             if (!r.point.coordVerified) Notice("위성사진 해안선 기준 위치예요. 실제 자리와 다르면 지도 위 '위치 수정'을 누르고 탭하면 저장돼요.")
 
             // ── 시간대별 ──
-            SectionCard("시간별 확률 (05~13시) – 누르면 근거") {
+            SectionCard("시간별 확률 (05~18시) – 누르면 근거") {
+                Text("순위는 05~13시 평균이에요. 13시 이후는 참고용.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 r.slots.forEach { s -> SlotBar(s, s.slot == selected) { selected = s.slot } }
             }
 

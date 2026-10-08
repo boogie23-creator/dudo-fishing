@@ -27,19 +27,23 @@ data class SlotScore(
 data class PointResult(
     val point: FishingPoint,
     val species: Species,
-    /** 낚시 시간 05~13시의 시간별 점수 */
+    /** 05~18시 시간별 점수 (13시 이후는 참고) */
     val slots: List<SlotScore>,
 ) {
-    val best: SlotScore get() = slots.maxBy { it.score }
+    /** 순위에 쓰는 05~13시 */
+    val rankSlots: List<SlotScore> get() = slots.filter { it.slot.startHour < TimeSlot.FISHING_END }
+
+    val best: SlotScore get() = rankSlots.maxBy { it.score }
 
     /** 05~13시 평균 확률 – 순위 기준 */
-    val dayScore: Int get() = slots.map { it.score }.average().roundToInt()
+    val dayScore: Int get() = rankSlots.map { it.score }.average().roundToInt()
 
-    /** 가장 좋은 연속 2시간 */
+    /** 05~13시 중 가장 좋은 연속 2시간 */
     val bestWindow: Pair<Int, Int> get() {
-        if (slots.size < 2) return best.slot.startHour to best.slot.endHour
-        val i = (0 until slots.size - 1).maxBy { slots[it].score + slots[it + 1].score }
-        return slots[i].slot.startHour to slots[i + 1].slot.endHour
+        val r = rankSlots
+        if (r.size < 2) return best.slot.startHour to best.slot.endHour
+        val i = (0 until r.size - 1).maxBy { r[it].score + r[it + 1].score }
+        return r[i].slot.startHour to r[i + 1].slot.endHour
     }
 
     val profile: PointProfile get() = PointModel.profile(point)
@@ -54,7 +58,7 @@ data class PointResult(
 object ScoreEngine {
 
     fun evaluate(point: FishingPoint, species: Species, c: DayConditions, ctx: ScoreContext = ScoreContext()): PointResult =
-        PointResult(point, species, TimeSlot.FISHING.map { scoreSlot(point, species, c, it, ctx) })
+        PointResult(point, species, TimeSlot.DISPLAY.map { scoreSlot(point, species, c, it, ctx) })
 
     /** 해당 포인트 대표 어종 중 하루 평균이 가장 높은 결과 */
     fun bestForPoint(point: FishingPoint, c: DayConditions, ctx: ScoreContext = ScoreContext()): PointResult {

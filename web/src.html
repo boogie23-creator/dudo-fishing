@@ -80,7 +80,9 @@ h1{font-family:var(--f-display);font-weight:400;font-size:clamp(28px,5vw,40px);l
 .pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .pill{font-size:12px;background:var(--surface2);border-radius:9px;padding:4px 9px}
 .pill b{font-weight:700}
-.hours{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;margin-top:14px}
+.hourscroll{overflow-x:auto;margin-top:14px;padding-bottom:4px}
+.hours{display:grid;grid-template-columns:repeat(13,minmax(54px,1fr));gap:6px;min-width:760px}
+.hcol.after{opacity:.6;border-style:dashed}
 .hcol{border:1px solid var(--line);border-radius:12px;padding:6px 4px 8px;text-align:center;cursor:pointer;background:var(--surface);color:inherit;font:inherit}
 .hcol[aria-pressed="true"]{border-color:var(--tide);background:var(--surface2)}
 .hcol .h{font:600 12px var(--f-num)}
@@ -96,7 +98,7 @@ h1{font-family:var(--f-display);font-weight:400;font-size:clamp(28px,5vw,40px);l
 .foot{font-size:12px;color:var(--muted);margin-top:22px;max-width:70ch}
 .danger{color:var(--bad);font-weight:700;font-size:13px}
 @media (prefers-reduced-motion:no-preference){.hcol .tank i,.bars i{transition:height .35s ease}}
-@media (max-width:520px){.hours{grid-template-columns:repeat(4,minmax(0,1fr))}.prow{grid-template-columns:22px 44px minmax(0,1fr)}.prow .bars{grid-column:3}.gauge{width:44px;height:44px}}
+@media (max-width:520px){.prow{grid-template-columns:22px 44px minmax(0,1fr)}.prow .bars{grid-column:3}.gauge{width:44px;height:44px}}
 </style>
 
 <header class="top">
@@ -145,14 +147,14 @@ h1{font-family:var(--f-display);font-weight:400;font-size:clamp(28px,5vw,40px);l
     </section>
     <section class="panel">
       <h2>추천 순위</h2>
-      <p class="hint">막대 8개 = 05·06·…·12시 확률</p>
+      <p class="hint">막대 = 05~18시 시간별 확률 (진한 막대 05~13시가 순위 기준, 흐린 막대는 참고)</p>
       <div class="list" id="list"></div>
     </section>
   </div>
 
   <section class="panel detail" id="detail"></section>
 
-  <p class="foot" id="foot">점수는 물때·조류 방향·바람·체감 파고·수온·포인트 수심과 지형·과거 조과(인낚 조행기, 송도 은파낚시 밴드 조황)로 계산한 참고값입니다. 갯바위 출조 전 기상특보와 현장 상황을 꼭 확인하세요.</p>
+  <p class="foot" id="foot">섬 모양: OpenStreetMap 해안선 (© OpenStreetMap contributors). 점수는 물때·조류 방향·바람·체감 파고·수온·포인트 수심과 지형·과거 조과(인낚 조행기, 송도 은파낚시 밴드 조황)로 계산한 참고값입니다. 갯바위 출조 전 기상특보와 현장 상황을 꼭 확인하세요.</p>
 </main>
 
 <script>
@@ -419,12 +421,14 @@ function scoreHour(p,sp,cond,h){
   let score=toScore(R.reduce((s,x)=>s+x[1],0)); if(danger)score=Math.min(score,15);
   return {h,score,reasons:R,danger,phase,wind,wdir,wave};
 }
-const HOURS=[5,6,7,8,9,10,11,12];
+const HOURS=[5,6,7,8,9,10,11,12,13,14,15,16,17];   // 보여주는 시간 05~18시
+const RANK_END=13;                                     // 순위는 05~13시 평균
 function evaluate(p,sp,cond){
   const hours=HOURS.map(h=>scoreHour(p,sp,cond,h));
-  const day=r0(hours.reduce((s,x)=>s+x.score,0)/hours.length);
-  let bi=0;for(let i=0;i<hours.length-1;i++)if(hours[i].score+hours[i+1].score>hours[bi].score+hours[bi+1].score)bi=i;
-  return {p,sp,hours,day,win:[hours[bi].h,hours[bi+1].h+1]};
+  const rk=hours.filter(x=>x.h<RANK_END);
+  const day=r0(rk.reduce((s,x)=>s+x.score,0)/rk.length);
+  let bi=0;for(let i=0;i<rk.length-1;i++)if(rk[i].score+rk[i+1].score>rk[bi].score+rk[bi+1].score)bi=i;
+  return {p,sp,hours,day,win:[rk[bi].h,rk[bi+1].h+1]};
 }
 function bestFor(p,cond,sp){
   if(sp)return evaluate(p,sp,cond);
@@ -510,7 +514,7 @@ function renderHeader(cond){
   let d="",fill="";
   for(let m=0;m<=1440;m+=10){const x=480*m/1440,y=35-lvl(start+m*6e4)*26;d+=(m?"L":"M")+x.toFixed(1)+" "+y.toFixed(1);}
   fill=d+" L480 70 L0 70 Z";
-  const win=`<rect x="${480*5/24}" y="0" width="${480*8/24}" height="70" fill="rgba(255,255,255,.07)"/>`;
+  const win=`<rect x="${480*5/24}" y="0" width="${480*8/24}" height="70" fill="rgba(255,255,255,.09)"/><rect x="${480*13/24}" y="0" width="${480*5/24}" height="70" fill="rgba(255,255,255,.04)"/>`;
   const dots=day.map(e=>{const x=480*(e.t-start)/864e5;return `<circle cx="${x}" cy="${e.high?9:61}" r="3.5" fill="${e.high?"#5fc6c9":"#f2fbfc"}"/>`}).join("");
   let now="";
   if(state.day===0){const m=(Date.now()-start)/6e4;if(m>=0&&m<=1440){const x=480*m/1440,y=35-lvl(Date.now())*26;now=`<circle cx="${x}" cy="${y}" r="5.5" fill="#fff"/><circle cx="${x}" cy="${y}" r="3.5" fill="#ff6f45"/>`}}
@@ -541,6 +545,7 @@ function project(lat,lng){
 }
 function renderMap(results){
   const isl=SHAPE.islands.map(poly=>`<path d="${poly.map(([la,ln],i)=>{const [x,y]=project(la,ln);return(i?"L":"M")+x.toFixed(1)+" "+y.toFixed(1)}).join("")}Z" fill="var(--rockfill)" stroke="var(--rock)" stroke-width="1.5"/>`).join("");
+  const coast=(SHAPE.coast||[]).map(line=>`<path d="${line.map(([la,ln],i)=>{const [x,y]=project(la,ln);return(i?"L":"M")+x.toFixed(1)+" "+y.toFixed(1)}).join("")}" fill="none" stroke="var(--rock)" stroke-width="2"/>`).join("");
   const [bx1,by1]=project(...SHAPE.breakwater[0]),[bx2,by2]=project(...SHAPE.breakwater[1]);
   const [ux,uy]=project(...SHAPE.buoy);
   const sel=results.find(r=>r.p.id===state.sel);
@@ -554,7 +559,7 @@ function renderMap(results){
       <circle cx="${x}" cy="${y}" r="${rad}" fill="${scoreColor(r.day)}" stroke="#fff" stroke-width="${s?2.5:1.5}"/>
       <text x="${x}" y="${y+3.3}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="${lab.length>3?7:s?10:8.5}" font-weight="600" fill="#fff">${lab}</text></g>`}).join("");
   const n=[MAP.w-24,24];
-  $("map").innerHTML=`<line x1="${bx1}" y1="${by1}" x2="${bx2}" y2="${by2}" stroke="var(--rock)" stroke-width="7" stroke-linecap="round" opacity=".7"/>${isl}
+  $("map").innerHTML=`${coast}<line x1="${bx1}" y1="${by1}" x2="${bx2}" y2="${by2}" stroke="var(--rock)" stroke-width="7" stroke-linecap="round" opacity=".7"/>${isl}
    <circle cx="${ux}" cy="${uy}" r="4" fill="var(--bad)"/><text x="${ux+7}" y="${uy+4}" font-size="10" fill="var(--muted)">부표</text>
    <text x="${n[0]}" y="${n[1]}" text-anchor="middle" font-size="12" font-weight="700" fill="var(--muted)">N ↑</text>
    <text x="${bx2+8}" y="${by2+12}" font-size="10" fill="var(--muted)">방파제 → 송도</text>
@@ -570,14 +575,14 @@ function renderList(results){
       <span class="rank">${i+1}</span>${gaugeSvg(r.day)}
       <span style="min-width:0"><span class="pname">${r.p.name}<span class="tag ${tagCls(prof.type)}">${prof.type}</span></span>
       <span class="pmeta" style="display:block">${r.sp} · 최고 ${String(r.win[0]).padStart(2,"0")}~${String(r.win[1]).padStart(2,"0")}시 · ${r.p.terrain} · 수심 ${r.p.depth}</span></span>
-      <span class="bars" aria-hidden="true">${r.hours.map(x=>`<i style="height:${4+x.score*.22}px;background:${x.danger?"var(--bad)":scoreColor(x.score)}"></i>`).join("")}</span>
+      <span class="bars" aria-hidden="true">${r.hours.map(x=>`<i style="height:${4+x.score*.22}px;background:${x.danger?"var(--bad)":scoreColor(x.score)}${x.h>=RANK_END?";opacity:.4":""}"></i>`).join("")}</span>
     </button>`}).join("");
   $("list").querySelectorAll(".prow").forEach(b=>b.onclick=()=>select(b.dataset.id));
 }
 
 function renderDetail(results){
   const r=results.find(x=>x.p.id===state.sel)||results[0]; if(!r){$("detail").innerHTML="";return}
-  const prof=profile(r.p), bestH=r.hours.reduce((a,b)=>b.score>a.score?b:a);
+  const prof=profile(r.p), bestH=r.hours.filter(x=>x.h<RANK_END).reduce((a,b)=>b.score>a.score?b:a);
   const hs=r.hours.find(x=>x.h===state.selHour)||bestH;
   const sum=hs.reasons.reduce((s,x)=>s+x[1],0);
   $("detail").innerHTML=`<div class="dhead">${gaugeSvg(r.day,86,8,true)}
@@ -591,9 +596,10 @@ function renderDetail(results){
       <span class="pill">공략 <b>${compass(r.p.facingDeg)}쪽 ${r.p.targetDistance}m</b></span>
       <span class="pill">수심 <b>${r.p.depth}</b></span><span class="pill">지형 <b>${r.p.terrain}</b></span>
     </div>
-    <div class="hours" role="group" aria-label="시간별 확률">${r.hours.map(x=>`<button class="hcol" type="button" data-h="${x.h}" aria-pressed="${x.h===hs.h}">
+    <div class="hourscroll"><div class="hours" role="group" aria-label="시간별 확률">${r.hours.map(x=>`<button class="hcol${x.h>=RANK_END?" after":""}" type="button" data-h="${x.h}" aria-pressed="${x.h===hs.h}">
       <div class="h">${String(x.h).padStart(2,"0")}시</div><div class="tank"><i style="height:${x.score}%;background:${x.danger?"var(--bad)":scoreColor(x.score)}"></i></div>
-      <div class="s">${x.score}</div><div class="ph">${x.phase}</div></button>`).join("")}</div>
+      <div class="s">${x.score}</div><div class="ph">${x.phase}</div></button>`).join("")}</div></div>
+    <div class="sum">점선 칸(13시 이후)은 참고용이고 순위에는 들어가지 않아요.</div>
     <h2 style="margin-top:16px">${String(hs.h).padStart(2,"0")}~${String(hs.h+1).padStart(2,"0")}시 ${hs.score}점 근거</h2>
     ${hs.danger?`<div class="danger">⚠ ${hs.danger}</div>`:""}
     <div class="reasons">${[...hs.reasons].sort((a,b)=>b[1]-a[1]).map(([t,d])=>{const c=d>0?"var(--good)":d<0?"var(--bad)":"var(--muted)";return `<div class="reason"><span class="d" style="background:${c}"></span><span>${t}</span><span class="n" style="color:${c}">${d>0?"+":""}${d}</span></div>`}).join("")}</div>

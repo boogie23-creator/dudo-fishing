@@ -57,5 +57,8 @@ data class TimeSlot(val label: String, val startHour: Int, val endHour: Int) {
         const val FISHING_START = 5
         const val FISHING_END = 13
         val FISHING: List<TimeSlot> = (FISHING_START until FISHING_END).map { TimeSlot("%02d시".format(it), it, it + 1) }
+        /** 화면에 보여주는 시간 05~18시 (13시 이후는 참고용, 순위에는 안 들어감) */
+        const val DISPLAY_END = 18
+        val DISPLAY: List<TimeSlot> = (FISHING_START until DISPLAY_END).map { TimeSlot("%02d시".format(it), it, it + 1) }
     }
 }
