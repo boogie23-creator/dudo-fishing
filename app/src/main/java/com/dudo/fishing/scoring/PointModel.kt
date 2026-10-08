@@ -104,6 +104,8 @@ object PointModel {
         Species.BENGAE -> if (temp >= 18) 3.0..10.0 else 6.0..12.0
         Species.BOLLAK -> 2.0..8.0
         Species.MUNUI -> 3.0..10.0
+        Species.CHAMDOM -> 8.0..20.0   // 본류대 깊은 곳
+        Species.NONGEO -> 2.0..8.0     // 포말 지는 얕은 여·곶부리
     }
 
     /** 포인트 수심 범위와 선호 수심의 겹침 비율 0~1 */

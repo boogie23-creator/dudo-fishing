@@ -113,6 +113,7 @@ object Factors {
             Species.BENGAE -> if (p.depthMax >= 8) add(Reason("벵에돔 – 수심 있고 조류 받는 자리 (%s)".format(p.depth), 4))
             Species.BOLLAK -> if (p.terrain == "여밭" || p.terrain == "홈통") add(Reason("볼락 – 여밭·홈통 은신처", 3))
             Species.MUNUI -> if (p.terrain == "곶부리" || p.terrain == "직벽") add(Reason("무늬오징어 – 돌출부·직벽 에깅 유리", 3))
+            Species.CHAMDOM, Species.NONGEO -> Unit
         }
         Unit
     }

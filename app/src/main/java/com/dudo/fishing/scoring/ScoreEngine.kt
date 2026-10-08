@@ -109,7 +109,8 @@ object ScoreEngine {
         r += Reason("수심 ${p.depth} – 지금 수온의 ${s.label} 선호 수심 %.0f~%.0fm".format(pref.start, pref.endInclusive) +
                 if (fit >= 0.6) " (맞음)" else if (fit > 0.2) " (일부)" else " (벗어남)", (fit * 14 - 5).roundToInt())
         terrainFit(p, s, t)?.let { r += it }
-        if (s.label !in p.species) r += Reason("이 자리 대표 어종 아님", -8)
+        if (s.habitat) habitatFit(p, s, prof)?.let { r += it }
+        else if (s.label !in p.species) r += Reason("이 자리 대표 어종 아님", -8)
         if (p.localBias != 0) r += Reason(p.localNote.ifBlank { "현지 경험 보정" }, p.localBias)
 
         // ── 물때·조류 (이 시각) ────────────────
@@ -123,6 +124,7 @@ object ScoreEngine {
                 r += when (s) {
                     Species.GAMSEONG -> Reason("$which 물돌이 – 두도 대물 감성돔 입질 시간 (밴드 조황)", 9)
                     Species.BENGAE -> Reason("$which 정조 – 벵에돔은 조류가 있어야", -4)
+                    Species.CHAMDOM -> Reason("$which 정조 – 참돔은 조류가 멈추면 입질 끊김", -4)
                     else -> Reason("$which 물돌이", 2)
                 }
             } else {
@@ -144,12 +146,15 @@ object ScoreEngine {
                 // 감성돔은 중들물~끝들물, 벵에돔은 조류가 살아 있는 중간 시간
                 if (s == Species.GAMSEONG && ts.incoming && ts.progress >= 0.4) r += Reason("중들물~끝들물", 5)
                 if (s == Species.BENGAE && ts.progress in 0.25..0.75) r += Reason("조류 활발한 중간 물때", 4)
+                if (s == Species.CHAMDOM && strength > 0.55 && suit >= 0.75) r += Reason("센 본류가 앞으로 뻗음 – 참돔 회유", 5)
+                if (s == Species.NONGEO && ts.progress in 0.2..0.7) r += Reason("물이 살아 움직이는 시간 – 농어 사냥", 3)
                 if (strength > 0.65 && p.terrain == "곶부리" && suit < 0.85) r += Reason("센 조류 – 곶부리 정면은 물살이 너무 빠름", -4)
                 if (strength > 0.65 && p.terrain == "홈통") r += Reason("센 조류 – 홈통 반탄류에 고기가 모임", 4)
                 if (strength < 0.3 && p.terrain == "곶부리") r += Reason("약한 조류 – 물이 가는 곶부리 유리", 4)
             }
         }
         val f = c.tideRangeFactor
+        if (s == Species.CHAMDOM && f > 0.75) r += Reason("사리 – 참돔은 센 물때 선호", 3)
         val ml = c.tideRangeCm?.let { "${c.mulName}(실제 조차 ${it}cm)" } ?: c.mulName
         r += when {
             f < 0.2 -> Reason("$ml – 조류 거의 없음", -6)
@@ -175,6 +180,17 @@ object ScoreEngine {
             }
             Species.BOLLAK -> if (sinceRise < 30) Reason("새벽 – 볼락 활성", 8) else Reason("낮 – 볼락 활성 낮음", -10)
             Species.MUNUI -> if (sinceRise in -60..90) Reason("아침 피딩", 8) else Reason("주간", -2)
+            Species.CHAMDOM -> when {
+                sinceRise in -60..60 -> Reason("해 뜰 무렵 – 참돔 피딩", 8)
+                sinceRise in 61..180 -> Reason("아침", 3)
+                slot.startHour >= 11 -> Reason("한낮", -2)
+                else -> Reason("주간", 0)
+            }
+            Species.NONGEO -> when {
+                sinceRise <= 60 -> Reason("새벽·해 뜰 무렵 – 농어 활성 최고", 9)
+                sinceRise <= 150 -> Reason("아침", 3)
+                else -> Reason("낮 – 농어 경계심↑", -5)
+            }
         }
 
         // ── 바람 (이 자리 기준) ─────────────────
@@ -202,6 +218,9 @@ object ScoreEngine {
                 wave > s.waveLimit -> r += Reason("$tag – 높음", -12)
                 s == Species.GAMSEONG && wave in 0.4..1.2 -> r += Reason("$tag – 적당한 포말, 경계심 낮춤", 7)
                 s == Species.BENGAE && wave in 0.3..1.0 -> r += Reason("$tag – 적당한 물결", 4)
+                s == Species.NONGEO && wave >= 0.8 -> r += Reason("$tag – 파도·포말, 농어 최적", 8)
+                s == Species.NONGEO && wave < 0.5 -> r += Reason("$tag – 잔잔하면 농어 경계", -6)
+                s == Species.CHAMDOM && wave in 0.5..1.5 -> r += Reason("$tag – 적당한 물결", 3)
                 wave < 0.3 && s.likesSomeWave -> r += Reason("$tag – 너무 잔잔함", -4)
                 else -> r += Reason(tag, 0)
             }
@@ -235,6 +254,22 @@ object ScoreEngine {
         }
         Species.BOLLAK -> if (p.terrain == "여밭" || p.terrain == "홈통") Reason("여밭·홈통 – 볼락 은신처", 4) else null
         Species.MUNUI -> if (p.terrain == "곶부리" || p.terrain == "직벽") Reason("돌출부·직벽 – 에깅 유리", 4) else null
+        Species.CHAMDOM, Species.NONGEO -> null
+    }
+
+    /** 부수 어종 자리 판정 (대표 어종 목록 대신) */
+    private fun habitatFit(p: FishingPoint, s: Species, prof: PointProfile): Reason? = when (s) {
+        Species.CHAMDOM -> when {
+            prof.exposure >= 0.9 && p.depthMax >= 10 -> Reason("외해 본류대·깊은 수심 – 참돔 회유 길목", 6)
+            prof.exposure >= 0.65 && p.depthMax >= 8 -> Reason("반쯤 열린 깊은 자리 – 참돔 가능", 1)
+            else -> Reason("막혔거나 얕은 자리 – 참돔 회유 적음", -6)
+        }
+        Species.NONGEO -> when {
+            (p.terrain == "곶부리" || p.terrain == "여밭") && prof.exposure >= 0.65 -> Reason("포말 지는 곶부리·여밭 – 농어 사냥터", 6)
+            prof.exposure >= 0.65 -> Reason("열린 갯바위 – 농어 가능", 1)
+            else -> Reason("막힌 홈통·안쪽 – 농어 적음", -5)
+        }
+        else -> null
     }
 
     private fun angleDiff(a: Int, b: Int): Int {

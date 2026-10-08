@@ -118,6 +118,8 @@ object Tactics {
             }
             Species.BOLLAK -> parts += "가벼운 찌(G2~B) 볼락 채비, 수심 2~4m 여 가장자리와 홈통 그늘. 밤에는 집어등 쪽보다 그 경계를 노리세요."
             Species.MUNUI -> parts += "에기 2.5~3.5호. 조류가 걸리는 곶부리·직벽 앞에서 바닥까지 가라앉힌 뒤 2~3번 저킹하고 폴링 때 입질을 받으세요."
+            Species.CHAMDOM -> parts += "1~2호 반유동, 원줄 3호·목줄 2.5~3호. 본류대 가장자리로 길게 흘려 바닥에서 1~2m 띄우세요. 조류가 멈추면 쉬었다가 다시 흐를 때 집중."
+            Species.NONGEO -> parts += "포말 속을 노리는 찌낚시(1~2호 막대·구멍찌, 목줄 2.5호 이상) 또는 미노우·바이브 루어. 파도가 갯바위에 부서지는 흰 포말 가장자리로 던지세요."
         }
         if (wind >= 6) parts += "바람이 세요(%.0fm/s) – 원줄이 날리지 않게 한 단계 무거운 찌를 쓰고, 초릿대를 물에 담가 원줄을 가라앉히세요.".format(wind)
         return parts.joinToString(" ")
@@ -133,6 +135,8 @@ object Tactics {
         Species.BENGAE -> "크릴(부서지지 않게 작은 것). 밑밥은 크릴+벵에 전용 집어제."
         Species.BOLLAK -> "크릴, 청갯지렁이."
         Species.MUNUI -> null
+        Species.CHAMDOM -> "크릴(큰 것), 새우류. 밑밥은 크릴 위주로 본류대에 길게 띠를 만드세요."
+        Species.NONGEO -> "크릴·청갯지렁이(찌낚시), 또는 미노우 루어."
     }
 
     /**
