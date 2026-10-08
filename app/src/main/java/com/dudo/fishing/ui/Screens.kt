@@ -142,7 +142,7 @@ fun HomeScreen(vm: MainViewModel, onOpen: (String) -> Unit, onSettings: () -> Un
                     item {
                         Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(440.dp), shape = RoundedCornerShape(20.dp)) {
                             PointsMap(
-                                pins = st.results.map { MapPin(it.point, it.best.score) },
+                                pins = st.results.map { MapPin(it.point, it.dayScore) },
                                 selectedId = null, zoom = 17.2,
                                 modifier = Modifier.fillMaxSize(),
                                 onPinClick = onOpen,
@@ -304,12 +304,16 @@ private fun TopPickCard(r: PointResult, onClick: () -> Unit) {
                     Spacer(Modifier.height(4.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(speciesIcon(r.species), null, tint = Shallow, modifier = Modifier.size(16.dp))
-                        Text(" ${r.species.label} · ${b.slot.label} ${b.slot.rangeText} · ${b.tidePhase}", color = Foam.copy(alpha = 0.9f), fontSize = 13.sp)
+                        Text(" ${r.species.label} · 최고 %02d~%02d시 · ${r.profile.tideType}".format(r.bestWindow.first, r.bestWindow.second), color = Foam.copy(alpha = 0.9f), fontSize = 13.sp)
                     }
+                    HourStrip(r, light = true)
                     topReason(b)?.let { Text("👍 ${it.text}", color = Foam.copy(alpha = 0.85f), fontSize = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp)) }
                     b.danger?.let { DangerLine(it, Coral) }
                 }
-                Box(Modifier.clip(CircleShape).background(MaterialTheme.colorScheme.surface).padding(4.dp)) { ScoreGauge(b.score, 70.dp, 7.dp, showLabel = true) }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(Modifier.clip(CircleShape).background(MaterialTheme.colorScheme.surface).padding(4.dp)) { ScoreGauge(r.dayScore, 70.dp, 7.dp, showLabel = true) }
+                    Text("05~13시 평균", color = Foam.copy(alpha = 0.8f), fontSize = 10.sp, modifier = Modifier.padding(top = 4.dp))
+                }
             }
         }
     }
@@ -326,7 +330,7 @@ private fun PointRow(rank: Int, r: PointResult, onClick: () -> Unit) {
     ) {
         Row(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("$rank", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold, modifier = Modifier.width(24.dp))
-            ScoreGauge(b.score, 50.dp, 5.dp)
+            ScoreGauge(r.dayScore, 50.dp, 5.dp)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -336,13 +340,29 @@ private fun PointRow(rank: Int, r: PointResult, onClick: () -> Unit) {
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(speciesIcon(r.species), null, tint = Tide, modifier = Modifier.size(14.dp))
-                    Text(" ${r.species.label} · ${b.slot.label} ${b.slot.rangeText} · ${b.tidePhase}",
+                    Text(" ${r.species.label} · 최고 %02d~%02d시 · ${r.profile.tideType}".format(r.bestWindow.first, r.bestWindow.second),
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+                HourStrip(r, light = false)
                 topReason(b)?.let { Text(it.text, style = MaterialTheme.typography.bodySmall, color = Good, maxLines = 1, overflow = TextOverflow.Ellipsis) }
                 b.danger?.let { DangerLine(it, Bad) }
             }
             WindArrow(b.windDir, MaterialTheme.colorScheme.onSurfaceVariant, 18.dp)
+        }
+    }
+}
+
+/** 05~13시 시간별 확률을 작은 막대로 */
+@Composable
+private fun HourStrip(r: PointResult, light: Boolean) {
+    Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.Bottom) {
+        r.slots.forEach { s ->
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(Modifier.width(16.dp).height((4 + s.score * 0.22).dp).clip(RoundedCornerShape(3.dp))
+                    .background(if (s.danger != null) Bad else scoreColor(s.score)))
+                Text("${s.slot.startHour}", fontSize = 8.sp,
+                    color = if (light) Foam.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
     }
 }
@@ -388,7 +408,7 @@ fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit, onOpen:
         // ── 위성지도 ──
         Box(Modifier.fillMaxWidth().height(300.dp)) {
             PointsMap(
-                pins = st.results.map { MapPin(it.point, it.best.score) },
+                pins = st.results.map { MapPin(it.point, it.dayScore) },
                 selectedId = pointId, editMode = editMode, flowDeg = flowDeg,
                 modifier = Modifier.fillMaxSize(),
                 onPinClick = { id -> if (!editMode && id != pointId) onOpen(id) },
@@ -427,14 +447,17 @@ fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit, onOpen:
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             // ── 점수 요약 ──
             Row(verticalAlignment = Alignment.CenterVertically) {
-                ScoreGauge(slot.score, 92.dp, 8.dp, showLabel = true)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    ScoreGauge(r.dayScore, 92.dp, 8.dp, showLabel = true)
+                    Text("05~13시 평균", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 Spacer(Modifier.width(16.dp))
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(speciesIcon(r.species), null, tint = Tide, modifier = Modifier.size(18.dp))
-                        Text(" ${r.species.label}", fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                        Text(" ${r.species.label} · 최고 %02d~%02d시".format(r.bestWindow.first, r.bestWindow.second), fontWeight = FontWeight.Bold, fontSize = 17.sp)
                     }
-                    Text("${slot.slot.label} ${slot.slot.rangeText} · ${slot.tidePhase}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+                    Text("선택 ${slot.slot.rangeText}: ${slot.score}점 · ${slot.tidePhase}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         WindArrow(slot.windDir, Tide)
                         Text(" ${ScoreEngine.compass(slot.windDir)} %.1fm/s".format(slot.windSpeed) + (slot.wave?.let { " · 파고 %.1fm".format(it) } ?: ""),
@@ -446,6 +469,8 @@ fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit, onOpen:
 
             // ── 포인트 정보 ──
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                InfoPill("성격", r.profile.tideType)
+                InfoPill("너울", r.profile.exposureText)
                 InfoPill("수심", r.point.depth)
                 InfoPill("지형", r.point.terrain)
                 InfoPill("바닥", r.point.bottom)
@@ -454,13 +479,8 @@ fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit, onOpen:
             WindyButton(r.point.lat, r.point.lng)
             if (!r.point.coordVerified) Notice("위성사진 해안선 기준 위치예요. 실제 자리와 다르면 지도 위 '위치 수정'을 누르고 탭하면 저장돼요.")
 
-            // ── 오늘의 공략법 ──
-            if (cond != null) SectionCard("${slot.slot.label} 공략법 · ${r.species.label}") {
-                Tactics.build(r.point, r.species, slot, cond).forEach { tip -> TipRow(tip) }
-            }
-
             // ── 시간대별 ──
-            SectionCard("시간대별 입질 지수") {
+            SectionCard("시간별 확률 (05~13시) – 누르면 근거") {
                 r.slots.forEach { s -> SlotBar(s, s.slot == selected) { selected = s.slot } }
             }
 
@@ -470,6 +490,14 @@ fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit, onOpen:
                         if (slot.danger != null) " (위험 조건으로 15점 제한)" else "",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 slot.reasons.sortedByDescending { it.delta }.forEach { reason -> ReasonRow(reason) }
+            }
+
+            // ── 참고: 채비·밑밥 (접힘) ──
+            if (cond != null) {
+                var showTips by remember(pointId) { mutableStateOf(false) }
+                Text(if (showTips) "채비·밑밥 참고 접기 ▲" else "채비·밑밥 참고 보기 ▼", color = Tide, fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable { showTips = !showTips }.padding(vertical = 4.dp))
+                if (showTips) SectionCard(null) { Tactics.build(r.point, r.species, slot, cond).forEach { tip -> TipRow(tip) } }
             }
 
             SectionCard(null) {
@@ -558,7 +586,7 @@ private fun SlotBar(s: SlotScore, selected: Boolean, onClick: () -> Unit) {
     ) {
         Column(Modifier.width(78.dp)) {
             Text(s.slot.label, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-            Text(s.slot.rangeText, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(s.tidePhase, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Box(Modifier.weight(1f).height(14.dp).clip(RoundedCornerShape(7.dp)).background(MaterialTheme.colorScheme.surfaceVariant)) {
             Box(Modifier.fillMaxWidth(s.score / 100f).height(14.dp).clip(RoundedCornerShape(7.dp))

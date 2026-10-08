@@ -27,201 +27,199 @@ data class SlotScore(
 data class PointResult(
     val point: FishingPoint,
     val species: Species,
+    /** 낚시 시간 05~13시의 시간별 점수 */
     val slots: List<SlotScore>,
 ) {
     val best: SlotScore get() = slots.maxBy { it.score }
+
+    /** 05~13시 평균 확률 – 순위 기준 */
+    val dayScore: Int get() = slots.map { it.score }.average().roundToInt()
+
+    /** 가장 좋은 연속 2시간 */
+    val bestWindow: Pair<Int, Int> get() {
+        if (slots.size < 2) return best.slot.startHour to best.slot.endHour
+        val i = (0 until slots.size - 1).maxBy { slots[it].score + slots[it + 1].score }
+        return slots[i].slot.startHour to slots[i + 1].slot.endHour
+    }
+
+    val profile: PointProfile get() = PointModel.profile(point)
 }
 
 /**
- * 규칙 기반 점수 계산 (1단계).
- * 요인별 가감을 합산한 뒤 곡선으로 0~100점 변환. 위험 조건이면 15점 이하로 제한.
- * 모든 가감 내역을 Reason 으로 남겨 "왜 이 점수인지" 앱에서 보여준다.
+ * 시간별 확률 모델.
+ * 낚시 시간 05~13시를 1시간씩 나눠, 그 시각의 물때(들물·날물·물돌이)·조류 세기·바람·체감 파고·빛과
+ * 계절(수온·선호 수심)·포인트 고정 성격(들물/날물 포인트, 너울 노출도, 지형)·과거 조과를 합산해 0~100으로 만든다.
+ * 하루 순위는 05~13시 평균(dayScore).
  */
 object ScoreEngine {
 
     fun evaluate(point: FishingPoint, species: Species, c: DayConditions, ctx: ScoreContext = ScoreContext()): PointResult =
-        PointResult(point, species, TimeSlot.entries.map { scoreSlot(point, species, c, it, ctx) })
+        PointResult(point, species, TimeSlot.FISHING.map { scoreSlot(point, species, c, it, ctx) })
 
-    /** 해당 포인트 대표 어종 중 가장 점수가 높은 결과 */
+    /** 해당 포인트 대표 어종 중 하루 평균이 가장 높은 결과 */
     fun bestForPoint(point: FishingPoint, c: DayConditions, ctx: ScoreContext = ScoreContext()): PointResult {
         val candidates = point.species.mapNotNull { Species.byLabel(it) }.ifEmpty { Species.entries }
-        return candidates.map { evaluate(point, it, c, ctx) }.maxBy { it.best.score }
+        return candidates.map { evaluate(point, it, c, ctx) }.maxBy { it.dayScore }
     }
 
-    /**
-     * 가감 합계를 0~100 점수로 바꾼다. 요인이 많아 단순 합산하면 대부분 상한에 몰리므로
-     * 부드러운 곡선(tanh)으로 눌러서 좋은 날·좋은 포인트 사이 차이가 보이게 한다.
-     * 합계 +38 ≈ 50점, +60 ≈ 72점, +80 ≈ 86점, +15 ≈ 30점.
-     */
-    fun toScore(sum: Int): Int = (50 + 48 * kotlin.math.tanh((sum - 38) / 28.0)).roundToInt().coerceIn(0, 100)
+    /** 가감 합계 → 0~100 (로지스틱). 합계 +44 ≈ 50점, +62 ≈ 80점, +26 ≈ 20점 */
+    fun toScore(sum: Int): Int = (100.0 / (1.0 + kotlin.math.exp(-(sum - 44) / 13.0))).roundToInt().coerceIn(1, 99)
 
     private fun scoreSlot(p: FishingPoint, s: Species, c: DayConditions, slot: TimeSlot, ctx: ScoreContext): SlotScore {
         val r = mutableListOf<Reason>()
-        val start = c.date.atTime(slot.startHour, 0)
-        val center = start.plusMinutes(((slot.endHour - slot.startHour) * 30).toLong())
-        val hours = c.weather.filter {
-            it.time.toLocalDate() == c.date && it.time.hour in slot.startHour until slot.endHour
-        }.ifEmpty { listOfNotNull(c.weather.minByOrNull { abs(Duration.between(it.time, center).toMinutes()) }) }
-
-        val wind = hours.map { it.windSpeed }.average().takeIf { !it.isNaN() } ?: 0.0
-        val windDir = hours.maxByOrNull { it.windSpeed }?.windDir ?: 0
-        val wave = hours.mapNotNull { it.wave }.maxOrNull()
-        val rainy = hours.any { it.precipType != 0 }
+        val prof = PointModel.profile(p)
+        val at = c.date.atTime(slot.startHour, 30)
+        val hw = c.weather.filter { it.time.toLocalDate() == c.date && it.time.hour == slot.startHour }
+            .ifEmpty { listOfNotNull(c.weather.minByOrNull { abs(Duration.between(it.time, at).toMinutes()) }) }
+        val wind = hw.map { it.windSpeed }.average().takeIf { !it.isNaN() } ?: 0.0
+        val windDir = hw.firstOrNull()?.windDir ?: 0
+        val seaWave = hw.mapNotNull { it.wave }.maxOrNull()
+        val wave = PointModel.effectiveWave(prof, p, seaWave, wind, windDir)
+        val rainy = hw.any { it.precipType != 0 }
         var danger: String? = null
-
-        // 1. 시즌
-        val season = s.season[c.date.monthValue - 1]
-        r += Reason("${s.label} 시즌 적합도 ${"★".repeat(season)}${"☆".repeat(3 - season)}", (season - 1.5).times(8).roundToInt())
-
-        // 2. 수온
         val t = c.waterTemp
-        when {
-            t in s.idealTemp -> r += Reason("수온 %.1f°C – 적정 범위".format(t), 12)
-            t in s.okTemp -> r += Reason("수온 %.1f°C – 활동 가능 범위".format(t), 2)
-            else -> r += Reason("수온 %.1f°C – 선호 범위 밖".format(t), -15)
-        }
 
-        // 2-1. 수온 변화 (24시간 전 대비) – 오르면 활성↑, 급락하면 입을 닫음
+        // ── 계절 ─────────────────────────────
+        val season = s.season[c.date.monthValue - 1]
+        r += Reason("${s.label} 시즌 ${"★".repeat(season)}${"☆".repeat(3 - season)}", ((season - 1.5) * 7).roundToInt())
+        val mid = (s.idealTemp.start + s.idealTemp.endInclusive) / 2
+        val half = (s.idealTemp.endInclusive - s.idealTemp.start) / 2 + 2
+        val tempFit = kotlin.math.exp(-((t - mid) / half).let { it * it })
+        r += Reason("수온 %.1f°C (${s.label} 적정 %.0f~%.0f°C)".format(t, s.idealTemp.start, s.idealTemp.endInclusive), (tempFit * 18 - 8).roundToInt())
         c.waterTempChange?.let { d ->
             when {
-                d >= 0.3 -> r += Reason("수온 상승 %+.1f°C – 활성 오름".format(d), if (s == Species.GAMSEONG || s == Species.BENGAE) 5 else 3)
+                d >= 0.3 -> r += Reason("수온 상승 %+.1f°C – 활성 오름".format(d), 5)
                 d <= -1.5 -> r += Reason("수온 급락 %+.1f°C – 입을 닫기 쉬움".format(d), -8)
                 d <= -0.5 -> r += Reason("수온 하락 %+.1f°C".format(d), -4)
             }
         }
-        // 2-2. 저수온기 감성돔: 북서풍을 등지고 볕 드는 남향 자리, 깊은 곳이 유리 (영등철 공략)
-        if (s == Species.GAMSEONG && t < 13.5) {
-            if (p.facingDeg in 120..240) r += Reason("저수온기 – 볕 드는 남향 자리", 4)
-            if (p.depthMax >= 10) r += Reason("저수온기 – 수온 안정된 깊은 수심", 3)
+
+        // ── 포인트 × 계절: 수온별 선호 수심, 지형 ───────────
+        val pref = PointModel.preferredDepth(s, t)
+        val fit = PointModel.depthFit(p, pref)
+        r += Reason("수심 ${p.depth} – 지금 수온의 ${s.label} 선호 수심 %.0f~%.0fm".format(pref.start, pref.endInclusive) +
+                if (fit >= 0.6) " (맞음)" else if (fit > 0.2) " (일부)" else " (벗어남)", (fit * 14 - 5).roundToInt())
+        terrainFit(p, s, t)?.let { r += it }
+        if (s.label !in p.species) r += Reason("이 자리 대표 어종 아님", -8)
+
+        // ── 물때·조류 (이 시각) ────────────────
+        val ts = Factors.tideState(at, c.tides)
+        val strength = ts?.let { Factors.currentStrength(it, c.tideRangeFactor) } ?: 0.3
+        val phaseText = ts?.text ?: "정보 없음"
+        if (ts != null) {
+            val nearTurn = ts.nearSlack
+            if (nearTurn) {
+                val which = if ((ts.progress < 0.5) == ts.prevIsHigh) "만조" else "간조"
+                r += when (s) {
+                    Species.GAMSEONG -> Reason("$which 물돌이 – 두도 대물 감성돔 입질 시간 (밴드 조황)", 9)
+                    Species.BENGAE -> Reason("$which 정조 – 벵에돔은 조류가 있어야", -4)
+                    else -> Reason("$which 물돌이", 2)
+                }
+            } else {
+                val suit = if (ts.incoming) prof.floodSuit else prof.ebbSuit
+                val tideName = if (ts.incoming) "들물" else "날물"
+                val power = (strength / 0.5).coerceIn(0.3, 1.0)
+                val pts = (suit * 14 * power).roundToInt()
+                val how = when {
+                    suit >= 0.9 -> "조류가 공략 지점으로 뻗어 나감"
+                    suit >= 0.75 -> "섬 하류 쪽 조경지대 형성"
+                    suit >= 0.5 -> "조류가 갯바위를 따라 흐름"
+                    suit > 0 -> "홈통 안으로 도는 물"
+                    else -> "조류가 갯바위로 받혀 채비가 밀려옴"
+                }
+                r += Reason("$tideName ${(ts.progress * 100).roundToInt()}% – $how (${prof.tideType})", pts)
+                // 감성돔은 중들물~끝들물, 벵에돔은 조류가 살아 있는 중간 시간
+                if (s == Species.GAMSEONG && ts.incoming && ts.progress >= 0.4) r += Reason("중들물~끝들물", 5)
+                if (s == Species.BENGAE && ts.progress in 0.25..0.75) r += Reason("조류 활발한 중간 물때", 4)
+                if (strength > 0.65 && p.terrain == "곶부리" && suit < 0.85) r += Reason("센 조류 – 곶부리 정면은 물살이 너무 빠름", -4)
+                if (strength > 0.65 && p.terrain == "홈통") r += Reason("센 조류 – 홈통 반탄류에 고기가 모임", 4)
+                if (strength < 0.3 && p.terrain == "곶부리") r += Reason("약한 조류 – 물이 가는 곶부리 유리", 4)
+            }
         }
-
-        // 3. 대표 어종 여부
-        if (s.label !in p.species) r += Reason("이 포인트의 대표 어종 아님", -10)
-
-        // 4. 시간대(피딩타임)
-        r += timeOfDay(s, slot, c.sunrise, c.sunset)
-
-        // 5. 조류(물 흐름)
-        val (phaseText, tideReasons) = tide(s, center, c.tides)
-        r += tideReasons
-
-        // 6. 물때(조차)
         val f = c.tideRangeFactor
-        when {
-            f < 0.25 -> r += Reason("${c.mulName} – 물 흐름 약함(조금 무렵)", -5)
-            f in 0.4..0.8 -> r += Reason("${c.mulName} – 적당한 조류", 8)
-            f > 0.9 -> r += Reason("${c.mulName} – 사리 무렵, 조류 강함", if (p.depthMax >= 10) 0 else -3)
-            else -> r += Reason("${c.mulName}", 2)
+        r += when {
+            f < 0.2 -> Reason("${c.mulName} – 조류 거의 없음", -6)
+            f in 0.35..0.8 -> Reason("${c.mulName} – 적당한 조류", 5)
+            f > 0.9 -> Reason("${c.mulName} – 사리, 조류 강함", if (p.depthMax >= 10) 1 else -3)
+            else -> Reason(c.mulName, 1)
         }
 
-        // 7. 바람 (포인트가 바라보는 방향 기준)
-        val onshore = angleDiff(windDir, p.facingDeg) <= 60   // 바다 쪽에서 갯바위로 불어오는 바람
+        // ── 빛 (해 뜨는 시각 기준) ──────────────
+        val sinceRise = (slot.startHour * 60 + 30) - (c.sunrise.hour * 60 + c.sunrise.minute)
+        r += when (s) {
+            Species.GAMSEONG -> when {
+                sinceRise in -60..60 -> Reason("해 뜰 무렵 피딩타임", 10)
+                sinceRise in 61..150 -> Reason("아침 – 입질 이어짐", 5)
+                slot.startHour >= 11 -> Reason("한낮 – 경계심 커짐", -3)
+                sinceRise < -60 -> Reason("해 뜨기 전 어두운 시간", 2)
+                else -> Reason("오전", 0)
+            }
+            Species.BENGAE -> when {
+                sinceRise < 0 -> Reason("해 뜨기 전 – 벵에 활성 낮음", -5)
+                slot.startHour in 7..11 -> Reason("오전 – 벵에 활성 시간", 5)
+                else -> Reason("주간", 2)
+            }
+            Species.BOLLAK -> if (sinceRise < 30) Reason("새벽 – 볼락 활성", 8) else Reason("낮 – 볼락 활성 낮음", -10)
+            Species.MUNUI -> if (sinceRise in -60..90) Reason("아침 피딩", 8) else Reason("주간", -2)
+        }
+
+        // ── 바람 (이 자리 기준) ─────────────────
+        val onshore = Factors.angleDiff(windDir, p.facingDeg) <= 60
         val dirText = compass(windDir)
         when {
             wind >= 12 -> { danger = "강풍 %.0fm/s".format(wind); r += Reason("강풍 %.1fm/s – 출조 위험".format(wind), -30) }
-            wind >= 9 -> r += Reason("$dirText 바람 %.1fm/s – 낚시 어려움".format(wind), -15)
+            wind >= 9 -> r += Reason("$dirText %.1fm/s – 낚시 어려움".format(wind), if (onshore) -18 else -10)
             wind >= 6 && onshore -> {
                 r += Reason("$dirText 맞바람 %.1fm/s – 채비 운용 어려움".format(wind), -12)
                 if (wind >= 8) danger = "맞바람·파도 주의"
             }
-            wind >= 6 -> r += Reason("$dirText 바람 %.1fm/s – 포인트가 등지는 방향".format(wind), -3)
-            wind >= 2.5 -> r += Reason("$dirText 바람 %.1fm/s – 적당한 물결".format(wind), 4)
-            else -> r += Reason("바람 거의 없음 %.1fm/s".format(wind), if (s.likesSomeWave) -3 else 2)
+            wind >= 6 -> r += Reason("$dirText %.1fm/s – 등지는 자리".format(wind), 0)
+            wind >= 2.5 -> r += Reason("$dirText %.1fm/s – 적당한 물결".format(wind), 3)
+            else -> r += Reason("바람 거의 없음 – 잔잔하면 경계심↑ (밴드 조황)", if (s == Species.GAMSEONG) -4 else 0)
         }
-        // 은파낚시 밴드 조황: 남서풍이 불면 수온이 내려가고 조황이 떨어진 날이 많았음
-        if (wind >= 4 && windDir in 200..250) r += Reason("남서풍 – 두도 수온 하강·조황 저하 경향 (밴드 조황)", -3)
+        if (wind >= 4 && windDir in 200..250) r += Reason("남서풍 – 수온 하강·조황 저하 경향 (밴드 조황)", -3)
 
-        // 8. 파고
+        // ── 체감 파고 (외해 파고 × 너울 노출도) ───────
         if (wave != null) {
+            val tag = "체감 파고 %.1fm (외해 %.1fm, ${prof.exposureText})".format(wave, seaWave ?: wave)
             when {
-                wave >= 2.0 -> { danger = "파고 %.1fm – 갯바위 위험".format(wave); r += Reason("파고 %.1fm – 갯바위 위험".format(wave), -30) }
-                wave > s.waveLimit -> r += Reason("파고 %.1fm – ${s.label} 낚시에 높음".format(wave), -12)
-                s.likesSomeWave && wave in 0.5..1.2 -> r += Reason("파고 %.1fm – 적당한 포말, 경계심 낮춤".format(wave), 6)
-                wave < 0.3 && s.likesSomeWave -> r += Reason("파고 %.1fm – 너무 잔잔함".format(wave), -3)
-                else -> r += Reason("파고 %.1fm".format(wave), 0)
+                wave >= 2.0 -> { danger = "파고 %.1fm – 갯바위 위험".format(wave); r += Reason(tag + " – 위험", -30) }
+                wave > s.waveLimit -> r += Reason("$tag – 높음", -12)
+                s == Species.GAMSEONG && wave in 0.4..1.2 -> r += Reason("$tag – 적당한 포말, 경계심 낮춤", 7)
+                s == Species.BENGAE && wave in 0.3..1.0 -> r += Reason("$tag – 적당한 물결", 4)
+                wave < 0.3 && s.likesSomeWave -> r += Reason("$tag – 너무 잔잔함", -4)
+                else -> r += Reason(tag, 0)
             }
             if (onshore && wave >= 1.5 && danger == null) danger = "정면 너울 – 갯바위 진입 주의"
         }
+        if (rainy) r += Reason("강수 예보", -3)
 
-        // 9. 비
-        if (rainy) r += Reason("강수 예보", -4)
-
-        // 10. 찌낚시 조류·지형 (포인트가 바라보는 방향 vs 들물/날물 흐름)
-        r += Factors.currentReasons(p, Factors.tideState(center, c.tides), c.tideRangeFactor)
-
-        // 11. 어종별 수심·지형 적합도
-        r += Factors.depthTerrainReasons(p, s)
-
-        // 12-0. 물돌이(만조·간조)가 이 시간대에 들어 있는지 – 두도 대물 감성돔은 물돌이 전후 입질 (밴드 조황 다수)
-        if (s == Species.GAMSEONG) {
-            val turn = c.tides.firstOrNull { it.time.toLocalDate() == c.date && it.time.hour in slot.startHour until slot.endHour }
-            if (turn != null) r += Reason("물돌이(%s %02d:%02d) 포함 – 대물 입질 시간 (밴드 조황)".format(
-                if (turn.isHigh) "만조" else "간조", turn.time.hour, turn.time.minute), 7)
-        }
-
-        // 12. 과거 조과 기록 – 비슷한 물때·계절·바람·파고·수온일 때 가점
-        r += Factors.historyReasons(p, s, c, slot, wind, windDir, wave, ctx)
-        // 12-1. 두도 전체 조황 (모든 포인트 공통 – 순위는 바꾸지 않음)
-        r += Factors.dayReasons(s, c, slot, wind, windDir, wave, ctx)
+        // ── 과거 조과 ─────────────────────────
+        r += Factors.historyReasons(p, s, c, slot, wind, windDir, seaWave, ctx)
+        r += Factors.dayReasons(s, c, slot, wind, windDir, seaWave, ctx)
 
         var score = toScore(r.sumOf { it.delta })
         if (danger != null) score = score.coerceAtMost(15)
         return SlotScore(slot, score, r, danger, wind, windDir, wave, phaseText)
     }
 
-    private fun timeOfDay(s: Species, slot: TimeSlot, rise: LocalTime, set: LocalTime): Reason {
-        val riseIn = rise.hour in (slot.startHour - 1) until slot.endHour
-        val setIn = set.hour in (slot.startHour - 1) until slot.endHour
-        val twilight = riseIn || setIn
-        return when (s.activeAt) {
-            Activity.TWILIGHT -> if (twilight) Reason("${if (riseIn) "해 뜰 무렵" else "해 질 무렵"} 피딩타임", 12)
-                else if (slot == TimeSlot.MIDDAY) Reason("한낮 – 활성도 낮은 시간", -6) else Reason("일반 시간대", 0)
-            Activity.NIGHT -> when (slot) {
-                TimeSlot.NIGHT -> Reason("밤 – ${s.label} 활성 시간", 15)
-                TimeSlot.DAWN -> Reason("새벽 – 아직 어두운 시간", 8)
-                else -> if (setIn) Reason("해 질 무렵 – 입질 시작", 6) else Reason("낮 – ${s.label} 활성도 낮음", -12)
-            }
-            Activity.DAY -> when (slot) {
-                TimeSlot.NIGHT -> Reason("밤 – ${s.label} 활성도 낮음", -12)
-                TimeSlot.MORNING, TimeSlot.AFTERNOON -> Reason("낮 활성 시간대", 6)
-                else -> Reason("일반 시간대", 0)
-            }
+    /** 어종 × 지형 × 계절 */
+    private fun terrainFit(p: FishingPoint, s: Species, t: Double): Reason? = when (s) {
+        Species.GAMSEONG -> when {
+            t >= 13.5 && p.terrain == "여밭" -> Reason("여밭 – 가을 감성돔이 붙는 지형", 6)
+            t < 13.5 && (p.terrain == "직벽" || p.depthMax >= 11) -> Reason("깊은 직벽·수로 – 저수온기 감성돔 은신처", 6)
+            p.terrain == "홈통" -> Reason("홈통 – 밑밥이 모이는 지형", 3)
+            p.terrain == "곶부리" -> Reason("곶부리 – 조류 경계", 2)
+            else -> null
         }
-    }
-
-    /** 가운데 시각 기준 들물/날물 진행 정도로 점수 계산 */
-    private fun tide(s: Species, at: LocalDateTime, tides: List<TideEvent>): Pair<String, List<Reason>> {
-        val prev = tides.lastOrNull { !it.time.isAfter(at) }
-        val next = tides.firstOrNull { it.time.isAfter(at) }
-        if (prev == null || next == null) return "정보 없음" to emptyList()
-
-        val total = Duration.between(prev.time, next.time).toMinutes().coerceAtLeast(1)
-        val elapsed = Duration.between(prev.time, at).toMinutes()
-        val p = elapsed.toDouble() / total            // 0 = 직전 극치, 1 = 다음 극치
-        val incoming = !prev.isHigh                   // 간조 → 만조 사이면 들물
-        val nearSlack = elapsed < 40 || total - elapsed < 40
-        val phase = (if (incoming) "들물" else "날물") + " %d%%".format((p * 100).roundToInt())
-        val reasons = mutableListOf<Reason>()
-
-        if (nearSlack) {
-            val which = if ((p < 0.5) == prev.isHigh) "만조" else "간조"
-            if (which == "만조" && s.likesIncoming) reasons += Reason("만조 전후 – 감성돔류 입질 기대", 8)
-            else if (s == Species.GAMSEONG) reasons += Reason("$which 물돌이 무렵", 0)   // 두도 조황상 감성돔은 물돌이에 입질 → 감점 안 함
-            else reasons += Reason("$which 정조 – 물 흐름 멈춤", -6)
-        } else if (incoming) {
-            reasons += when {
-                s.likesIncoming && p >= 0.4 -> Reason("중들물~끝들물 – 좋은 물때", 14)
-                s.likesIncoming -> Reason("초들물 – 입질 시작 구간", 6)
-                p in 0.3..0.8 -> Reason("들물 중반 – 조류 활발", 8)
-                else -> Reason("들물", 3)
-            }
-        } else {
-            reasons += when {
-                p in 0.2..0.6 -> Reason("초날물~중날물 – 조류 활발", if (s.likesIncoming) 5 else 9)
-                else -> Reason("끝날물", -2)
-            }
+        Species.BENGAE -> when (p.terrain) {
+            "곶부리" -> Reason("곶부리 – 조류 받는 벵에 자리", 5)
+            "직벽" -> Reason("직벽 – 벵에 은신처", 4)
+            "여밭" -> Reason("여밭 – 수중여 주변", 3)
+            else -> null
         }
-        return phase to reasons
+        Species.BOLLAK -> if (p.terrain == "여밭" || p.terrain == "홈통") Reason("여밭·홈통 – 볼락 은신처", 4) else null
+        Species.MUNUI -> if (p.terrain == "곶부리" || p.terrain == "직벽") Reason("돌출부·직벽 – 에깅 유리", 4) else null
     }
 
     private fun angleDiff(a: Int, b: Int): Int {

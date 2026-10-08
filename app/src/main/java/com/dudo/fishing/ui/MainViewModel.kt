@@ -128,7 +128,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         val ctx = ScoreContext(history, points.associateBy { it.id })
         val results = points.map { p ->
             if (sp == null) ScoreEngine.bestForPoint(p, c, ctx) else ScoreEngine.evaluate(p, sp, c, ctx)
-        }.sortedByDescending { it.best.score }
+        }.sortedByDescending { it.dayScore }
         _state.update { it.copy(loading = false, conditions = c, results = results) }
     }
 }

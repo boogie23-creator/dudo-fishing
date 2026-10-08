@@ -26,7 +26,8 @@ enum class Species(
     ),
     BENGAE(
         "벵에돔", 18.0..24.0, 15.0..26.0,
-        intArrayOf(0, 0, 0, 1, 2, 3, 3, 3, 3, 3, 2, 1),
+        // 두도 밴드 조황: 10월부터는 감성돔 위주 → 벵에돔 10~12월 낮춤
+        intArrayOf(0, 0, 0, 1, 2, 3, 3, 3, 3, 2, 1, 0),
         Activity.DAY, likesIncoming = false, likesSomeWave = true, waveLimit = 1.5
     ),
     BOLLAK(
@@ -47,13 +48,14 @@ enum class Species(
 
 enum class Activity { DAY, NIGHT, TWILIGHT }
 
-/** 하루를 나눈 시간대 */
-enum class TimeSlot(val label: String, val startHour: Int, val endHour: Int) {
-    DAWN("새벽", 4, 7),
-    MORNING("오전", 7, 11),
-    MIDDAY("한낮", 11, 15),
-    AFTERNOON("오후", 15, 19),
-    NIGHT("밤", 19, 24);
-
+/** 시간대 (기본: 낚시 시간 05~13시를 1시간 단위로) */
+data class TimeSlot(val label: String, val startHour: Int, val endHour: Int) {
     val rangeText get() = "%02d~%02d시".format(startHour, endHour)
+
+    companion object {
+        /** 보통 낚시 시간 05~13시 */
+        const val FISHING_START = 5
+        const val FISHING_END = 13
+        val FISHING: List<TimeSlot> = (FISHING_START until FISHING_END).map { TimeSlot("%02d시".format(it), it, it + 1) }
+    }
 }
