@@ -1,152 +1,721 @@
-<!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,viewport-fit=cover"><meta name="theme-color" content="#426d55"><meta name="description" content="세은이·아인이 쌍둥이를 돌보며 2D 도트 마을을 탐험하는 오프라인 가족생활 게임"><title>세은이와 아인이의 꽃잎마을 — 도트 가족생활 게임</title>
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<title>두도 포인트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
-:root{--bg:#e9e9d6;--ink:#324738;--forest:#376d53;--deep:#203f37;--line:#c4d2b3;--cream:#fff9df;--muted:#87937c;--accent:#e6a563;--pink:#e89cab;--shadow:#899979;--mint:#93c5a1;--border:#536850;--white:#fffcf0}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Malgun Gothic","Apple SD Gothic Neo",sans-serif}body{background:radial-gradient(ellipse at 10% 5%,#fbf7de 0%,transparent 45%),radial-gradient(ellipse at 90% 70%,#d2e6c7 0%,transparent 50%),#e9ecd8;-webkit-tap-highlight-color:transparent}button{font:inherit;cursor:pointer}button:focus-visible{outline:3px solid #f7b968;outline-offset:3px}button:active{transform:translateY(2px)}.app{max-width:1210px;margin:auto;padding:21px 18px 32px}.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 15px}.logo{display:flex;align-items:center;gap:12px;min-width:0}.logoMark{width:54px;height:54px;background:#fef5d0;border:3px solid #6a9370;border-radius:15px;box-shadow:0 5px 0 #b8c7a7;display:grid;place-items:center;font-size:28px}.tiny{letter-spacing:2.4px;font-size:10px;color:#668b6a;font-weight:900}.logo h1{font-size:24px;line-height:1.15;letter-spacing:-1px;margin:3px 0}.logo p{color:#758473;margin:0;font-size:11px;font-weight:700}.topchips{display:flex;gap:9px;flex-wrap:wrap;justify-content:end}.chip{border:2px solid #d0d9b9;background:#fff9e6;border-radius:15px;box-shadow:0 4px 0 #c4d0b3;padding:10px 13px;white-space:nowrap;font-size:13px;font-weight:900}.chip b{color:#b87540}.chip button{border:0;background:transparent;font-size:14px;padding:0;color:#507159}.layout{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(280px,.84fr);gap:19px;align-items:start}.gameCol{min-width:0}.gameFrame{background:#4f7460;border:5px solid #426e58;border-radius:16px;padding:6px;box-shadow:0 9px 0 #9aae91,0 17px 35px #5974594c;overflow:hidden}.gameMeta{background:#fff5d9;border:2px solid #8fa77c;border-bottom:0;border-radius:7px 7px 0 0;padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;font-weight:900;color:#507457}.metaRight{display:flex;align-items:center;gap:7px}.keyTiny{font-size:10px;color:#8b976d}.canvasBox{position:relative;overflow:hidden;background:#83b69a;aspect-ratio:640/416}.canvasBox canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none}.overlayTop{position:absolute;left:11px;top:10px;pointer-events:none;display:flex;gap:7px}.mapBadge{border:2px solid #e9e4b7;background:#fff9e5ec;border-radius:4px;padding:5px 8px;box-shadow:2px 2px 0 #426d55;font-weight:900;font-size:11px}.hintBubble{position:absolute;bottom:11px;left:50%;transform:translateX(-50%);background:#fff9ddeb;border:2px solid #7f9b74;color:#4c684e;border-radius:5px;padding:6px 11px;font-size:11px;font-weight:800;white-space:nowrap;box-shadow:2px 2px 0 #426d55;pointer-events:none;max-width:98%;overflow:hidden;text-overflow:ellipsis}.nightVeil{position:absolute;inset:0;background:#202b5d63;pointer-events:none;mix-blend-mode:multiply;display:none}.nightVeil.active{display:block}.controls{background:#fff9e9;border:2px solid #8ba47d;border-top:0;border-radius:0 0 7px 7px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:11px 11px 10px;min-height:130px}.ctrlHelp{font-size:11px;color:#7b896f;line-height:1.8}.ctrlHelp strong{font-size:12px;color:#577358;display:block}.dpad{width:148px;height:111px;position:relative;touch-action:none}.ctrl{position:absolute;width:45px;height:35px;border:2px solid #51715b;border-radius:8px;background:#e0e7c9;color:#40624d;font-size:19px;font-weight:950;box-shadow:0 4px 0 #9cac8f;user-select:none;touch-action:none;display:grid;place-items:center}.ctrl.up{top:0;left:52px}.ctrl.left{top:37px;left:5px}.ctrl.down{top:74px;left:52px}.ctrl.right{top:37px;right:5px}.ctrl.active{background:#c6dcb6;box-shadow:0 1px 0 #86a17d;transform:translateY(3px)}.aControls{display:flex;justify-content:flex-end;gap:11px;align-items:center;flex-wrap:wrap}.abtn{width:63px;height:63px;border:3px solid #a76c5b;background:#e9a28b;border-radius:50%;box-shadow:0 5px 0 #ba8b75;color:#fff9de;font-size:20px;font-weight:1000;letter-spacing:.5px;touch-action:manipulation}.abtn.secondary{width:51px;height:51px;background:#9ab7a3;border-color:#6d9477;box-shadow:0 5px 0 #779581;font-size:14px}.abtn:active{box-shadow:0 1px 0 #ba8b75}.controlLabel{font-size:10px;color:#748572;text-align:center;margin-top:5px;font-weight:800}.footHint{display:flex;justify-content:space-between;align-items:center;gap:10px;color:#7b8b7a;margin-top:15px;font-size:11px}.footHint b{color:#4d725a}.sceneInfo{padding:13px 15px 15px;margin-top:18px;border:2px solid #d5d9b9;background:#fdf9e7;border-radius:15px;box-shadow:0 5px 0 #d8deca}.sceneInfo h3{margin:0 0 5px;font-size:14px}.sceneInfo p{margin:0;color:#77846d;font-size:12px;line-height:1.6}.side{display:flex;flex-direction:column;gap:13px}.paper{border:2px solid #d0d6ba;background:#fffdf0;border-radius:14px;box-shadow:0 5px 0 #d1d9c0;overflow:hidden}.paperHead{background:#e5ead3;border-bottom:2px solid #d1dbbe;padding:11px 14px;font-size:14px;display:flex;align-items:center;justify-content:space-between;font-weight:950}.paperHead span{color:#7c9178;font-size:10px}.twins{padding:11px;display:grid;grid-template-columns:1fr 1fr;gap:9px}.babyCard{padding:10px 9px;background:#fff6e9;border:2px solid #e9d6bd;border-radius:11px;min-width:0}.babyCard:nth-child(2){background:#f8f1ff;border-color:#d9cfeb}.bHeader{display:flex;align-items:center;gap:6px;margin-bottom:9px}.pface{font-size:23px;line-height:1}.bn{font-size:13px;font-weight:950}.bn small{display:block;color:#a0877d;font-size:10px;font-weight:700;margin-top:2px}.meters{display:grid;gap:7px}.meterRow{display:flex;justify-content:space-between;font-size:10px;font-weight:800;color:#817f75}.meterTrack{height:7px;background:#e4e3d7;border-radius:3px;overflow:hidden;margin-top:3px}.meterFill{height:100%;background:#e6b874;border-radius:2px}.meterFill.energy{background:#95aaed}.meterFill.joy{background:#eda4b8}.meterFill.clean{background:#86c5a9}.sideText{padding:0 13px 12px;margin:0;color:#7d8977;font-size:11px;line-height:1.55}.missionList{padding:10px 13px 13px}.mission{display:flex;justify-content:space-between;gap:7px;align-items:center;padding:9px 0;border-bottom:1px dashed #dfe5cb;font-size:12px;font-weight:800}.mission:last-child{border:0}.mission .okay{color:#4f9a71}.mission .pending{color:#a4ac94;font-size:11px}.actLog{padding:12px 14px;display:grid;gap:9px}.logLine{display:flex;gap:9px;font-size:11px;color:#617562;line-height:1.5}.logLine i{font-style:normal;flex:0 0 19px}.miniButtons{display:flex;gap:7px;flex-wrap:wrap;padding:0 13px 13px}.smallBtn{background:#ebefdb;border:2px solid #cbd8bc;color:#4d705a;border-radius:9px;padding:8px 10px;font-size:11px;font-weight:900}.smallBtn:hover{background:#d7e7cb}.footerNote{text-align:center;color:#91a08b;font-size:10px;margin:30px 0 5px}.modalCover{position:fixed;inset:0;background:#1e3932ac;z-index:70;display:none;align-items:center;justify-content:center;padding:18px}.modalCover.open{display:flex}.dialogue{background:#fff9e7;border:5px solid #607960;box-shadow:0 8px 0 #264b3d,0 20px 65px #17342966;border-radius:10px;padding:17px 18px;max-width:470px;width:100%;color:#3f5945}.dialogTitle{font-weight:1000;font-size:17px;margin-bottom:8px;display:flex;align-items:center;gap:6px}.dialogue p{font-size:13px;line-height:1.8;white-space:pre-line;min-height:36px;margin:0 0 13px;color:#63705d}.choices{display:grid;gap:7px}.choiceBtn{background:#e7efd9;color:#486c51;border:2px solid #b2caa9;border-radius:7px;padding:12px 10px;font-size:13px;text-align:left;font-weight:900}.choiceBtn:hover{background:#d2e8c8}.choiceBtn:disabled{opacity:.55;cursor:not-allowed}.closeLine{display:flex;justify-content:flex-end;margin-top:9px}.closeLink{border:0;background:transparent;padding:8px;font-size:12px;font-weight:800;color:#82927c}.toast{position:fixed;z-index:90;bottom:24px;left:50%;transform:translateX(-50%);background:#3d7258;border:3px solid #a5d1a6;box-shadow:0 5px 0 #345441;border-radius:10px;color:#fffde7;padding:10px 16px;text-align:center;font-weight:850;font-size:12px;max-width:90%;opacity:0;transition:opacity .15s;pointer-events:none}.toast.show{opacity:1}.mobileHelp{display:none}
-@media(max-width:900px){.layout{grid-template-columns:1fr}.side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}.side>.paper:nth-child(3){grid-column:1/-1}.app{max-width:750px}}
-@media(max-width:600px){.app{padding:11px 8px 25px}.top{align-items:start;margin:0 5px 13px}.logo{gap:8px}.logoMark{width:41px;height:41px;font-size:20px;border-radius:11px;box-shadow:0 3px 0 #b8c7a7}.tiny{font-size:8px;letter-spacing:1.2px}.logo h1{font-size:17px;margin:3px 0}.logo p{font-size:9px}.topchips{gap:4px}.chip{padding:7px 8px;font-size:11px;border-width:1px;box-shadow:0 2px 0 #c4d0b3;border-radius:10px}.chip.sound{display:none}.gameFrame{padding:4px;border-width:3px;border-radius:11px;box-shadow:0 5px 0 #9aae91}.gameMeta{padding:7px 6px;font-size:10px}.keyTiny{font-size:9px}.controls{padding:7px 4px;min-height:133px;grid-template-columns:1fr 143px 1fr;gap:3px}.ctrlHelp{display:none}.dpad{transform:scale(.95);transform-origin:left center}.aControls{gap:5px}.abtn{width:55px;height:55px}.abtn.secondary{width:41px;height:41px}.controlLabel{font-size:9px}.mobileHelp{display:block;color:#83907a;font-size:10px;text-align:center;margin-top:13px}.footHint{display:none}.side{display:grid;grid-template-columns:1fr;gap:11px;margin-top:10px}.side>.paper:nth-child(3){grid-column:auto}.twins{padding:10px}.paperHead{padding:10px 12px}.sceneInfo{margin-top:14px}.canvasBox{aspect-ratio:640/416}.hintBubble{font-size:9px;padding:5px 7px;bottom:7px}.mapBadge{font-size:9px;padding:4px 6px}}
-@media(max-width:355px){.logo h1{font-size:15px}.logo p{display:none}.gameMeta .keyTiny{display:none}.controls{grid-template-columns:1fr 132px 1fr}.dpad{transform:scale(.88)}.abtn{width:48px;height:48px}}
-@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
-</style></head>
-<body><div class="app"><header class="top"><div class="logo"><div class="logoMark">🌷</div><div><div class="tiny">SE-EUN & AH-IN STORY</div><h1>세은이·아인이의 꽃잎마을</h1><p>걷고, 만나고, 함께 자라는 작은 가족 이야기</p></div></div><div class="topchips"><div class="chip">🪙 <b id="money">80</b></div><div class="chip" id="date">☀️ 1일째</div><div class="chip sound"><button id="sound" type="button" title="소리 켜기/끄기">🔇 소리</button></div></div></header>
-<div class="layout"><div class="gameCol"><div class="gameFrame"><div class="gameMeta"><span id="sceneHeading">🏡 우리집</span><div class="metaRight"><span class="keyTiny" id="clock">오전 8:00</span><span>🌿 PIXEL FAMILY LIFE</span></div></div><div class="canvasBox"><canvas id="gameCanvas" width="640" height="416" aria-label="방향키로 이동하는 2D 도트 마을"></canvas><div class="nightVeil" id="night"></div><div class="overlayTop"><div class="mapBadge" id="areaBadge">🏡 우리집</div></div><div class="hintBubble" id="hint">방향키로 움직이고 A로 대화해요</div></div><div class="controls"><div class="ctrlHelp"><strong>이동하기</strong>← ↑ ↓ → / WASD<br><strong>상호작용</strong>스페이스 / Z / A<br><strong>가방·도움말</strong>B 버튼</div><div class="dpad" aria-label="이동 방향키"><button class="ctrl up" data-dir="up" aria-label="위로">▲</button><button class="ctrl left" data-dir="left" aria-label="왼쪽">◀</button><button class="ctrl right" data-dir="right" aria-label="오른쪽">▶</button><button class="ctrl down" data-dir="down" aria-label="아래쪽">▼</button></div><div class="aControls"><div><button class="abtn secondary" id="buttonB" aria-label="가방">B</button><div class="controlLabel">가방</div></div><div><button class="abtn" id="buttonA" aria-label="말하기">A</button><div class="controlLabel">말하기</div></div></div></div></div><div class="mobileHelp">방향키 이동 · <strong>A</strong> 말하기/돌보기 · <strong>B</strong> 가방 및 도움말</div><section class="sceneInfo"><h3 id="placeTitle">🏡 꽃잎마을 우리집</h3><p id="placeInfo">세은이와 아인이가 있는 아늑한 집이에요. 분홍·보라색 아기 침대에 다가가 A를 눌러 돌봐주세요.</p></section><div class="footHint"><span>🌻 <b>새로운 이야기:</b> 하루가 지나면 마을 풍경과 가족 일기가 달라져요.</span><span>저장: 자동</span></div></div><aside class="side"><div class="paper"><div class="paperHead">🎀 우리집 쌍둥이 <span>각자 다른 하루</span></div><div class="twins" id="twins"></div><p class="sideText">아기에게 다가가 <strong>A</strong>를 누르면 우유·낮잠·기저귀·놀아주기 메뉴가 나와요.</p></div><div class="paper"><div class="paperHead">📋 오늘의 작은 목표 <span id="questCount">0 / 4</span></div><div class="missionList" id="quests"></div></div><div class="paper"><div class="paperHead">📒 가족 이야기 <span>우리의 추억</span></div><div class="actLog" id="journal"></div><div class="miniButtons"><button class="smallBtn" id="btnHelp">🎮 조작법</button><button class="smallBtn" id="btnAlbum">📸 추억앨범</button><button class="smallBtn" id="btnReset">↺ 새로 시작</button></div></div></aside></div><p class="footerNote">© 꽃잎마을 — 오리지널 픽셀 가족 시뮬레이션 · 인터넷 없이 플레이 가능 · 진행 상황은 이 기기에 저장됩니다.</p></div>
-<div class="modalCover" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="dialogue"><div class="dialogTitle" id="modalTitle">안녕하세요!</div><p id="modalText"></p><div class="choices" id="choices"></div><div class="closeLine"><button class="closeLink" id="modalClose">닫기 ✕</button></div></div></div><div class="toast" id="toast" role="status"></div>
-<script>
-(()=>{'use strict';
-const TILE=32, VIEW_W=640,VIEW_H=416,STORAGE='flowerVillage.pixel.walk.v1';
-const el=id=>document.getElementById(id),canvas=el('gameCanvas'),ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
-const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
-const nameText=['세은이','아인이'];
-const newState=()=>({version:1,scene:'home',pos:{home:[11,12],town:[19,15],park:[13,19],shop:[10,12]},face:'up',day:1,minutes:480,coins:80,steps:0,sound:false,babies:[{name:'세은이',food:75,energy:80,joy:76,clean:82,care:0},{name:'아인이',food:68,energy:77,joy:83,clean:74,care:0}],achievements:{},quest:{},purchases:[],flowers:0,flowerRound:0,log:[{icon:'🏠',text:'첫째 세은이와 둘째 아인이, 꽃잎마을의 첫날이에요.'}],lastSave:0});
-function restore(){try{const x=JSON.parse(localStorage.getItem(STORAGE));if(x&&x.version===1&&x.babies?.length===2){return {...newState(),...x,achievements:x.achievements||{},quest:x.quest||{},pos:{...newState().pos,...x.pos}}}}catch(e){ }return newState()};let s=restore();
-const SOUND={ctx:null};function beep(n=460,d=.09){if(!s.sound)return;try{if(!SOUND.ctx)SOUND.ctx=new (window.AudioContext||window.webkitAudioContext)();let o=SOUND.ctx.createOscillator(),g=SOUND.ctx.createGain(),t=SOUND.ctx.currentTime;o.type='square';o.frequency.setValueAtTime(n,t);g.gain.setValueAtTime(.045,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(SOUND.ctx.destination);o.start(t);o.stop(t+d)}catch(e){}}
-const save=()=>{try{s.lastSave=Date.now();localStorage.setItem(STORAGE,JSON.stringify(s))}catch(e){}};
-const logs=(icon,text)=>{s.log.unshift({icon,text});s.log=s.log.slice(0,30);save();renderSide()};
-function toast(text){let e=el('toast');e.textContent=text;e.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.classList.remove('show'),2000)}
-let modalOpen=false;function modal(title,text,choices=[]){modalOpen=true;el('modalTitle').textContent=title;el('modalText').textContent=text;let out=el('choices');out.innerHTML='';choices.forEach(c=>{let b=document.createElement('button');b.className='choiceBtn';b.textContent=c.label;b.disabled=!!c.disabled;b.addEventListener('click',()=>{closeModal();c.run?.()});out.append(b)});el('modal').classList.add('open');beep(660,.055)}function closeModal(){modalOpen=false;el('modal').classList.remove('open')};el('modalClose').addEventListener('click',closeModal);el('modal').addEventListener('click',e=>{if(e.target===el('modal'))closeModal()});
-const objs={};const areas={};
-function area(name,w,h,defaultTile){const tiles=Array.from({length:h},()=>Array(w).fill(defaultTile));const solid=Array.from({length:h},()=>Array(w).fill(false));areas[name]={name,w,h,tiles,solid,objects:[]};return areas[name]}
-const tile=(a,x,y,v,block=false)=>{if(x>=0&&y>=0&&x<a.w&&y<a.h){a.tiles[y][x]=v;if(block)a.solid[y][x]=true}};
-function rect(a,x,y,w,h,t,block=false){for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++)tile(a,xx,yy,t,block)}
-function thing(a,id,type,x,y,opts={}){let o={id,type,x,y,...opts};a.objects.push(o);if(opts.solid!==false)a.solid[y][x]=true;return o}
-let home=area('home',22,17,'floor');
-rect(home,0,0,22,1,'wall',true);rect(home,0,16,22,1,'wall',true);rect(home,0,0,1,17,'wall',true);rect(home,21,0,1,17,'wall',true);rect(home,2,2,18,13,'floor');rect(home,2,11,18,4,'rugFloor');rect(home,3,4,8,5,'nurseryRug');rect(home,12,4,7,6,'livingRug');
-for(let x=4;x<18;x++)tile(home,x,1,'wallFlower',true);
-thing(home,'crib0','crib',6,5,{baby:0});thing(home,'crib1','crib',9,5,{baby:1});
-thing(home,'toys','toys',4,9);thing(home,'table','table',16,7);thing(home,'bed','bed',4,13);thing(home,'books','books',18,4);thing(home,'cupboard','cupboard',17,2);thing(home,'plant','plant',2,3);thing(home,'lamp','lamp',19,12);thing(home,'mirror','mirror',12,2);thing(home,'rug','rug',13,12,{solid:false});
-// A space at the front door is intentional, the parent enters via it.
-thing(home,'doorHome','door',11,15,{solid:false,to:'town',toX:19,toY:17,caption:'🌳 꽃잎마을'});
-for(let x=1;x<21;x++)if(x!==11)tile(home,x,15,'baseBoard',true);
-let town=area('town',43,31,'grass');
-for(let y=0;y<31;y++)for(let x=0;x<43;x++)if((x*17+y*31)%23===0)tile(town,x,y,'flowers');else if((x*7+y*17)%13===0)tile(town,x,y,'grass2');
-rect(town,0,14,43,3,'path');rect(town,18,0,4,31,'path');rect(town,8,13,22,6,'path');
-// lake
-for(let y=21;y<29;y++)for(let x=31;x<41;x++){const q=((x-35.5)/5)**2+((y-24.5)/4)**2;if(q<1)tile(town,x,y,'water',true);else if(q<1.45)tile(town,x,y,'sand')}
-function tree(a,x,y){thing(a,'tree'+x+'-'+y,'tree',x,y)}
-[[3,3],[6,4],[11,2],[15,6],[26,5],[33,4],[38,7],[4,22],[9,26],[15,25],[26,25],[28,29],[41,13],[2,29],[6,28],[40,28],[39,3],[28,10]].forEach(p=>tree(town,...p));
-function houseDraw(a,id,x,y,w=6){for(let yy=y;yy<y+4;yy++)for(let xx=x;xx<x+w;xx++)tile(a,xx,yy,'house'+id,true);let dX=x+Math.floor(w/2);tile(a,dX,y+3,'houseDoor'+id,false);return [dX,y+4]};
-const hdoor=houseDraw(town,'pink',13,6,7);const sdoor=houseDraw(town,'blue',28,6,7);
-thing(town,'homeEntrance','door',hdoor[0],hdoor[1],{solid:false,to:'home',toX:11,toY:13,caption:'🏠 우리집'});
-thing(town,'shopEntrance','door',sdoor[0],sdoor[1],{solid:false,to:'shop',toX:10,toY:12,caption:'🛍️ 햇살 상점'});
-// park gate further left on road
-thing(town,'parkEntrance','sign',7,16,{solid:false,to:'park',toX:13,toY:19,caption:'🌸 벚꽃공원'});
-thing(town,'npcMiso','rabbit',9,13,{npc:true});thing(town,'npcGrandma','grandma',25,18,{npc:true});thing(town,'mailbox','mailbox',21,9);thing(town,'notice','board',20,22);thing(town,'bench1','bench',23,11);thing(town,'flowersP','flowersPatch',7,20,{solid:false});thing(town,'flowersP2','flowersPatch',34,19,{solid:false});
-let park=area('park',29,24,'grass');for(let y=0;y<24;y++)for(let x=0;x<29;x++)if((x*11+y*9)%13===0)tile(park,x,y,'flowers');
-rect(park,12,1,4,23,'path');rect(park,1,11,26,3,'path');rect(park,3,15,8,2,'path');rect(park,16,15,8,2,'path');
-[[2,2],[5,4],[8,2],[19,3],[24,4],[27,8],[2,21],[6,22],[25,20],[21,21],[3,8],[28,22]].forEach(p=>tree(park,...p));
-for(let y=3;y<=8;y++)for(let x=10;x<=17;x++){const q=((x-13.5)/4.2)**2+((y-5.7)/3.5)**2;if(q<1)tile(park,x,y,'water',true);else if(q<1.5)tile(park,x,y,'sand')}
-thing(park,'parkExit','sign',13,21,{solid:false,to:'town',toX:7,toY:17,caption:'🌳 마을로 돌아가기'});
-thing(park,'npcToto','bear',8,12,{npc:true});thing(park,'picnic','picnic',20,15);
-[[4,17],[6,18],[19,18],[22,8],[20,20],[8,7]].forEach((p,i)=>thing(park,'flower'+i,'flower',...p,{solid:false,flower:i}));
-thing(park,'bench2','bench',20,11);
-let shop=area('shop',22,17,'floor');rect(shop,0,0,22,1,'wall',true);rect(shop,0,16,22,1,'wall',true);rect(shop,0,0,1,17,'wall',true);rect(shop,21,0,1,17,'wall',true);rect(shop,3,3,16,9,'shopFloor');rect(shop,2,2,18,1,'wallFlower',true);rect(shop,9,4,4,7,'rugFloor');
-thing(shop,'shopShelf','shelf',6,5);thing(shop,'shopDesk','counter',15,6);thing(shop,'shopBear','bear',15,4,{npc:true});thing(shop,'toyShelf','toys',4,10);thing(shop,'shopPlant','plant',18,12);thing(shop,'shopExit','door',10,15,{solid:false,to:'town',toX:sdoor[0],toY:sdoor[1]+1,caption:'🌳 마을로 돌아가기'});for(let x=1;x<21;x++)if(x!==10)tile(shop,x,15,'baseBoard',true);
-let cx=0,cy=0,walk={fromX:s.pos[s.scene][0],fromY:s.pos[s.scene][1],toX:s.pos[s.scene][0],toY:s.pos[s.scene][1],t:1,start:0};
-let face=s.face||'down';let tick=0;const players=['#e8ad93','#8a80bf'];
-function box(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),Math.ceil(w),Math.ceil(h))}
-function line(x1,y1,x2,y2,c,width=2){ctx.strokeStyle=c;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke()}
-function rnd(n){return(Math.sin(n*127.3+98.2)*43758.5453)%1}
-function grassTile(x,y,t){let p=(x*47+y*19)%9;box(0,0,32,32,t==='grass2'?'#8cc69b':'#98cca2');if(p<6){box((x*11+y*4)%23+3,8,3,5,'#6bb98c');box((x*3+y*19)%25+2,22,2,3,'#d3e8b1')}if(t==='flowers'){box(12,12,3,3,'#ffdf87');box(9,12,3,3,'#f5aab1');box(13,8,3,3,'#ffe6c9');box(14,14,3,3,'#fff0dc')}}
-function pixelTile(t,x,y){if(t==='grass'||t==='grass2'||t==='flowers'){grassTile(x,y,t);return}if(t==='path'){box(0,0,32,32,'#eed8a7');box(0,0,32,3,'#f6e5bd');box(7+(x*y)%12,21,3,2,'#dec48f');box(23,5,4,3,'#f3e2bb');return}if(t==='sand'){box(0,0,32,32,'#e5dab0');box(7,11,2,2,'#cfc598');return}if(t==='water'){box(0,0,32,32,'#74b8c6');box(5+(tick/15|0)%7,8,12,3,'#a5d9d9');box(18,24,10,3,'#aad6df');return}if(t==='wall'||t==='wallFlower'||t==='baseBoard'){box(0,0,32,32,t==='baseBoard'?'#8b9f7b':'#e1dbc5');box(0,0,32,3,'#f4e9d4');if(t==='wallFlower'){box(12,12,3,3,'#e8a3b0');box(18,11,3,3,'#a6c5a7')}if(t==='baseBoard')box(0,1,32,4,'#627e65');return}if(t.startsWith('house')){const pink=t.includes('pink'),door=t.includes('Door');box(0,0,32,32,door?'#765f55':pink?'#ffc8bb':'#b1d0e5');box(0,0,32,5,pink?'#f1a7a2':'#85b0d4');if(door){box(8,0,17,32,pink?'#ab7770':'#647e9b');box(20,16,3,4,'#ffe39b')}else{box(3,10,26,2,pink?'#f5b9ae':'#95bddd')}return}if(t==='nurseryRug'||t==='livingRug'||t==='shopFloor'||t==='rugFloor'){box(0,0,32,32,t==='nurseryRug'?'#f8e9e1':t==='livingRug'?'#dfebd5':t==='shopFloor'?'#f5e8c8':'#d4dfb9');box(0,0,32,2,'#ffffff45');return}box(0,0,32,32,'#eddcc4');box(0,30,32,2,'#e2cdb3');if((x+y)%3===0)box(5,5,2,2,'#fff1db')}
-function drawPixelObj(o,wx,wy){let x=Math.round(wx),y=Math.round(wy);const type=o.type;const brick=(X,Y,W,H,C)=>box(x+X,y+Y,W,H,C);
-if(type==='tree'){brick(-10,-15,52,28,'#4e8266');brick(-5,-23,42,16,'#529977');brick(2,-31,28,13,'#69ae86');brick(11,15,10,25,'#805b49');brick(-8,-6,49,20,'#518a66');brick(-4,-11,14,7,'#8cc9a0');brick(24,-10,13,7,'#77bd8e');return}
-if(type==='crib'){let p=o.baby===0,shade=p?'#f0b5b8':'#bab0df';brick(1,6,30,25,'#825d52');brick(3,5,26,18,'#fff2df');brick(3,5,26,5,shade);brick(3,13,26,10,p?'#f0b4bd':'#beb7e7');brick(0,22,32,6,'#b18471');brick(2,27,5,5,'#725b4d');brick(25,27,5,5,'#725b4d');let b=s.babies[o.baby];brick(10,11,13,10,'#ffdcbb');brick(13,9,4,4,p?'#aa7559':'#77595d');brick(17,16,2,2,'#71565b');if(b.energy<24)brick(13,16,5,1,'#a17076');return}
-if(type==='door'){brick(7,2,18,30,'#aa7f65');brick(8,3,16,27,'#f7dcac');brick(18,17,3,4,'#a87255');return}
-if(type==='sign'){brick(14,8,4,24,'#7b634d');brick(1,5,30,16,'#f6e8bd');brick(4,8,24,10,'#8eae81');brick(11,10,10,5,'#e9f4d3');return}
-if(type==='flower'||type==='flowersPatch'){brick(15,13,3,16,'#629366');brick(9,5,14,5,'#efa5ad');brick(6,10,20,7,'#f6b8c3');brick(12,6,8,12,'#fff4d0');brick(14,10,4,4,'#dfae5a');return}
-if(type==='bed'){brick(-6,10,44,23,'#a77865');brick(0,14,36,13,'#f8ebca');brick(2,14,13,7,'#fffaf1');brick(15,14,17,12,'#e0b8ad');return}
-if(type==='table'||type==='counter'){brick(-7,8,46,11,'#9c6f55');brick(-3,18,6,16,'#765844');brick(30,18,6,16,'#765844');brick(-7,6,46,6,'#d9b088');if(type==='table'){brick(6,2,20,5,'#e9a0a6');brick(15,-1,5,5,'#f5c8d0')}return}
-if(type==='rabbit'||type==='bear'||type==='grandma'){drawNPC(type,x,y);return}
-if(type==='toys'){brick(3,12,26,20,'#ae8acb');brick(6,8,7,9,'#ffe49c');brick(20,4,8,16,'#91bdb0');brick(11,2,10,11,'#e9a1ae');return}
-if(type==='plant'){brick(8,20,17,12,'#ad7960');brick(3,10,26,12,'#5f9e77');brick(9,2,14,17,'#80ba8d');return}
-if(type==='mirror'){brick(4,1,24,30,'#ac805e');brick(7,4,18,24,'#9bd0ce');brick(9,6,3,17,'#d7ecdd');return}
-if(type==='books'||type==='shelf'){brick(0,7,32,25,'#a67858');for(let i=0;i<4;i++){brick(3+i*7,9,5,16,['#b5d4a3','#e8a8ad','#f2c67f','#b8abd9'][i]);}return}
-if(type==='cupboard'){brick(0,2,31,30,'#b18b6c');brick(3,4,25,25,'#dbbc89');brick(16,17,3,4,'#8b6f50');return}
-if(type==='lamp'){brick(14,3,4,29,'#867966');brick(3,1,25,16,'#ffdea4');brick(7,5,17,6,'#ffeec1');return}
-if(type==='mailbox'){brick(13,13,7,22,'#706d60');brick(2,0,30,21,'#e7a1ab');brick(8,7,15,4,'#fff9e0');return}
-if(type==='board'){brick(3,0,26,22,'#987958');brick(7,4,18,13,'#f6e3ac');brick(10,8,12,2,'#a7b998');brick(8,22,5,12,'#8c6d50');brick(21,22,5,12,'#8c6d50');return}
-if(type==='picnic'){brick(-8,5,48,25,'#f5b8a9');for(let i=0;i<4;i++)brick(-8+i*12,10,5,5,'#fff4dc');brick(12,-3,7,12,'#dfb373');brick(20,2,5,7,'#fff8e9');return}
-if(type==='bench'){brick(-5,12,42,8,'#a77a58');brick(-5,3,42,7,'#bd9573');brick(0,19,5,14,'#826848');brick(27,19,5,14,'#826848');return}
-if(type==='rug'){brick(2,7,28,18,'#f3deb9');brick(6,11,20,10,'#eab6b9');return}
+/* Layout: 바다색 헤더 → 오늘 조건 → [섬 지도 | 순위] 2단 (좁으면 1단) → 선택 포인트 시간별 상세 */
+:root{
+  --abyss:#08223a; --deep:#0d3a5c; --tide:#0e7c8c; --shallow:#5fc6c9; --foam:#f2fbfc; --coral:#ff6f45;
+  --bg:#eef4f6; --surface:#ffffff; --surface2:#e1edf1; --fg:#0b2236; --muted:#557083; --line:#cddde3;
+  --good:#16a06a; --mid:#d99a00; --bad:#d6493b;
+  --s1:#e03b2f; --s2:#f08a1c; --s3:#e0b400; --s4:#25a35a; --s5:#2f6fd6; --warn:#6b7a86; --rock:#8a8572; --rockfill:#c9c2a8; --sea:#d4e8ee;
+  --f-display:"Black Han Sans","Noto Sans KR",system-ui,sans-serif;
+  --f-body:"Noto Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
 }
-function drawNPC(type,x,y){const brick=(X,Y,W,H,C)=>box(x+X,y+Y,W,H,C);let rabbit=type==='rabbit',bear=type==='bear',grandma=type==='grandma';brick(9,19,7,11,grandma?'#8171a1':'#c89c6c');brick(19,19,7,11,grandma?'#8171a1':'#c89c6c');brick(7,13,22,16,rabbit?'#e1b6b2':grandma?'#8eaa9a':'#d6a16e');brick(6,5,22,18,rabbit?'#fff4e9':grandma?'#e6c5a4':'#ac7853');if(rabbit){brick(7,-13,7,20,'#fff4e9');brick(20,-12,7,20,'#fff4e9');brick(9,-9,3,11,'#e9bdc8');brick(22,-8,3,11,'#e9bdc8')}else if(bear){brick(5,1,9,11,'#a47750');brick(22,1,9,11,'#a47750')}else{brick(5,1,24,7,'#aeacae')}brick(12,13,3,3,'#394c43');brick(22,13,3,3,'#394c43');brick(17,19,4,2,'#ce9292')}
-function drawPlayer(x,y,dir,anim=false){x=Math.round(x);y=Math.round(y);const brick=(X,Y,W,H,C)=>box(x+X,y+Y,W,H,C);brick(6,26,8,6,'#5b6257');brick(20,26,8,6,'#5b6257');brick(8,17,17,12,'#7ea4bc');brick(4,14,7,12,'#e2b398');brick(24,14,7,12,'#e2b398');brick(6,3,22,17,'#efcaa8');brick(5,1,24,8,'#6e554b');brick(2,5,28,4,'#6e554b');brick(10,-3,13,6,'#e1b27a');brick(20,1,4,4,'#f3d6a1');if(dir!=='up'){brick(12,13,3,2,'#4c524a');brick(22,13,3,2,'#4c524a')}else{brick(8,6,18,8,'#816255')}brick(13,21,7,5,'#f2e5ae');if(anim)brick(20,28,7,5,'#e9ba8f')}
-function drawStroller(x,y){x=Math.round(x);y=Math.round(y);box(x+2,y+19,6,11,'#69766d');box(x+23,y+19,6,11,'#69766d');box(x+1,y+7,29,19,'#b0d2bc');box(x+2,y+1,28,11,'#fff0c4');box(x+3,y+7,13,15,'#e9b8c6');box(x+17,y+7,13,15,'#bdb2e1');box(x+7,y+8,7,7,'#ffdfbc');box(x+20,y+8,7,7,'#ffdfbc');box(x+9,y+6,3,3,'#e7a4ad');box(x+22,y+6,3,3,'#a6a5dd')}
-function drawScene(t){tick++;const a=areas[s.scene],pp=s.pos[s.scene],tween=walk.t>=1?1:Math.min(1,(t-walk.start)/140);walk.t=tween;const ex=walk.fromX+(walk.toX-walk.fromX)*tween,ey=walk.fromY+(walk.toY-walk.fromY)*tween;
-const ww=a.w*TILE,hh=a.h*TILE;cx=clamp((ex+.5)*TILE-VIEW_W/2,0,Math.max(0,ww-VIEW_W));cy=clamp((ey+.5)*TILE-VIEW_H/2,0,Math.max(0,hh-VIEW_H));ctx.clearRect(0,0,VIEW_W,VIEW_H);box(0,0,VIEW_W,VIEW_H,'#91bfa3');
-const minX=Math.floor(cx/TILE)-1,maxX=Math.ceil((cx+VIEW_W)/TILE)+1,minY=Math.floor(cy/TILE)-1,maxY=Math.ceil((cy+VIEW_H)/TILE)+1;
-for(let y=Math.max(0,minY);y<Math.min(maxY,a.h);y++)for(let x=Math.max(0,minX);x<Math.min(maxX,a.w);x++){ctx.save();ctx.translate(Math.round(x*TILE-cx),Math.round(y*TILE-cy));pixelTile(a.tiles[y][x],x,y);ctx.restore()}
-// roof stripes on outdoor houses; drawn on top of tiles
-if(s.scene==='town'){drawRoof(13,6,7,'pink');drawRoof(28,6,7,'blue')}
-const items=[...a.objects.map(o=>({y:o.y,obj:o})),{y:ey+.1,parent:true}];if(['town','park'].includes(s.scene))items.push({y:ey+.07,stroller:true});items.sort((p,q)=>p.y-q.y);
-for(const it of items){if(it.parent)drawPlayer((ex*TILE-cx)|0,(ey*TILE-cy)|0,face,tween<1);else if(it.stroller){let dx=face==='left'?32:face==='right'?-32:0,dy=face==='up'?32:-32;drawStroller((ex*TILE-cx+dx)|0,(ey*TILE-cy+dy)|0)}else{let o=it.obj;ctx.save();ctx.translate(Math.round(o.x*TILE-cx),Math.round(o.y*TILE-cy));drawPixelObj(o,0,0);ctx.restore()}}
-// in-world bubbles indicate interactables
-let active=nearest();if(active){let ox=Math.round(active.x*TILE-cx)+9,oy=Math.round(active.y*TILE-cy)-17;box(ox,oy,18,15,'#fff6d0');box(ox+2,oy+2,14,11,'#d7eac0');ctx.fillStyle='#4a7054';ctx.font='bold 12px monospace';ctx.fillText('A',ox+5,oy+12)}
-requestAnimationFrame(drawScene)}
-function drawRoof(x,y,w,kind){const X=Math.round(x*TILE-cx),Y=Math.round(y*TILE-cy);box(X-7,Y-16,w*32+14,16,kind==='pink'?'#a26067':'#577d9c');box(X-12,Y-8,w*32+24,11,kind==='pink'?'#e69c9e':'#7eacc4');for(let i=0;i<w;i++)box(X+i*32,Y-12,26,4,'#f9d3c5')}
-function nearest(){const a=areas[s.scene],p=s.pos[s.scene];let near=null,dist=999;for(const o of a.objects){let d=Math.abs(o.x-p[0])+Math.abs(o.y-p[1]);if(d<=2&&d<dist){near=o;dist=d}}return near}
-function updateHint(){const o=nearest();let message=o?({crib:'A: 쌍둥이 돌보기',door:'A: 들어가기',rabbit:'A: 토끼 미소에게 인사하기',grandma:'A: 할머니에게 말하기',bear:'A: 주민과 대화',sign:'A: 마을 이동',flower:'A: 꽃 관찰',picnic:'A: 가족 피크닉',toys:'A: 놀이하기',bed:'A: 잠자리 정리',books:'A: 책 읽어주기',table:'A: 가족 식사',shelf:'A: 쇼핑하기',counter:'A: 쇼핑하기',board:'A: 게시판 확인',plant:'A: 식물 관찰',mirror:'A: 거울 보기',mailbox:'A: 우편 확인',cupboard:'A: 선반 보기',bench:'A: 잠깐 쉬기',lamp:'A: 조명 켜기'})[o.type]||'A: 살펴보기':'방향키로 걷고 A로 대화해요';el('hint').textContent=message}
-function minutes(d){s.minutes+=d;while(s.minutes>=1440){s.minutes-=1440;s.day++;s.babies.forEach(b=>{b.food=clamp(b.food-6);b.clean=clamp(b.clean-4);b.energy=clamp(b.energy+20)});s.flowerRound=0;logs('🌅',`${s.day}일째 아침. 오늘도 우리 가족의 따뜻한 하루가 시작됐어요.`)}for(const b of s.babies){b.food=clamp(b.food-d/300);b.energy=clamp(b.energy-d/510);b.clean=clamp(b.clean-d/440)}updateTop();renderSide();save()}
-function move(dir){if(modalOpen)return;face=dir;s.face=dir;const a=areas[s.scene],p=s.pos[s.scene],d={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[dir];if(!d)return;let nx=p[0]+d[0],ny=p[1]+d[1];if(nx<0||ny<0||nx>=a.w||ny>=a.h||a.solid[ny][nx]){beep(200,.035);return}walk={fromX:p[0],fromY:p[1],toX:nx,toY:ny,t:0,start:performance.now()};p[0]=nx;p[1]=ny;s.steps++;if(s.steps%3===0)minutes(2);else save();if(s.steps%2===0)beep(255,.035);updateHint()}
-function go(place,x,y){s.scene=place;s.pos[place]=[x,y];face='down';s.face=face;walk={fromX:x,fromY:y,toX:x,toY:y,t:1,start:performance.now()};minutes(12);updateTop();updateHint();save();const word={town:'🌳 꽃잎마을',home:'🏡 우리집',shop:'🛍️ 햇살 상점',park:'🌸 벚꽃공원'}[place];toast(`${word}에 도착했어요!`)}
-function achievement(id,title,bonus=12){if(s.achievements[id])return;s.achievements[id]=true;s.coins+=bonus;logs('✨',`${title} 달성! +${bonus} 코인`);beep(810,.12)}
-function gainCare(i,key,inc,title){let b=s.babies[i];if(key==='nap'){b.energy=clamp(b.energy+35);b.food=clamp(b.food-6)}else{let k=key;b[k]=clamp(b[k]+inc)}b.joy=clamp(b.joy+3);b.care++;s.coins+=4;minutes(22);logs('🎀',`${b.name} ${title}. 사랑이 쌓였어요! +4 코인`);achievement(`care${i}`,`${b.name} 첫 돌봄`,10);toast(`${b.name} ${title} 🩷`);renderSide();save()}
-function careDialog(i){let b=s.babies[i];modal(`🎀 ${b.name} 돌보기`,`${i===0?'첫째':'둘째'} ${b.name}가 당신을 바라보며 방긋 웃어요.\n무엇을 해줄까요?`,[
-{label:`🍼 우유 먹이기 · 포만감 +27`,run:()=>gainCare(i,'food',27,'우유 먹이기')},
-{label:`😴 낮잠 재우기 · 에너지 +35`,run:()=>gainCare(i,'nap',35,'낮잠 재우기')},
-{label:`🧷 기저귀 갈기 · 청결 +35`,run:()=>gainCare(i,'clean',35,'기저귀 갈기')},
-{label:`🧸 까꿍 놀이 · 행복 +30`,run:()=>gainCare(i,'joy',30,'까꿍 놀이')}
-])}
-function talk(id){const seen=s.achievements['talkNpc'];if(id==='npcMiso'){achievement('talkNpc','첫 마을 친구 미소와 인사',16);modal('🐰 토끼 미소',`안녕! 나는 꽃잎마을 우체부 미소야.\n세은이와 아인이도 함께 왔구나! 공원에는 꽃이 활짝 피었대.`,[{label:'🌸 꽃공원은 어디야?',run:()=>modal('🐰 미소의 안내','마을 왼쪽 길을 따라 가면 공원 입구가 보여. 노란 안내판에서 A를 눌러봐!')},{label:'💌 반가워!',run:()=>{toast('미소와 친구가 되었어요!');save()}}]);return}if(id==='npcGrandma'){achievement('visitGrandma','할머니의 응원',8);modal('👵 꽃잎 할머니','어머, 우리 세은이랑 아인이 많이 컸네! 힘든 날도 있겠지만, 작은 행복을 자주 기록해 두렴.',[{label:'💖 고맙습니다',run:()=>{s.babies.forEach(b=>b.joy=clamp(b.joy+8));logs('💗','마을 할머니의 응원을 받았어요.');save();renderSide()}}]);return}if(id==='npcToto'){achievement('friendToto','공원 친구와 인사',12);modal('🐻 공원 친구 토토','어서 와! 여기서 꽃을 세 송이 관찰하면 작고 예쁜 꽃 왕관을 선물해 줄게.',[{label:'🌼 꽃 구경하러 가기',run:()=>toast('꽃 세 송이를 찾아보세요!')}]);return}if(id==='shopBear'){shopDialog();return}}
-const goods=[{id:'lamp',label:'🌙 별빛 조명',price:40},{id:'wall',label:'🌼 꽃무늬 벽장식',price:55},{id:'chair',label:'🪑 포근한 의자',price:70}];
-function shopDialog(){modal('🛍️ 햇살 상점',`안녕하세요! 작은 집에 행복을 더할 물건을 골라보세요.\n현재 코인: ${s.coins}개`,goods.map(g=>({label:`${s.purchases.includes(g.id)?'✅ 이미 구입함':g.label+' · '+g.price+' 코인'}`,disabled:s.purchases.includes(g.id)||s.coins<g.price,run:()=>{s.coins-=g.price;s.purchases.push(g.id);achievement('shopper','우리집 첫 꾸미기',18);minutes(8);logs('🛍️',`${g.label}을 구입했어요.`);renderSide();toast('우리 집 장식이 생겼어요!')}})))}
-function interact(){if(modalOpen)return;let o=nearest();if(!o){toast('조금 더 가까이 다가가 보세요!');return}beep(620,.04);if(o.to){go(o.to,o.toX,o.toY);return}if(o.baby!==undefined){careDialog(o.baby);return}if(o.npc){talk(o.id);return}switch(o.type){
-case 'flower':{const id=`${s.day}-${o.id}`;if(s.quest[id]){toast('이미 관찰한 꽃이에요.');return}s.quest[id]=true;s.flowers++;s.flowerRound++;s.coins+=3;minutes(5);logs('🌼',`공원에서 작은 꽃을 관찰했어요. (${s.flowerRound}/3)`);if(s.flowerRound===3)achievement(`flower${s.day}`,'세 송이 꽃 관찰 완료!',25);renderSide();toast('🌼 꽃을 발견했어요! +3 코인');return}
-case 'toys':modal('🧸 장난감 바구니','우리 딸들이 좋아하는 장난감이 잔뜩 있어요.',[{label:'🎵 율동하며 함께 놀기',run:()=>{s.babies.forEach(b=>b.joy=clamp(b.joy+19));minutes(24);achievement('play','쌍둥이 함께 놀기',12);logs('🎶','세은이와 아인이가 함께 웃었어요.')}}]);return;
-case 'bed':modal('🛏️ 잠자리 준비',`하루를 마무리하며 쌍둥이를 재울까요?\n오늘은 ${s.day}일째예요.`,[{label:'🌙 내일 아침으로 넘어가기',run:()=>{s.day++;s.minutes=480;s.babies.forEach(b=>{b.energy=clamp(b.energy+40);b.food=clamp(b.food-8)});s.flowerRound=0;achievement(`newday${s.day}`,`${s.day}일째 가족생활`,10);logs('🌅',`${s.day}일째 아침, 함께 맞는 새날.`);updateTop();renderSide();toast('좋은 아침이에요!')}}]);return;
-case 'table':case 'picnic':{modal('🧺 가족 피크닉',o.type==='table'?'식탁에 둘러앉아 가족 간식을 먹어요.':'햇살 아래에서 쌍둥이와 피크닉을 즐겨요.',[{label:'🍓 간식 먹으며 쉬기',run:()=>{s.babies.forEach(b=>{b.food=clamp(b.food+16);b.joy=clamp(b.joy+13)});minutes(35);achievement('picnic','함께하는 가족 식사',10);logs('🧺','가족이 함께 맛있는 간식을 먹었어요.')}}]);return}
-case 'shelf':case 'counter':shopDialog();return;
-case 'books':modal('📚 그림책 시간','세은이와 아인이가 그림책을 펼쳤어요.',[{label:'📖 동화 읽어주기',run:()=>{s.babies.forEach(b=>b.joy=clamp(b.joy+14));minutes(15);logs('📚','두 아이에게 그림책을 읽어주었어요.')}}]);return;
-case 'board':modal('📜 꽃잎마을 게시판','오늘의 소식\n🌼 공원 꽃 세 송이를 모아보세요.\n🍼 집에서 두 아이를 각각 돌봐주세요.\n🐰 우체부 미소와 인사를 나눠보세요.');return;
-case 'mailbox':modal('💌 마을 우편함','우편함에서 작은 편지를 발견했어요.\n“세은이와 아인이의 하루를 응원해요!”', [{label:'편지 간직하기',run:()=>achievement('mail','우리 가족에게 온 첫 편지',6)}]);return;
-case 'plant':case 'flowersPatch':case 'lamp':case 'mirror':case 'bench':case 'cupboard':case 'rug':modal('🌿 작은 발견','꽃잎마을의 평범한 물건에도 따뜻한 이야기가 숨어 있어요.');return;default:modal('✨ 살펴보기','사랑스러운 마을 풍경이에요.');}}
-function updateTop(){let hours=Math.floor(s.minutes/60),mins=Math.floor(s.minutes%60);el('money').textContent=s.coins;el('date').textContent=(hours>=19||hours<6?'🌙':'☀️')+' '+s.day+'일째';el('clock').textContent=(hours<12?'오전 ':'오후 ')+(hours%12||12)+':'+String(mins).padStart(2,'0');el('night').classList.toggle('active',hours>=19||hours<6);let labels={home:['🏡 우리집','🏡 꽃잎마을 우리집','세은이와 아인이의 아늑한 집이에요. 아기 침대에 다가가 A를 눌러 돌보고, 아래쪽 문에서 마을로 나가보세요.'],town:['🌳 꽃잎마을','🌳 꽃잎마을 중앙길','길을 따라 주민들과 인사하세요. 분홍 집은 우리집, 파란 집은 상점이에요. 왼쪽 아래 표지판에서는 공원으로 갈 수 있어요.'],park:['🌸 벚꽃공원','🌸 벚꽃공원','꽃을 세 송이 관찰하고, 친구 토토와 이야기하고, 가족 피크닉을 즐기세요.'],shop:['🛍️ 햇살 상점','🛍️ 햇살 상점','상점 주인과 대화해 집 꾸미기 물건을 구입해보세요. 아래쪽 문으로 마을에 돌아갈 수 있어요.']};el('sceneHeading').textContent=labels[s.scene][0];el('areaBadge').textContent=labels[s.scene][0];el('placeTitle').textContent=labels[s.scene][1];el('placeInfo').textContent=labels[s.scene][2];el('sound').textContent=s.sound?'🔊 소리':'🔇 소리'}
-const missionData=[['care0','세은이 돌보기'],['care1','아인이 돌보기'],['talkNpc','마을 친구에게 인사'],['flower'+s.day,'공원 꽃 3송이']];
-function renderSide(){el('twins').innerHTML=s.babies.map((b,i)=>`<div class="babyCard"><div class="bHeader"><span class="pface">${i===0?'👧🏻🎀':'👧🏻🌷'}</span><div class="bn">${b.name}<small>${i===0?'첫째 언니':'둘째 동생'}</small></div></div><div class="meters">${[['food','🍼 포만감','food'],['energy','💤 에너지','energy'],['joy','💕 행복','joy'],['clean','🫧 청결','clean']].map(([k,l,cls])=>`<div><div class="meterRow"><span>${l}</span><span>${Math.round(b[k])}</span></div><div class="meterTrack"><div class="meterFill ${cls}" style="width:${clamp(b[k])}%"></div></div></div>`).join('')}</div></div>`).join('');let completed=0;el('quests').innerHTML=missionData.map(([k,t])=>{let v=!!s.achievements[k];if(v)completed++;return `<div class="mission"><span>${v?'✅':'▫️'} ${t}</span><span class="${v?'okay':'pending'}">${v?'완료!':'진행 중'}</span></div>`}).join('');el('questCount').textContent=completed+' / '+missionData.length;el('journal').innerHTML=s.log.slice(0,4).map(x=>`<div class="logLine"><i>${x.icon}</i><span>${String(x.text).replace(/[<>&"']/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]))}</span></div>`).join('');el('money').textContent=s.coins}
-const keyToDir={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',s:'down',a:'left',d:'right',W:'up',S:'down',A:'left',D:'right'};let held=null,holdTimer=null;function stopHold(){clearInterval(holdTimer);held=null;document.querySelectorAll('.ctrl').forEach(b=>b.classList.remove('active'))}
-function hold(dir){if(!dir)return;stopHold();held=dir;move(dir);document.querySelector(`[data-dir="${dir}"]`)?.classList.add('active');holdTimer=setInterval(()=>move(dir),165)}
-document.querySelectorAll('.ctrl').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture?.(e.pointerId);hold(b.dataset.dir)});['pointerup','pointercancel','lostpointercapture'].forEach(k=>b.addEventListener(k,stopHold));b.addEventListener('contextmenu',e=>e.preventDefault())});
-window.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();return}if(modalOpen)return;if(keyToDir[e.key]){e.preventDefault();if(!e.repeat)hold(keyToDir[e.key]);return}if(['z','Z',' ','Enter'].includes(e.key)){e.preventDefault();interact()}else if(['b','B','x','X'].includes(e.key)){e.preventDefault();openBag()}});window.addEventListener('keyup',e=>{if(keyToDir[e.key]===held)stopHold()});window.addEventListener('blur',stopHold);
-el('buttonA').addEventListener('click',interact);el('buttonB').addEventListener('click',openBag);el('sound').addEventListener('click',()=>{s.sound=!s.sound;updateTop();save();beep(750,.09)});
-function openBag(){modal('🎒 우리 가족 가방',`📅 ${s.day}일째 · 코인 ${s.coins}개\n🌼 꽃 관찰 ${s.flowers}번\n🛍️ 구입한 집 꾸미기 물건 ${s.purchases.length}개\n🎀 쌍둥이 돌봄 ${s.babies.reduce((n,b)=>n+b.care,0)}번`,[{label:'📸 성장앨범 보기',run:openAlbum},{label:'🎮 조작법',run:openHelp},{label:'💾 지금 저장하기',run:()=>{save();toast('이 기기에 저장했어요!')}}])}
-function openAlbum(){let arr=s.log.slice(0,9);modal('📸 우리 가족 성장앨범',`세은이와 아인이의 순간들\n\n${arr.map(x=>x.icon+' '+x.text).join('\n')}`,[{label:'💗 오늘도 좋은 하루!',run:()=>toast('함께라서 행복해요!')}])}
-function openHelp(){modal('🎮 조작법 안내','휴대폰: 화면 아래 방향키로 걷기 / A로 대화·상호작용 / B로 가방\nPC: 화살표 또는 WASD 이동 / Space, Z, Enter로 대화 / B로 가방\n\n🏡 집 아기 침대에서 세은이·아인이 돌보기\n🌳 마을 분홍 집은 집, 파란 집은 상점\n🌸 왼쪽 공원 표지판에서 벚꽃공원 이동\n🛏️ 집의 침대에서 날짜 넘기기\n\n게임 진행 상황은 자동으로 이 브라우저에 저장돼요.')}
-el('btnHelp').addEventListener('click',openHelp);el('btnAlbum').addEventListener('click',openAlbum);el('btnReset').addEventListener('click',()=>modal('⚠️ 새 게임 시작','현재 게임 진행 기록이 삭제됩니다. 세은이·아인이와 꽃잎마을의 첫날부터 다시 시작할까요?',[{label:'네, 새로 시작하기',run:()=>{localStorage.removeItem(STORAGE);s=newState();face='up';walk={fromX:11,fromY:12,toX:11,toY:12,t:1,start:performance.now()};updateTop();renderSide();updateHint();save();toast('새로운 이야기가 시작됐어요!')}},{label:'아니요, 돌아가기',run:()=>{}}]));
-// purchased decorations shown in house without adding collision
-const oldDrawPixelObj=drawPixelObj;drawPixelObj=function(o,x,y){oldDrawPixelObj(o,x,y)};
-let decoObjects=[];function updateDeco(){home.objects=home.objects.filter(o=>!String(o.id).startsWith('deco'));home.solid[10][17]=false;home.solid[10][18]=false;if(s.purchases.includes('lamp'))thing(home,'decoLamp','lamp',14,3);if(s.purchases.includes('chair'))thing(home,'decoChair','bench',17,10);if(s.purchases.includes('wall'))thing(home,'decoWall','mirror',19,3)};
-const oldUpdateTop=updateTop;updateTop=()=>{updateDeco();oldUpdateTop()};
-updateTop();renderSide();updateHint();requestAnimationFrame(drawScene);save();
-if(!s.achievements.welcome){setTimeout(()=>modal('🌷 꽃잎마을에 오신 걸 환영해요!',`첫째 세은이, 둘째 아인이와 함께 시작하는 작은 모험!\n방향키로 걸어 다니며 집에서 두 딸을 돌보고, 밖으로 나가 친구를 만나보세요.`,[{label:'🎮 이제 출발!',run:()=>{s.achievements.welcome=true;save();toast('침대 옆에서 A를 눌러보세요!')}}]),650)}
-})();
-</script></body></html>
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#061827; --surface:#0c2740; --surface2:#123452; --fg:#e6f3f6; --muted:#9db8c6; --line:#1f4766;
+  --rock:#b9b39a; --rockfill:#3c4a4f; --sea:#0a3049; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#061827; --surface:#0c2740; --surface2:#123452; --fg:#e6f3f6; --muted:#9db8c6; --line:#1f4766;
+  --rock:#b9b39a; --rockfill:#3c4a4f; --sea:#0a3049; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:0 40px}
+header.top{background:linear-gradient(180deg,var(--deep),var(--abyss));color:var(--foam);padding-block:20px 34px;position:relative;overflow:hidden}
+header.top::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:22px;background:var(--bg);
+  -webkit-mask:radial-gradient(28px 12px at 50% 0,transparent 98%,#000) 0 0/56px 22px repeat-x;mask:radial-gradient(28px 12px at 50% 0,transparent 98%,#000) 0 0/56px 22px repeat-x}
+.toprow{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end;justify-content:space-between}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(28px,5vw,40px);letter-spacing:.5px;margin:0;line-height:1.05;text-wrap:balance}
+.sub{color:var(--shallow);font-size:13px;margin-top:4px}
+.seg{display:flex;background:rgba(255,255,255,.1);border-radius:999px;padding:4px;gap:2px}
+.seg button{border:0;background:transparent;color:var(--foam);font:700 14px var(--f-body);padding:8px 16px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--foam);color:var(--abyss)}
+.seg button:focus-visible,.btn:focus-visible,.prow:focus-visible{outline:2px solid var(--coral);outline-offset:2px}
+.cond{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:18px}
+.stat{background:rgba(255,255,255,.08);border-radius:14px;padding:10px 12px;min-width:0}
+.stat .k{font-size:11px;color:rgba(242,251,252,.7);letter-spacing:.3px}
+.stat .v{font:600 18px var(--f-num);font-variant-numeric:tabular-nums}
+.stat .v small{font:500 12px var(--f-body);color:rgba(242,251,252,.75)}
+.tidebar{margin-top:14px}
+.tidebar svg{width:100%;height:70px;display:block}
+.tideticks{display:flex;justify-content:space-between;font:500 10px var(--f-num);color:rgba(242,251,252,.7)}
+.status{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-top:18px;font-size:13px;color:var(--muted)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--fg);font:700 13px var(--f-body);padding:7px 12px;border-radius:999px;cursor:pointer}
+.manual{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:12px}
+.manual label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.manual output{font:600 14px var(--f-num);color:var(--fg);float:right}
+.manual input[type=range]{width:100%;accent-color:var(--tide)}
+.manual select{width:100%;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:14px var(--f-body)}
+.spchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+.spchips button{border:1px solid var(--line);background:var(--surface);color:var(--fg);font:500 13px var(--f-body);padding:6px 13px;border-radius:999px;cursor:pointer}
+.spchips button[aria-pressed="true"]{background:var(--tide);border-color:var(--tide);color:#fff;font-weight:700}
+.grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:18px;margin-top:16px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px;min-width:0}
+.panel h2{font:700 16px var(--f-body);margin:0 0 4px}
+.panel .hint{font-size:12px;color:var(--muted);margin:0 0 8px}
+.mapbox{position:relative}
+#map{width:100%;height:auto;display:block;border-radius:12px;background:var(--sea)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.list{display:flex;flex-direction:column;gap:6px}
+.prow{display:grid;grid-template-columns:26px 50px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 8px;border-radius:12px;cursor:pointer;border:1px solid transparent;background:none;text-align:left;color:inherit;font:inherit;width:100%}
+.prow:hover{background:var(--surface2)}
+.prow[aria-current="true"]{border-color:var(--tide);background:var(--surface2)}
+.rank{font:600 13px var(--f-num);color:var(--muted);text-align:center}
+.gauge{width:50px;height:50px}
+.pname{font-weight:700;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tag{font-size:10.5px;font-weight:700;color:var(--tide);background:color-mix(in srgb,var(--tide) 14%,transparent);padding:1px 6px;border-radius:6px}
+.tag.ebb{color:#7a5bd0;background:color-mix(in srgb,#7a5bd0 14%,transparent)}
+.tag.flood{color:var(--tide)}
+.tag.both{color:var(--good);background:color-mix(in srgb,var(--good) 14%,transparent)}
+.pmeta{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bars{display:flex;gap:2px;align-items:flex-end;height:26px}
+.bars i{display:block;width:7px;border-radius:2px}
+.detail{margin-top:18px}
+.dhead{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center}
+.dhead .big{width:86px;height:86px}
+.dname{font-family:var(--f-display);font-size:26px;font-weight:400;line-height:1.1}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.pill{font-size:12px;background:var(--surface2);border-radius:9px;padding:4px 9px}
+.pill b{font-weight:700}
+.hourscroll{overflow-x:auto;margin-top:14px;padding-bottom:4px}
+.hours{display:grid;grid-template-columns:repeat(13,minmax(54px,1fr));gap:6px;min-width:760px}
+.hcol.after{opacity:.6;border-style:dashed}
+.hcol{border:1px solid var(--line);border-radius:12px;padding:6px 4px 8px;text-align:center;cursor:pointer;background:var(--surface);color:inherit;font:inherit}
+.hcol[aria-pressed="true"]{border-color:var(--tide);background:var(--surface2)}
+.hcol .h{font:600 12px var(--f-num)}
+.hcol .tank{height:70px;margin:6px auto;width:60%;background:var(--surface2);border-radius:6px;position:relative;overflow:hidden}
+.hcol .tank i{position:absolute;left:0;right:0;bottom:0;border-radius:6px}
+.hcol .s{font:600 15px var(--f-num)}
+.hcol .ph{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reasons{margin-top:14px;display:flex;flex-direction:column;gap:5px}
+.reason{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:8px;align-items:baseline;font-size:14px}
+.reason .d{width:8px;height:8px;border-radius:50%;align-self:center}
+.reason .n{font:600 13px var(--f-num)}
+.sum{font-size:12px;color:var(--muted);margin-top:10px}
+.foot{font-size:12px;color:var(--muted);margin-top:22px;max-width:70ch}
+.danger{color:var(--bad);font-weight:700;font-size:13px}
+@media (prefers-reduced-motion:no-preference){.hcol .tank i,.bars i{transition:height .35s ease}}
+@media (max-width:520px){.prow{grid-template-columns:22px 44px minmax(0,1fr)}.prow .bars{grid-column:3}.gauge{width:44px;height:44px}}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="toprow">
+      <div>
+        <h1>두도 포인트</h1>
+        <div class="sub">부산 송도 두도 갯바위 찌낚시 · 05~13시 평균 확률 순위</div>
+      </div>
+      <div class="seg" role="group" aria-label="날짜">
+        <button type="button" data-day="0" aria-pressed="true">오늘</button>
+        <button type="button" data-day="1" aria-pressed="false">내일</button>
+        <button type="button" data-day="2" aria-pressed="false">모레</button>
+      </div>
+    </div>
+    <div class="cond" id="cond"></div>
+    <div class="tidebar">
+      <svg id="tideSvg" viewBox="0 0 480 70" preserveAspectRatio="none" aria-label="하루 물때 곡선"></svg>
+      <div class="tideticks"><span>0시</span><span>6시</span><span>12시</span><span>18시</span><span>24시</span></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="status" id="status"></div>
+  <div class="manual" id="manual" hidden>
+    <div><label for="inWind">풍속 <output id="oWind"></output></label><input type="range" id="inWind" min="0" max="14" step="0.5"></div>
+    <div><label for="inDir">바람 방향 (불어오는 쪽)</label>
+      <select id="inDir"><option value="0">북</option><option value="45">북동</option><option value="90">동</option><option value="135">남동</option><option value="180">남</option><option value="225">남서</option><option value="270">서</option><option value="315">북서</option></select></div>
+    <div><label for="inWave">외해 파고 <output id="oWave"></output></label><input type="range" id="inWave" min="0" max="3" step="0.1"></div>
+    <div><label for="inTemp">수온 <output id="oTemp"></output></label><input type="range" id="inTemp" min="8" max="28" step="0.5"></div>
+  </div>
+  <div class="spchips" id="spchips" role="group" aria-label="대상어"></div>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>섬 지도</h2>
+      <p class="hint">원 안 번호 = 포인트, 색 = 05~13시 평균 확률. 원을 누르면 시간별 근거가 나와요.</p>
+      <div class="mapbox"><svg id="map" viewBox="0 0 400 520" role="img" aria-label="두도 포인트 지도"></svg></div>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--s5)"></i>75↑ 강력 추천</span>
+        <span><i class="dot" style="background:var(--s4)"></i>62↑ 좋음</span>
+        <span><i class="dot" style="background:var(--s3)"></i>50↑ 보통</span>
+        <span><i class="dot" style="background:var(--s2)"></i>38↑ 낮음</span>
+        <span><i class="dot" style="background:var(--s1)"></i>비추천</span>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>추천 순위</h2>
+      <p class="hint">막대 = 05~18시 시간별 확률 (진한 막대 05~13시가 순위 기준, 흐린 막대는 참고)</p>
+      <div class="list" id="list"></div>
+    </section>
+  </div>
+
+  <section class="panel detail" id="detail"></section>
+
+  <p class="foot" id="foot">섬 모양: OpenStreetMap 해안선 (© OpenStreetMap contributors). 점수는 물때·조류 방향·바람·체감 파고·수온·포인트 수심과 지형·과거 조과(인낚 조행기, 송도 은파낚시 밴드 조황)로 계산한 참고값입니다. 갯바위 출조 전 기상특보와 현장 상황을 꼭 확인하세요.</p>
+</main>
+
+<script>
+const SHAPE={"islands": [[[35.047891, 129.015815], [35.048011, 129.015937], [35.048275, 129.015953], [35.048356, 129.015854], [35.048622, 129.016013], [35.048705, 129.015987], [35.048764, 129.015796], [35.048867, 129.015842], [35.048906, 129.015811], [35.048906, 129.015685], [35.049234, 129.015756], [35.049288, 129.015615], [35.049274, 129.015333], [35.049582, 129.015682], [35.04981, 129.015429], [35.049865, 129.015081], [35.04998, 129.015207], [35.050325, 129.014931], [35.050351, 129.014393], [35.050198, 129.014237], [35.049912, 129.014211], [35.04982, 129.014292], [35.049541, 129.014138], [35.049294, 129.014214], [35.049208, 129.014033], [35.049008, 129.01422], [35.048925, 129.014162], [35.048936, 129.01406], [35.048913, 129.01402], [35.048846, 129.014086], [35.048734, 129.014214], [35.04871, 129.014057], [35.048428, 129.01424], [35.048466, 129.014105], [35.048244, 129.014049], [35.048155, 129.013898], [35.048012, 129.014005], [35.047987, 129.014214], [35.047904, 129.01439], [35.047908, 129.01465], [35.047754, 129.014987], [35.047815, 129.015607], [35.047891, 129.015815]], [[35.047695, 129.015581], [35.047746, 129.015528], [35.047729, 129.015108], [35.047697, 129.015007], [35.047392, 129.014883], [35.047334, 129.015119], [35.04762, 129.015567], [35.047695, 129.015581]], [[35.047581, 129.015629], [35.047098, 129.015481], [35.047048, 129.015528], [35.047031, 129.015709], [35.047111, 129.01583], [35.047322, 129.015949], [35.047482, 129.015993], [35.047535, 129.015945], [35.047562, 129.016008], [35.047629, 129.016008], [35.047714, 129.015869], [35.047714, 129.015741], [35.047581, 129.015629]]], "coast": [[[35.079852, 129.004225], [35.071101, 129.005476], [35.065977, 129.009301], [35.065177, 129.012018], [35.063029, 129.011095], [35.062803, 129.008272], [35.062597, 129.008289], [35.062497, 129.008247], [35.060694, 129.008482], [35.060483, 129.008838], [35.057979, 129.0097], [35.057639, 129.008373], [35.056959, 129.008611], [35.057254, 129.009957], [35.056408, 129.010241], [35.055785, 129.010479], [35.055722, 129.010445], [35.0554, 129.009144], [35.054834, 129.009369], [35.055155, 129.010639], [35.05507, 129.010753], [35.052432, 129.011673], [35.051239, 129.008498], [35.050942, 129.00869], [35.052743, 129.013203], [35.052667, 129.013342], [35.052728, 129.014002], [35.052646, 129.014212], [35.052645, 129.014572], [35.052746, 129.01504], [35.052945, 129.015341], [35.05333, 129.0158], [35.053814, 129.016174], [35.05429, 129.0163], [35.054601, 129.016188], [35.054801, 129.015581], [35.054839, 129.015429], [35.055099, 129.015534], [35.055233, 129.015369], [35.055405, 129.01561], [35.055949, 129.015677], [35.056003, 129.015587], [35.056356, 129.01579], [35.057112, 129.01609], [35.057101, 129.016285], [35.057109, 129.016518], [35.057386, 129.016688], [35.057421, 129.016756], [35.057181, 129.016723], [35.057133, 129.016916], [35.057216, 129.017063], [35.057118, 129.017191], [35.057169, 129.017633], [35.057305, 129.017903], [35.057365, 129.018213], [35.057567, 129.018273], [35.05779, 129.018288], [35.05777, 129.018471], [35.057967, 129.018604], [35.058326, 129.018555], [35.058437, 129.018729], [35.058614, 129.018972], [35.058818, 129.018892], [35.05892, 129.018725], [35.059299, 129.018822], [35.05945, 129.019223], [35.059587, 129.019237], [35.059616, 129.01948], [35.059737, 129.019685], [35.05992, 129.019748], [35.060033, 129.019873], [35.060078, 129.020229], [35.060272, 129.020628], [35.060306, 129.020724], [35.060258, 129.020855], [35.060518, 129.021179], [35.060886, 129.021354], [35.060907, 129.021485], [35.060731, 129.021514], [35.060804, 129.021724], [35.061144, 129.022081], [35.061564, 129.022172], [35.061747, 129.022342], [35.061863, 129.022431], [35.062114, 129.022425], [35.062149, 129.022288], [35.06251, 129.02224], [35.062565, 129.022051], [35.062846, 129.021806], [35.064485, 129.02053], [35.064824, 129.020715], [35.065011, 129.020737], [35.065181, 129.020673], [35.065436, 129.02075], [35.065502, 129.020837], [35.065657, 129.020905], [35.065846, 129.02088], [35.066114, 129.020503], [35.066242, 129.02045], [35.066259, 129.020252], [35.066451, 129.02015], [35.066584, 129.020229], [35.066983, 129.020277], [35.067233, 129.02048], [35.067482, 129.020727], [35.067774, 129.02081], [35.068172, 129.020859], [35.068494, 129.020608], [35.068666, 129.02075], [35.068818, 129.020868], [35.06901, 129.020857], [35.069335, 129.020619], [35.069536, 129.020372], [35.069567, 129.020221], [35.069733, 129.019931], [35.069826, 129.019904], [35.070041, 129.019701], [35.070069, 129.019541], [35.070279, 129.019331], [35.070553, 129.01981], [35.071043, 129.019899], [35.071439, 129.019626], [35.071524, 129.019534], [35.071445, 129.019248], [35.071346, 129.019272], [35.071349, 129.01944], [35.071021, 129.019687], [35.070688, 129.019637], [35.070569, 129.019369], [35.07065, 129.019307], [35.070586, 129.019173], [35.071055, 129.018878], [35.071292, 129.018981], [35.071392, 129.018895], [35.071332, 129.018745], [35.071629, 129.018344], [35.071941, 129.018182], [35.072302, 129.018101], [35.072647, 129.018176], [35.072926, 129.018121], [35.07311, 129.018037], [35.07321, 129.017834], [35.073449, 129.017662], [35.073772, 129.017508], [35.073892, 129.017652], [35.074019, 129.017645], [35.073824, 129.017065], [35.074007, 129.016946], [35.074166, 129.016932], [35.074319, 129.016938], [35.074534, 129.016989], [35.075124, 129.017342], [35.075351, 129.017538], [35.07573, 129.017971], [35.07603, 129.018409], [35.076382, 129.018896], [35.076626, 129.019297], [35.076891, 129.019827], [35.077024, 129.020276], [35.077064, 129.020559], [35.077064, 129.020911], [35.077027, 129.02112], [35.076996, 129.021183], [35.076959, 129.021156], [35.076941, 129.021203], [35.077065, 129.021298], [35.077029, 129.021418], [35.076999, 129.021548], [35.076853, 129.021769], [35.076786, 129.021901], [35.076831, 129.021931], [35.076848, 129.021995], [35.076807, 129.022064], [35.076691, 129.022167], [35.076509, 129.022301], [35.076484, 129.022234], [35.076474, 129.022156], [35.076474, 129.022092], [35.076505, 129.022008], [35.076587, 129.021839], [35.076815, 129.021636], [35.076743, 129.021528], [35.076569, 129.021704], [35.076405, 129.02195], [35.076347, 129.022113], [35.076283, 129.022245], [35.076317, 129.022298], [35.076169, 129.022457], [35.076068, 129.022596], [35.076074, 129.022701], [35.07607, 129.022711], [35.076054, 129.022749], [35.076015, 129.022842], [35.075918, 129.022856], [35.075825, 129.022957], [35.075759, 129.023259], [35.075773, 129.02354], [35.075816, 129.023761], [35.075969, 129.024], [35.076102, 129.024103], [35.076095, 129.024547], [35.078304, 129.025116], [35.078453, 129.025232], [35.078505, 129.025555], [35.079089, 129.025572], [35.079101, 129.025433], [35.0792, 129.025337], [35.079213, 129.025233], [35.080734, 129.025554], [35.080939, 129.025872], [35.080931, 129.026133], [35.081224, 129.026207]], [[35.046661, 129.000161], [35.046834, 129.000441], [35.04711, 129.000518], [35.047712, 129.000169], [35.047885, 129.00126], [35.048019, 129.001415], [35.048984, 129.00694], [35.049202, 129.006872], [35.048218, 129.001235], [35.048982, 129.000959], [35.049097, 129.00136], [35.049803, 129.001118], [35.049837, 129.001212], [35.050532, 129.000974], [35.050458, 129.000708], [35.050888, 129.000505], [35.050912, 129.000677], [35.051254, 129.000517], [35.051329, 129.000487], [35.051827, 129.000277], [35.054333, 128.999335], [35.054384, 128.999407], [35.054876, 128.99921], [35.054882, 128.999242], [35.054971, 128.999202], [35.05503, 128.99913], [35.055077, 128.999028], [35.055022, 128.998833], [35.055346, 128.998707], [35.055403, 128.998888], [35.056025, 128.998677], [35.056008, 128.998592], [35.056513, 128.998367], [35.056572, 128.998575], [35.056655, 128.998535], [35.056613, 128.998386], [35.056683, 128.998354], [35.056725, 128.998509], [35.056847, 128.998458], [35.056823, 128.998376], [35.057025, 128.9983], [35.057063, 128.99842], [35.057533, 128.998228], [35.057402, 128.997656], [35.063358, 128.995322], [35.071395, 128.995303], [35.07138, 128.994338], [35.072151, 128.994256], [35.072287, 128.994055], [35.072251, 128.993573], [35.072508, 128.993555], [35.072544, 128.994078], [35.072661, 128.994068], [35.072643, 128.993714], [35.073223, 128.993703], [35.073211, 128.993527], [35.073424, 128.993517], [35.073442, 128.993697], [35.073547, 128.993695], [35.073759, 128.993697], [35.073814, 128.993701], [35.074546, 128.994621], [35.07436, 128.994625], [35.074578, 128.994983], [35.075771, 128.994932], [35.079052, 128.99319], [35.079072, 128.993058], [35.079414, 128.992887], [35.079488, 128.99295], [35.080091, 128.992634], [35.08389, 128.993059], [35.083185, 128.996575]]], "breakwater": [[35.050501, 129.014562], [35.050981, 129.014605]], "buoy": [35.047227, 129.014682], "source": "OpenStreetMap 해안선 (© OpenStreetMap contributors, ODbL)"};
+const POINTS=[{"id": "dudo_1", "name": "두도 1번", "lat": 35.05028, "lng": 129.014326, "facingDeg": 300, "depthMin": 6, "depthMax": 10, "depth": "6~10m", "terrain": "곶부리", "species": ["감성돔", "벵에돔", "볼락"], "target": "방파제(테트라포드)와 섬이 만나는 모서리 앞. 방파제를 따라 흐르는 조류와 섬을 돌아 나오는 조류가 만나는 조경지대", "targetDistance": 10}, {"id": "dudo_1_5", "name": "두도 1.5번", "lat": 35.050118, "lng": 129.014266, "facingDeg": 285, "depthMin": 4, "depthMax": 8, "depth": "4~8m", "terrain": "여밭", "species": ["감성돔", "벵에돔", "볼락", "무늬오징어"], "target": "방파제 안쪽 홈. 날물 때 방파제에 막힌 물이 돌아 나가는 와류 지대", "targetDistance": 12}, {"id": "dudo_2", "name": "두도 2번", "lat": 35.04997, "lng": 129.014234, "facingDeg": 275, "depthMin": 3, "depthMax": 6, "depth": "3~6m", "terrain": "여밭", "species": ["감성돔", "볼락", "무늬오징어"], "target": "전방 10~15m 여밭 끝자락(수심 3~6m). 들물에 감성돔이 여밭 위로 올라붙는 자리", "targetDistance": 12}, {"id": "dudo_2_5", "name": "두도 2.5번", "lat": 35.049741, "lng": 129.014227, "facingDeg": 270, "depthMin": 2.5, "depthMax": 6, "depth": "2.5~6m", "terrain": "여밭", "species": ["감성돔", "벵에돔", "볼락", "무늬오징어"], "target": "전방 10~15m 수심 4~6m 여밭 – 조행기상 가을 감성돔 마릿수 자리. 여 사이 골창을 흘림", "targetDistance": 12}, {"id": "dudo_3", "name": "두도 3번", "lat": 35.049634, "lng": 129.014201, "facingDeg": 265, "depthMin": 4, "depthMax": 8, "depth": "4~8m", "terrain": "여밭", "species": ["감성돔", "벵에돔", "볼락", "무늬오징어"], "target": "전방 10~15m 여밭과 모래 경계(수심 4~8m). 경계선을 따라 채비가 지나가게", "targetDistance": 13}, {"id": "dudo_4", "name": "두도 4번", "lat": 35.04923, "lng": 129.014095, "facingDeg": 265, "depthMin": 4, "depthMax": 7, "depth": "4~7m", "terrain": "평면", "species": ["감성돔", "볼락", "무늬오징어"], "target": "작은 돌출부 끝 – 발 앞 수중여 끝자락에서 조류가 꺾이는 지점", "targetDistance": 10}, {"id": "dudo_4_5", "name": "두도 4.5번", "lat": 35.04892, "lng": 129.014095, "facingDeg": 250, "depthMin": 4.5, "depthMax": 6, "depth": "4.5~6m", "terrain": "홈통", "species": ["감성돔", "볼락", "무늬오징어"], "target": "서편 홈통 입구(수심 4.5~6m). 센 물때에 홈통 안으로 도는 반탄류", "targetDistance": 8}, {"id": "dudo_5", "name": "두도 5번", "lat": 35.04818, "lng": 129.01394, "facingDeg": 225, "depthMin": 5, "depthMax": 8, "depth": "5~8m", "terrain": "평면", "species": ["감성돔", "벵에돔", "볼락", "무늬오징어"], "target": "남서쪽 곶부리 끝 – 들물·날물이 갈라지는 본류대 가장자리, 곶부리 뒤 지류와의 경계", "targetDistance": 12}, {"id": "dudo_6", "name": "두도 6번", "lat": 35.047951, "lng": 129.014293, "facingDeg": 200, "depthMin": 6, "depthMax": 12, "depth": "6~12m", "terrain": "곶부리", "species": ["감성돔", "벵에돔", "볼락"], "target": "본섬과 가운데 부속섬 사이 수로 입구(수심 6~12m). 수로로 빨려드는 조류의 가장자리", "targetDistance": 10}, {"id": "dudo_6_5", "name": "두도 6.5번", "lat": 35.047907, "lng": 129.014555, "facingDeg": 175, "depthMin": 6, "depthMax": 11, "depth": "6~11m", "terrain": "홈통", "species": ["감성돔", "벵에돔", "볼락"], "target": "수로 안쪽 직벽 아래(수심 6~11m). 수로를 통과하며 빨라진 물살 옆 완류대", "targetDistance": 8}, {"id": "dudo_7", "name": "두도 7번", "lat": 35.047758, "lng": 129.015028, "facingDeg": 355, "depthMin": 6, "depthMax": 10, "depth": "6~10m", "terrain": "평면", "species": ["감성돔", "벵에돔", "볼락"], "target": "가운데 부속섬 북쪽 – 본섬 사이 좁은 수로. 물돌이 직후 조류가 살아날 때 발밑~5m", "targetDistance": 6}, {"id": "dudo_8", "name": "두도 8번", "lat": 35.047466, "lng": 129.014901, "facingDeg": 245, "depthMin": 6, "depthMax": 9, "depth": "6~9m", "terrain": "평면", "species": ["감성돔", "벵에돔", "볼락"], "target": "가운데 부속섬 서쪽 끝, 앞쪽 수중여(부표 쪽) 주변. 여 뒤편에 생기는 와류", "targetDistance": 10}, {"id": "dudo_9", "name": "두도 9번", "lat": 35.047404, "lng": 129.015229, "facingDeg": 146, "depthMin": 6, "depthMax": 10, "depth": "6~10m", "terrain": "홈통", "species": ["감성돔", "벵에돔", "볼락"], "target": "가운데 부속섬 남쪽 – 외해 쪽 조류가 섬을 돌며 생기는 조경지대", "targetDistance": 10, "localBias": -10, "localNote": "현지 경험(사용자): 조과가 잘 안 나오는 자리"}, {"id": "dudo_wall", "name": "두도 직벽", "lat": 35.047412, "lng": 129.015561, "facingDeg": 280, "depthMin": 11, "depthMax": 15, "depth": "11~15m", "terrain": "직벽", "species": ["감성돔", "벵에돔", "볼락"], "target": "동남 부속섬 서쪽 직벽(수심 11~15m) – 두 부속섬 사이 수로로 흐르는 본류 옆. 직벽을 따라 바닥층", "targetDistance": 6}, {"id": "dudo_10", "name": "두도 10번", "lat": 35.047182, "lng": 129.015498, "facingDeg": 250, "depthMin": 8, "depthMax": 12, "depth": "8~12m", "terrain": "곶부리", "species": ["감성돔", "벵에돔", "볼락"], "target": "동남 부속섬 서쪽 – 직벽 바로 아래쪽. 가운데 부속섬과의 수로 남쪽 출구(수심 8~12m), 수로를 빠져나가는 조류 가장자리", "targetDistance": 10}, {"id": "dudo_11", "name": "두도 11번", "lat": 35.047015, "lng": 129.01567, "facingDeg": 191, "depthMin": 8, "depthMax": 12, "depth": "8~12m", "terrain": "곶부리", "species": ["감성돔", "벵에돔", "볼락"], "target": "동남 부속섬 남쪽 끝 곶부리 – 외해 본류와 수로 조류가 만나는 조경지대", "targetDistance": 12, "localBias": -10, "localNote": "현지 경험(사용자): 조과가 잘 안 나오는 자리"}, {"id": "dudo_12", "name": "두도 12번", "lat": 35.047332, "lng": 129.015951, "facingDeg": 122, "depthMin": 8, "depthMax": 12, "depth": "8~12m", "terrain": "곶부리", "species": ["감성돔", "벵에돔", "볼락"], "target": "동남 부속섬 동쪽 아래 – 날물 북동류가 붙어 흐르는 외해면(수심 8~12m)", "targetDistance": 10}, {"id": "dudo_12_5", "name": "두도 12.5번", "lat": 35.04762, "lng": 129.016008, "facingDeg": 42, "depthMin": 8, "depthMax": 12, "depth": "8~12m", "terrain": "곶부리", "species": ["감성돔", "벵에돔", "볼락"], "target": "동남 부속섬 동쪽 위 – 조류가 섬에 부딪혀 꺾이는 반탄류", "targetDistance": 10}, {"id": "dudo_13", "name": "두도 13번", "lat": 35.047714, "lng": 129.015869, "facingDeg": 17, "depthMin": 8, "depthMax": 10, "depth": "8~10m", "terrain": "평면", "species": ["감성돔", "벵에돔", "볼락"], "target": "동남 부속섬 북쪽 – 본섬과의 수로(수심 8~10m). 물돌이 전후 수로 안 완류", "targetDistance": 8}, {"id": "dudo_13_5", "name": "두도 13.5번", "lat": 35.047875, "lng": 129.01577, "facingDeg": 150, "depthMin": 8, "depthMax": 10, "depth": "8~10m", "terrain": "홈통", "species": ["감성돔", "벵에돔", "볼락"], "target": "본섬과 동남 부속섬 사이 수로 입구(수심 8~10m) – 물돌이 전후 수로 안 완류", "targetDistance": 8, "localBias": -10, "localNote": "현지 경험(사용자): 조과가 잘 안 나오는 자리"}, {"id": "dudo_14", "name": "두도 14번", "lat": 35.048337, "lng": 129.015877, "facingDeg": 131, "depthMin": 4, "depthMax": 8, "depth": "4~8m", "terrain": "평면", "species": ["감성돔", "벵에돔", "볼락", "무늬오징어"], "target": "동편 직선 갯바위 앞 – 날물 북동류가 갯바위를 따라 흐르는 띠(수심 4~8m)", "targetDistance": 10}, {"id": "dudo_14_5", "name": "두도 14.5번", "lat": 35.048709, "lng": 129.015972, "facingDeg": 105, "depthMin": 4, "depthMax": 9, "depth": "4~9m", "terrain": "곶부리", "species": ["감성돔", "벵에돔", "볼락", "무늬오징어"], "target": "동편 돌출부 끝 – 조류가 가장 잘 받히는 곶부리. 약한 물때 1순위", "targetDistance": 12}, {"id": "dudo_15", "name": "두도 15번", "lat": 35.049252, "lng": 129.015709, "facingDeg": 55, "depthMin": 6, "depthMax": 9, "depth": "6~9m", "terrain": "평면", "species": ["감성돔", "벵에돔", "볼락"], "target": "동편 홈 – 곶부리 뒤로 생기는 지류·와류(수심 6~9m)", "targetDistance": 10}, {"id": "dudo_16", "name": "두도 16번", "lat": 35.049677, "lng": 129.015576, "facingDeg": 32, "depthMin": 5, "depthMax": 8, "depth": "5~8m", "terrain": "평면", "species": ["감성돔", "벵에돔", "볼락", "무늬오징어"], "target": "북동 돌출부 – 들물 남서류가 돌아 나가는 조경지대", "targetDistance": 10}, {"id": "dudo_16_5", "name": "두도 16.5번", "lat": 35.04982, "lng": 129.015367, "facingDeg": 18, "depthMin": 6, "depthMax": 9, "depth": "6~9m", "terrain": "홈통", "species": ["감성돔", "벵에돔", "볼락"], "target": "북동 홈통 – 조행기상 감성돔·벵에돔 조과 자리. 홈통 안 완류에 밑밥을 가둠", "targetDistance": 10}, {"id": "dudo_17", "name": "두도 17번", "lat": 35.050094, "lng": 129.015116, "facingDeg": 10, "depthMin": 5, "depthMax": 9, "depth": "5~9m", "terrain": "평면", "species": ["감성돔", "벵에돔", "볼락", "무늬오징어"], "target": "북동 갯바위 앞 여밭(수심 5~9m)", "targetDistance": 10}, {"id": "dudo_17_5", "name": "두도 17.5번", "lat": 35.050232, "lng": 129.015006, "facingDeg": 4, "depthMin": 4, "depthMax": 7, "depth": "4~7m", "terrain": "평면", "species": ["감성돔", "볼락", "무늬오징어"], "target": "북쪽 – 방파제 동쪽 홈(수심 4~7m)", "targetDistance": 8}, {"id": "dudo_18", "name": "두도 18번", "lat": 35.050328, "lng": 129.014875, "facingDeg": 357, "depthMin": 3, "depthMax": 6, "depth": "3~6m", "terrain": "곶부리", "species": ["감성돔", "볼락", "무늬오징어"], "target": "북쪽 끝 방파제 동쪽 모서리 – 방파제를 타고 흐르는 조류", "targetDistance": 8}];
+const RECORDS=[{"date": "2023-07-26", "startHour": 8, "endHour": 14, "pointId": "dudo_2_5", "catches": {"벵에돔": 20, "감성돔": 10}, "source": "인낚 조행기 (2023.07.29)"}, {"date": "2023-08-13", "startHour": 5, "endHour": 11, "pointId": "dudo_16_5", "catches": {"감성돔": 10, "벵에돔": 10}, "source": "인낚 조행기 (2023.08.14)"}, {"date": "2023-09-14", "startHour": 7, "endHour": 13, "sideFacingDeg": 270, "catches": {"감성돔": 15}, "source": "인낚 조행기 (2023.09.15, 2일 출조 중 1일차)"}, {"date": "2023-09-15", "startHour": 7, "endHour": 13, "sideFacingDeg": 270, "catches": {"감성돔": 15}, "source": "인낚 조행기 (2023.09.15, 2일 출조 중 2일차)"}, {"date": "2026-09-12", "startHour": 7, "endHour": 13, "pointId": "dudo_2_5", "catches": {"감성돔": 15}, "source": "인낚 조행기 (2026.09.13)"}, {"date": "2018-09-03", "startHour": 6, "endHour": 12, "catches": {"감성돔": 1}, "source": "인낚 스태프 조행기 (2018.09.03)"}, {"date": "2021-07-31", "startHour": 13, "endHour": 17, "pointId": "dudo_1", "catches": {"무늬오징어": 10}, "source": "월간낚시21 기사 (2021.07.31 출조)"}, {"date": "2026-10-05", "startHour": 5, "endHour": 12, "catches": {"감성돔": 0}, "rating": {"감성돔": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-10-05)"}, {"date": "2026-10-04", "startHour": 5, "endHour": 12, "catches": {"감성돔": 12}, "rating": {"감성돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2026-10-04)"}, {"date": "2026-09-30", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-09-30)"}, {"date": "2026-09-27", "startHour": 5, "endHour": 12, "catches": {"감성돔": 12}, "rating": {"감성돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2026-09-27)"}, {"date": "2026-09-26", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-09-26)"}, {"date": "2026-09-24", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2026-09-24)"}, {"date": "2026-09-13", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-09-13)"}, {"date": "2026-09-12", "startHour": 5, "endHour": 12, "catches": {"감성돔": 12}, "rating": {"감성돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2026-09-12)"}, {"date": "2026-09-08", "startHour": 5, "endHour": 12, "catches": {"벵에돔": 6, "감성돔": 2}, "rating": {"벵에돔": 1, "감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2026-09-08)"}, {"date": "2026-08-27", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-08-27)"}, {"date": "2026-08-22", "startHour": 5, "endHour": 12, "catches": {"벵에돔": 6, "감성돔": 2}, "rating": {"벵에돔": 1, "감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2026-08-22)"}, {"date": "2026-08-14", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2026-08-14)"}, {"date": "2026-08-07", "startHour": 5, "endHour": 12, "catches": {"무늬오징어": 12}, "rating": {"무늬오징어": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2026-08-07)"}, {"date": "2026-06-08", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-06-08)"}, {"date": "2026-06-07", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6, "벵에돔": 0}, "rating": {"감성돔": 1, "벵에돔": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-06-07)"}, {"date": "2026-06-03", "startHour": 5, "endHour": 12, "catches": {"벵에돔": 12}, "rating": {"벵에돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2026-06-03)"}, {"date": "2026-06-03", "startHour": 5, "endHour": 12, "sideFacingDeg": 90, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-06-03)"}, {"date": "2026-05-30", "startHour": 5, "endHour": 12, "catches": {"벵에돔": 6}, "rating": {"벵에돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-05-30)"}, {"date": "2026-05-23", "startHour": 5, "endHour": 12, "catches": {"벵에돔": 6}, "rating": {"벵에돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-05-23)"}, {"date": "2026-05-07", "startHour": 5, "endHour": 12, "catches": {"벵에돔": 2}, "rating": {"벵에돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2026-05-07)"}, {"date": "2026-05-06", "startHour": 5, "endHour": 12, "catches": {"벵에돔": 0}, "rating": {"벵에돔": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-05-06)"}, {"date": "2026-04-30", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-04-30)"}, {"date": "2026-04-29", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6, "벵에돔": 6}, "rating": {"감성돔": 1, "벵에돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-04-29)"}, {"date": "2026-04-25", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2026-04-25)"}, {"date": "2026-04-18", "startHour": 5, "endHour": 12, "catches": {"감성돔": 12}, "rating": {"감성돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2026-04-18)"}, {"date": "2026-04-11", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-04-11)"}, {"date": "2026-04-05", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2026-04-05)"}, {"date": "2026-03-14", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-03-14)"}, {"date": "2026-03-09", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-03-09)"}, {"date": "2026-03-07", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2026-03-07)"}, {"date": "2026-03-06", "startHour": 5, "endHour": 12, "catches": {"감성돔": 0}, "rating": {"감성돔": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-03-06)"}, {"date": "2026-02-20", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2026-02-20)"}, {"date": "2026-02-15", "startHour": 5, "endHour": 12, "catches": {"감성돔": 0}, "rating": {"감성돔": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-02-15)"}, {"date": "2026-02-13", "startHour": 5, "endHour": 12, "catches": {"감성돔": 0}, "rating": {"감성돔": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-02-13)"}, {"date": "2026-02-05", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-02-05)"}, {"date": "2026-01-25", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2, "볼락": 6}, "rating": {"감성돔": 0, "볼락": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-01-25)"}, {"date": "2026-01-24", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2026-01-24)"}, {"date": "2026-01-17", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2026-01-17)"}, {"date": "2025-12-31", "startHour": 5, "endHour": 12, "catches": {"감성돔": 0}, "rating": {"감성돔": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-12-31)"}, {"date": "2025-12-29", "startHour": 5, "endHour": 12, "catches": {"감성돔": 0}, "rating": {"감성돔": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-12-29)"}, {"date": "2025-12-23", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2025-12-23)"}, {"date": "2025-12-22", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-12-22)"}, {"date": "2025-12-07", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2025-12-07)"}, {"date": "2025-12-06", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-12-06)"}, {"date": "2025-12-01", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2025-12-01)"}, {"date": "2025-11-29", "startHour": 5, "endHour": 12, "catches": {"감성돔": 12}, "rating": {"감성돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2025-11-29)"}, {"date": "2025-11-23", "startHour": 5, "endHour": 12, "catches": {"감성돔": 12}, "rating": {"감성돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2025-11-23)"}, {"date": "2025-11-22", "startHour": 5, "endHour": 12, "catches": {"감성돔": 12}, "rating": {"감성돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2025-11-22)"}, {"date": "2025-11-20", "startHour": 5, "endHour": 12, "catches": {"볼락": 0}, "rating": {"볼락": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-11-20)"}, {"date": "2025-11-16", "startHour": 5, "endHour": 12, "catches": {"감성돔": 0}, "rating": {"감성돔": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-11-16)"}, {"date": "2025-10-31", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-10-31)"}, {"date": "2025-10-25", "startHour": 5, "endHour": 12, "catches": {"감성돔": 12}, "rating": {"감성돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2025-10-25)"}, {"date": "2025-10-24", "startHour": 5, "endHour": 12, "catches": {"감성돔": 0}, "rating": {"감성돔": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-10-24)"}, {"date": "2025-10-21", "startHour": 5, "endHour": 12, "catches": {"감성돔": 12}, "rating": {"감성돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2025-10-21)"}, {"date": "2025-10-20", "startHour": 5, "endHour": 12, "catches": {"감성돔": 12}, "rating": {"감성돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2025-10-20)"}, {"date": "2025-10-05", "startHour": 5, "endHour": 12, "catches": {"감성돔": 0}, "rating": {"감성돔": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-10-05)"}, {"date": "2025-09-25", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-09-25)"}, {"date": "2025-09-24", "startHour": 5, "endHour": 12, "catches": {"감성돔": 12}, "rating": {"감성돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2025-09-24)"}, {"date": "2025-09-16", "startHour": 5, "endHour": 12, "catches": {"무늬오징어": 6}, "rating": {"무늬오징어": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-09-16)"}, {"date": "2025-09-09", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6, "벵에돔": 6}, "rating": {"감성돔": 1, "벵에돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-09-09)"}, {"date": "2025-08-29", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-08-29)"}, {"date": "2025-08-28", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2025-08-28)"}, {"date": "2025-08-27", "startHour": 5, "endHour": 12, "catches": {"벵에돔": 12}, "rating": {"벵에돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2025-08-27)"}, {"date": "2025-08-22", "startHour": 5, "endHour": 12, "pointId": "dudo_8", "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-08-22)"}, {"date": "2025-08-22", "startHour": 5, "endHour": 12, "pointId": "dudo_9", "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-08-22)"}, {"date": "2025-08-22", "startHour": 5, "endHour": 12, "pointId": "dudo_12", "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-08-22)"}, {"date": "2025-08-21", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2025-08-21)"}, {"date": "2025-08-16", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-08-16)"}, {"date": "2025-08-22", "startHour": 5, "endHour": 12, "pointId": "dudo_2_5", "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2025-08-22)"}, {"date": "2025-08-22", "startHour": 5, "endHour": 12, "pointId": "dudo_11", "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2025-08-22)"}, {"date": "2025-08-22", "startHour": 5, "endHour": 12, "pointId": "dudo_13", "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2025-08-22)"}];
+</script>
+<script>
+"use strict";
+// ───────── 기본 ─────────
+const KST = 9 * 3600e3;
+const SPECIES = {
+  "감성돔": {ideal:[15,22], season:[3,3,2,2,2,1,1,2,3,3,3,3], waveLimit:1.5, likesWave:true},
+  "벵에돔": {ideal:[18,24], season:[0,0,0,1,2,3,3,3,3,2,1,0], waveLimit:1.5, likesWave:true},
+  "볼락":   {ideal:[10,16], season:[3,3,3,3,2,1,0,0,0,1,2,3], waveLimit:1.2, likesWave:false},
+  "무늬오징어": {ideal:[17,24], season:[0,0,0,1,2,2,1,1,3,3,2,1], waveLimit:1.0, likesWave:false},
+};
+const MONTH_TEMP = [13,12,12.5,14,16.5,19,21.5,24,23.5,21,18,15];
+let FLOOD = 250, EBB = 60;           // 들물 남서류(250°), 날물 북동류(60°) – 감천항 입구 실측(창 1.9kn, 낙 1.6kn)
+const C_LAT = 35.0488, C_LNG = 129.0150;
+const ang = (a,b)=>{let d=Math.abs(a-b)%360;return d>180?360-d:d};
+const COMPASS = ["북","북동","동","남동","남","남서","서","북서"];
+const compass = d=>COMPASS[Math.floor((((d%360)+360+22)%360)/45)];
+const r0 = Math.round;
+const kstParts = ms=>{const d=new Date(ms+KST);return {y:d.getUTCFullYear(),m:d.getUTCMonth()+1,d:d.getUTCDate(),h:d.getUTCHours(),mi:d.getUTCMinutes()}};
+const kstMs = (ds,h=0,mi=0)=>{const [y,m,d]=ds.split("-").map(Number);return Date.UTC(y,m-1,d,h,mi)-KST};
+const dateStr = ms=>{const p=kstParts(ms);return `${p.y}-${String(p.m).padStart(2,"0")}-${String(p.d).padStart(2,"0")}`};
+const addDays = (ds,n)=>dateStr(kstMs(ds,12)+n*864e5);
+const hm = ms=>{const p=kstParts(ms);return `${String(p.h).padStart(2,"0")}:${String(p.mi).padStart(2,"0")}`};
+// 확률 색: 높음→낮음 = 파랑·초록·노랑·주황·빨강
+const scoreColor = s=>s>=75?"var(--s5)":s>=62?"var(--s4)":s>=50?"var(--s3)":s>=38?"var(--s2)":"var(--s1)";
+const scoreLabel = s=>s>=75?"강력 추천":s>=62?"좋음":s>=50?"보통":s>=38?"낮음":"비추천";
+
+// ───────── 천문: 합삭(Meeus) · 음력 · 물때 · 일출 ─────────
+function newMoonMs(k){
+  const T=k/1236.85, R=Math.PI/180;
+  let jde=2451550.09766+29.530588861*k+0.00015437*T*T-0.00000015*T**3+0.00000000073*T**4;
+  const E=1-0.002516*T-0.0000074*T*T;
+  const M=R*(2.5534+29.1053567*k-0.0000014*T*T), Mp=R*(201.5643+385.81693528*k+0.0107582*T*T+0.00001238*T**3);
+  const F=R*(160.7108+390.67050284*k-0.0016118*T*T), O=R*(124.7746-1.56375588*k+0.0020672*T*T);
+  const s=Math.sin;
+  jde+=-0.4072*s(Mp)+0.17241*E*s(M)+0.01608*s(2*Mp)+0.01039*s(2*F)+0.00739*E*s(Mp-M)-0.00514*E*s(Mp+M)+0.00208*E*E*s(2*M)
+    -0.00111*s(Mp-2*F)-0.00057*s(Mp+2*F)+0.00056*E*s(2*Mp+M)-0.00042*s(3*Mp)+0.00042*E*s(M+2*F)+0.00038*E*s(M-2*F)
+    -0.00024*E*s(2*Mp-M)-0.00017*s(O)-0.00007*s(Mp+2*M)+0.00004*s(2*Mp-2*F)+0.00004*s(3*M)+0.00003*s(Mp+M-2*F)
+    +0.00003*s(2*Mp+2*F)-0.00003*s(Mp+M+2*F)+0.00003*s(Mp-M+2*F)-0.00002*s(Mp-M-2*F)-0.00002*s(3*Mp+M)+0.00002*s(4*Mp);
+  return (jde-2440587.5)*864e5-69e3;
+}
+function lastNewMoonK(ms){let k=Math.floor((ms-Date.UTC(2000,0,6,18,14))/864e5/29.530588853)+1;while(newMoonMs(k)>ms)k--;return k}
+function lunarDay(ds){
+  const end=kstMs(ds,23,59); const k=lastNewMoonK(end);
+  return Math.min(30,Math.round((kstMs(ds,12)-kstMs(dateStr(newMoonMs(k)),12))/864e5)+1);
+}
+const moonAge = ms=>(ms-newMoonMs(lastNewMoonK(ms)))/864e5;
+const mulIndex = ds=>(lunarDay(ds)-1+7)%15;
+const MUL_NAMES=[...Array.from({length:13},(_,i)=>`${i+1}물`),"조금","무쉬"];
+const mulName = ds=>MUL_NAMES[mulIndex(ds)];
+const rangeFactor = age=>(1+Math.cos(4*Math.PI*(age-1.5)/29.530588853))/2;
+function sunrise(ds){
+  const [y,m,d]=ds.split("-").map(Number); const n=Math.round((Date.UTC(y,m-1,d)-Date.UTC(y,0,0))/864e5);
+  const g=2*Math.PI/365*(n-1);
+  const eq=229.18*(0.000075+0.001868*Math.cos(g)-0.032077*Math.sin(g)-0.014615*Math.cos(2*g)-0.040849*Math.sin(2*g));
+  const dec=0.006918-0.399912*Math.cos(g)+0.070257*Math.sin(g)-0.006758*Math.cos(2*g)+0.000907*Math.sin(2*g)-0.002697*Math.cos(3*g)+0.00148*Math.sin(3*g);
+  const lat=C_LAT*Math.PI/180;
+  const ha=Math.acos(Math.cos(90.833*Math.PI/180)/(Math.cos(lat)*Math.cos(dec))-Math.tan(lat)*Math.tan(dec))*180/Math.PI;
+  return Math.round(720-4*(C_LNG+ha)-eq+540);  // KST 분
+}
+
+// ───────── 조석: 실시간(해수면 예보) 또는 천문 추정 ─────────
+function tidesEstimate(ds){
+  const ev=[];
+  for(let o=-1;o<=1;o++){
+    const day=addDays(ds,o); const age=moonAge(kstMs(day,12));
+    const transit=12*60+24+age*50.47; const HWI=515;     // 부산 고조간격 근사 (바다타임과 대조해 보정)
+    const base=kstMs(day)+(((transit+HWI)%745)+745)%745*60e3;
+    for(let n=-1;n<=2;n++){const h=base+n*745*60e3;ev.push({t:h,high:true});ev.push({t:h-372.5*60e3,high:false})}
+  }
+  const a=kstMs(ds)-8*36e5,b=kstMs(ds)+32*36e5;
+  // 같은 극치가 이웃 날짜 계산에서 겹치면 하나만
+  const out=[];for(const e of ev.filter(e=>e.t>a&&e.t<b).sort((x,y)=>x.t-y.t)){const l=out[out.length-1];if(l&&l.high===e.high&&e.t-l.t<4*36e5){l.t=(l.t+e.t)/2;continue}out.push(e)}
+  return out;
+}
+function tidesFromLevel(times,levels){
+  const ev=[];
+  for(let i=1;i<levels.length-1;i++){
+    const a=levels[i-1],b=levels[i],c=levels[i+1];
+    if(a==null||b==null||c==null)continue;
+    const hi=b>=a&&b>c, lo=b<=a&&b<c; if(!hi&&!lo)continue;
+    const den=a-2*b+c; const off=den!==0?0.5*(a-c)/den:0;   // 포물선 보정으로 정확한 시각
+    ev.push({t:times[i]+off*36e5,high:hi,level:b});
+  }
+  return ev;
+}
+function tideState(t,tides){
+  let prev=null,next=null;
+  for(const e of tides){if(e.t<=t)prev=e;else{next=e;break}}
+  if(!prev||!next)return null;
+  const total=Math.max(1,(next.t-prev.t)/6e4), el=(t-prev.t)/6e4;
+  const range=prev.level!=null&&next.level!=null?Math.abs(next.level-prev.level):null;
+  return {incoming:!prev.high,progress:el/total,nearSlack:el<40||total-el<40,prevHigh:prev.high,range};
+}
+// 실제 조차 → 조류 세기(0~1). 예보 구간의 평균 조차 대비 비율로 본다(사리 ≈ 평균의 1.5배, 조금 ≈ 0.5배).
+// 모델 해수면의 절대 진폭이 실제와 달라도 비율은 유지되므로 평균 대비로 정규화한다.
+function rangeStats(tides){
+  const r=[];for(let i=1;i<tides.length;i++){const a=tides[i-1],b=tides[i];if(a.level!=null&&b.level!=null&&a.high!==b.high)r.push(Math.abs(b.level-a.level))}
+  return r.length>=6?{mean:r.reduce((x,y)=>x+y)/r.length}:null;
+}
+const rfFromRange=(range,stats)=>Math.max(0,Math.min(1,.5+(range/stats.mean-1)));
+const strengthOf=(ts,rf)=>Math.max(0,Math.sin(Math.PI*ts.progress))*(0.4+0.6*rf);
+
+// ───────── 포인트 고정 성격 ─────────
+const PROFILE={};
+function profile(p){
+  if(PROFILE[p.id])return PROFILE[p.id];
+  const dy=(p.lat-C_LAT)*111320, dx=(p.lng-C_LNG)*111320*Math.cos(C_LAT*Math.PI/180);
+  const b=((Math.atan2(dx,dy)*180/Math.PI)+360)%360;
+  const suit=F=>{
+    const a=ang(F,p.facingDeg), lee=Math.cos((b-F)*Math.PI/180);
+    let v=a<=50?1:a<130?(lee>.3?.85:lee>-.3?.6:.4):p.terrain==="홈통"?.15:-.6;
+    if(p.terrain==="곶부리")v+=lee>.3?.1:-.1;
+    if(p.terrain==="홈통"&&a>=50&&a<130)v+=.1;
+    if(p.terrain==="직벽")v+=.05;
+    return Math.max(-1,Math.min(1,v));
+  };
+  const sec=x=>x>=110&&x<=250?1:x>250&&x<=300?.75:x>=60&&x<110?.7:.35;
+  const fl=suit(FLOOD), eb=suit(EBB), ex=Math.max(sec(b)*.6+sec(p.facingDeg)*.4,.3);
+  const type=fl-eb>=.35?"들물 포인트":eb-fl>=.35?"날물 포인트":fl>.3&&eb>.3?"양물 포인트":"물돌이 포인트";
+  return PROFILE[p.id]={flood:fl,ebb:eb,exposure:ex,bearing:b,type,suitAt:suit,
+    exposureText:ex>=.9?"외해 정면":ex>=.65?"반쯤 열림":"막힌 쪽"};
+}
+function preferredDepth(sp,t){
+  if(sp==="감성돔")return t>=20?[3,8]:t>=15?[4,8]:t>=13.5?[6,12]:[8,15];
+  if(sp==="벵에돔")return t>=18?[3,10]:[6,12];
+  return sp==="볼락"?[2,8]:[3,10];
+}
+const depthFit=(p,[a,b])=>Math.max(0,Math.min(1,(Math.min(p.depthMax,b)-Math.max(p.depthMin,a))/Math.max(1,p.depthMax-p.depthMin)));
+function terrainFit(p,sp,t){
+  const tr=p.terrain;
+  if(sp==="감성돔"){
+    if(t>=13.5&&tr==="여밭")return ["여밭 – 가을 감성돔이 붙는 지형",6];
+    if(t<13.5&&(tr==="직벽"||p.depthMax>=11))return ["깊은 직벽·수로 – 저수온기 은신처",6];
+    if(tr==="홈통")return ["홈통 – 밑밥이 모이는 지형",3];
+    if(tr==="곶부리")return ["곶부리 – 조류 경계",2];
+    return null;
+  }
+  if(sp==="벵에돔")return tr==="곶부리"?["곶부리 – 조류 받는 벵에 자리",5]:tr==="직벽"?["직벽 – 벵에 은신처",4]:tr==="여밭"?["여밭 – 수중여 주변",3]:null;
+  if(sp==="볼락")return (tr==="여밭"||tr==="홈통")?["여밭·홈통 – 볼락 은신처",4]:null;
+  return (tr==="곶부리"||tr==="직벽")?["돌출부·직벽 – 에깅 유리",4]:null;
+}
+
+// ───────── 과거 조과 ─────────
+const cyc=(a,b,n)=>{const d=Math.abs(a-b)%n;return Math.min(d,n-d)};
+const BYID=Object.fromEntries(POINTS.map(p=>[p.id,p]));
+const isPointRec=r=>r.pointId!=null||r.sideFacingDeg!=null;
+function similarity(rec,cond,h){
+  const m=[1,.85,.6,.35][cyc(cond.mulIdx,rec._mul,15)]??0;
+  const s=[1,.7,.3][cyc(cond.month,+rec.date.slice(5,7),12)]??0;
+  if(!m||!s)return 0;
+  const ov=Math.min(h+1,rec.endHour)-Math.max(h,rec.startHour);
+  return m*s*(ov>0?1:.5);
+}
+function distM(a,b){return Math.hypot((a.lat-b.lat)*111320,(a.lng-b.lng)*111320*Math.cos(a.lat*Math.PI/180))}
+function pointWeight(p,r){
+  if(r.pointId){
+    if(r.pointId===p.id)return 1;
+    const q=BYID[r.pointId]; if(!q)return 0;
+    const d=distM(q,p);
+    return d<=35&&ang(q.facingDeg,p.facingDeg)<=50?.45:d<=70&&q.terrain===p.terrain?.2:0;
+  }
+  return ang(r.sideFacingDeg,p.facingDeg)<=50?.5:0;
+}
+function historyReasons(p,sp,cond,h){
+  let total=0,count=0,best=null,poorT=0,poorN=0; const out=[];
+  for(const r of RECORDS){
+    if(!isPointRec(r))continue;
+    const poor=(r.rating||{})[sp]<0, n=r.catches[sp];
+    if(n==null||(n<=0&&!poor))continue;
+    const pw=pointWeight(p,r); if(pw<=0)continue;
+    const sim=similarity(r,cond,h); if(sim<=0)continue;
+    if(poor){if(sim*pw>=.05){poorT+=sim*pw;poorN++}continue}
+    const c=sim*pw*Math.log(1+n)/Math.log(16); if(c<.05)continue;
+    total+=c;count++; if(!best||c>best[1])best=[r,c];
+  }
+  if(best){
+    const r=best[0]; const where=r.pointId===p.id?"이 자리":r.pointId?(BYID[r.pointId]?.name.replace("두도 ","")||"인접 자리"):compass(r.sideFacingDeg)+"편";
+    out.push([`비슷한 물때 조과 ${count}건 (예: ${r.date} ${where})`,Math.max(2,Math.min(18,r0(total*14)))]);
+  }
+  if(poorN)out.push([`비슷한 물때에 이쪽 부진 기록 ${poorN}건`,-Math.max(2,Math.min(8,r0(poorT*12)))]);
+  return out;
+}
+function dayReason(sp,cond,h){
+  let good=0,poor=0,ng=0,np=0;
+  for(const r of RECORDS){
+    if(isPointRec(r))continue;
+    const isPoor=(r.rating||{})[sp]<0, n=r.catches[sp];
+    if(n==null||(n<=0&&!isPoor))continue;
+    const sim=similarity(r,cond,h); if(sim<.25)continue;
+    if(isPoor){poor+=sim;np++}else{good+=sim*Math.log(1+n)/Math.log(13);ng++}
+  }
+  if(!ng&&!np)return null;
+  return [`두도 전체 – 비슷한 물때 날 조황 (좋음 ${ng}일 · 부진 ${np}일)`,Math.max(-8,Math.min(10,r0((good-poor*.9)*4)))];
+}
+
+// ───────── 시간별 점수 ─────────
+const toScore=sum=>Math.max(1,Math.min(99,Math.round(100/(1+Math.exp(-(sum-44)/13)))));
+function scoreHour(p,sp,cond,h){
+  const S=SPECIES[sp], prof=profile(p), R=[]; let danger=null;
+  const w=cond.weather[h]||cond.weather.def;
+  const wind=w.wind, wdir=w.dir, sea=w.wave, t=cond.temp;
+  const on=ang(wdir,p.facingDeg)<=60;
+  let wave=null;
+  let swellOn=null;
+  if(sea!=null){
+    wave=sea*(.35+.65*prof.exposure);
+    if(w.waveDir!=null){const a=ang(w.waveDir,p.facingDeg); swellOn=a<=70; wave*=a<=70?1.2:a>=110?.7:1}   // 실제 너울이 오는 방향
+    else if(wind>=4)wave*=on?1.15:.85;
+    wave=Math.floor(wave*10)/10}
+  // 계절
+  const season=S.season[cond.month-1];
+  R.push([`${sp} 시즌 ${"★".repeat(season)}${"☆".repeat(3-season)}`,r0((season-1.5)*7)]);
+  const mid=(S.ideal[0]+S.ideal[1])/2, half=(S.ideal[1]-S.ideal[0])/2+2;
+  R.push([`수온 ${t.toFixed(1)}°C (적정 ${S.ideal[0]}~${S.ideal[1]}°C)`,r0(Math.exp(-(((t-mid)/half)**2))*18-8)]);
+  if(cond.tempChange!=null){const d=cond.tempChange;
+    if(d>=.3)R.push([`수온 상승 ${d>0?"+":""}${d.toFixed(1)}°C – 활성 오름`,5]);
+    else if(d<=-1.5)R.push([`수온 급락 ${d.toFixed(1)}°C`,-8]); else if(d<=-.5)R.push([`수온 하락 ${d.toFixed(1)}°C`,-4]);}
+  const pref=preferredDepth(sp,t), fit=depthFit(p,pref);
+  R.push([`수심 ${p.depth} · 지금 수온 선호 ${pref[0]}~${pref[1]}m ${fit>=.6?"(맞음)":fit>.2?"(일부)":"(벗어남)"}`,r0(fit*14-5)]);
+  const tf=terrainFit(p,sp,t); if(tf)R.push(tf);
+  if(!p.species.includes(sp))R.push(["이 자리 대표 어종 아님",-8]);
+  if(p.localBias)R.push([p.localNote||"현지 경험 보정",p.localBias]);
+  // 물때·조류
+  const at=kstMs(cond.date,h,30), ts=tideState(at,cond.tides);
+  const st=ts?strengthOf(ts,(ts.range!=null&&cond.rangeStats)?rfFromRange(ts.range,cond.rangeStats):cond.rf):.3;
+  let phase="정보 없음";
+  if(ts){
+    phase=`${ts.incoming?"들물":"날물"} ${r0(ts.progress*100)}%`;
+    if(ts.nearSlack){
+      const which=(ts.progress<.5)===ts.prevHigh?"만조":"간조";
+      R.push(sp==="감성돔"?[`${which} 물돌이 – 대물 입질 시간 (밴드 조황)`,9]:sp==="벵에돔"?[`${which} 정조 – 벵에는 조류가 있어야`,-4]:[`${which} 물돌이`,2]);
+    }else{
+      const cur=cond.cur?.[h];
+      const suit=cur?prof.suitAt(cur.d):(ts.incoming?prof.flood:prof.ebb);
+      const power=cur?Math.max(.3,Math.min(1,cur.v/cond.flow.vRef)):Math.max(.3,Math.min(1,st/.5));
+      if(cur)phase+=` · ${compass(cur.d)}류 ${(cur.v/1.852).toFixed(1)}kn`;
+      const how=suit>=.9?"조류가 공략 지점으로 뻗어 나감":suit>=.75?"섬 하류 쪽 조경지대":suit>=.5?"갯바위 따라 흐름":suit>0?"홈통 안으로 도는 물":"갯바위로 받혀 채비가 밀려옴";
+      R.push([`${phase} – ${how} (${prof.type})`,r0(suit*14*power)]);
+      if(sp==="감성돔"&&ts.incoming&&ts.progress>=.4)R.push(["중들물~끝들물",5]);
+      if(sp==="벵에돔"&&ts.progress>=.25&&ts.progress<=.75)R.push(["조류 활발한 중간 물때",4]);
+      if(st>.65&&p.terrain==="곶부리"&&suit<.85)R.push(["센 조류 – 곶부리 정면은 너무 빠름",-4]);
+      if(st>.65&&p.terrain==="홈통")R.push(["센 조류 – 홈통 반탄류",4]);
+      if(st<.3&&p.terrain==="곶부리")R.push(["약한 조류 – 물이 가는 곶부리 유리",4]);
+    }
+  }
+  const f=cond.rf, ml=cond.rangeCm!=null?`${cond.mul}(실제 조차 ${cond.rangeCm}cm)`:cond.mul;
+  R.push(f<.2?[`${ml} – 조류 거의 없음`,-6]:f>=.35&&f<=.8?[`${ml} – 적당한 조류`,5]:f>.9?[`${ml} – 사리, 조류 강함`,p.depthMax>=10?1:-3]:[ml,1]);
+  // 빛
+  const sr=h*60+30-cond.sunrise;
+  if(sp==="감성돔")R.push(sr>=-60&&sr<=60?["해 뜰 무렵 피딩타임",10]:sr>60&&sr<=150?["아침 – 입질 이어짐",5]:h>=11?["한낮 – 경계심 커짐",-3]:sr<-60?["해 뜨기 전",2]:["오전",0]);
+  else if(sp==="벵에돔")R.push(sr<0?["해 뜨기 전 – 벵에 활성 낮음",-5]:h>=7&&h<=11?["오전 – 벵에 활성 시간",5]:["주간",2]);
+  else if(sp==="볼락")R.push(sr<30?["새벽 – 볼락 활성",8]:["낮 – 볼락 활성 낮음",-10]);
+  else R.push(sr>=-60&&sr<=90?["아침 피딩",8]:["주간",-2]);
+  // 바람
+  const dt=compass(wdir);
+  if(wind>=12){danger=`강풍 ${wind.toFixed(0)}m/s`;R.push([`강풍 ${wind.toFixed(1)}m/s – 출조 위험`,-30])}
+  else if(wind>=9)R.push([`${dt} ${wind.toFixed(1)}m/s – 낚시 어려움`,on?-18:-10]);
+  else if(wind>=6&&on){R.push([`${dt} 맞바람 ${wind.toFixed(1)}m/s – 채비 운용 어려움`,-12]);if(wind>=8)danger="맞바람·파도 주의"}
+  else if(wind>=6)R.push([`${dt} ${wind.toFixed(1)}m/s – 등지는 자리`,0]);
+  else if(wind>=2.5)R.push([`${dt} ${wind.toFixed(1)}m/s – 적당한 물결`,3]);
+  else R.push(["바람 거의 없음 – 잔잔하면 경계심↑",sp==="감성돔"?-4:0]);
+  if(wind>=4&&wdir>=200&&wdir<=250)R.push(["남서풍 – 수온 하강·조황 저하 경향 (밴드 조황)",-3]);
+  // 체감 파고
+  if(wave!=null){
+    const tag=`체감 파고 ${wave.toFixed(1)}m (외해 ${sea.toFixed(1)}m${w.waveDir!=null?`, ${compass(w.waveDir)}쪽 너울${swellOn?" 정면":swellOn===false&&ang(w.waveDir,p.facingDeg)>=110?" 등짐":""}`:""}, ${prof.exposureText})`;
+    if(wave>=2){danger=`파고 ${wave.toFixed(1)}m – 갯바위 위험`;R.push([tag+" – 위험",-30])}
+    else if(wave>S.waveLimit)R.push([tag+" – 높음",-12]);
+    else if(sp==="감성돔"&&wave>=.4&&wave<=1.2)R.push([tag+" – 적당한 포말",7]);
+    else if(sp==="벵에돔"&&wave>=.3&&wave<=1)R.push([tag+" – 적당한 물결",4]);
+    else if(wave<.3&&S.likesWave)R.push([tag+" – 너무 잔잔함",-4]);
+    else R.push([tag,0]);
+    if((swellOn??on)&&wave>=1.5&&!danger)danger="정면 너울 – 갯바위 진입 주의";
+  }
+  if(w.rain)R.push(["강수 예보",-3]);
+  // 기압 변화 (6시간)
+  if(w.dp!=null){
+    if(w.dp<=-3)R.push([`기압 급하강 ${w.dp.toFixed(1)}hPa/6h – 날씨 급변 전`,-3]);
+    else if(w.dp<=-1)R.push([`기압 완만한 하강 ${w.dp.toFixed(1)}hPa/6h – 입질 활발해지는 경향`,3]);
+    else if(w.dp>=3)R.push([`기압 급상승 +${w.dp.toFixed(1)}hPa/6h – 고기압 직후 경계심↑`,-3]);
+  }
+  // 물색 (최근 48시간 비·전날 파고로 추정)
+  if(cond.clarity&&(sp==="감성돔"||sp==="벵에돔")){
+    const c=cond.clarity, txt=`물색 추정: ${c.type} (48시간 비 ${c.rain}mm, 전날 파고 ${c.wave}m)`;
+    if(sp==="감성돔")R.push(c.type==="뻘물"?[txt+" – 흙탕물은 입을 닫음",-5]:c.type==="적당히 탁함"?[txt+" – 감성돔이 경계를 푸는 물색 (밴드: 물색 흐려지니 다시 보임)",4]:c.type==="맑음(청물)"?[txt+" – 맑으면 경계심↑, 원투·가는 목줄",-3]:[txt,0]);
+    else R.push(c.type==="뻘물"?[txt,-4]:c.type==="맑음(청물)"?[txt+" – 벵에는 맑은 물 선호",2]:[txt,0]);
+  }
+  R.push(...historyReasons(p,sp,cond,h));
+  const dr=dayReason(sp,cond,h); if(dr)R.push(dr);
+  let score=toScore(R.reduce((s,x)=>s+x[1],0)); if(danger)score=Math.min(score,15);
+  return {h,score,reasons:R,danger,phase,wind,wdir,wave};
+}
+const HOURS=[5,6,7,8,9,10,11,12,13,14,15,16,17];   // 보여주는 시간 05~18시
+const RANK_END=13;                                     // 순위는 05~13시 평균
+function evaluate(p,sp,cond){
+  const hours=HOURS.map(h=>scoreHour(p,sp,cond,h));
+  const rk=hours.filter(x=>x.h<RANK_END);
+  const day=r0(rk.reduce((s,x)=>s+x.score,0)/rk.length);
+  let bi=0;for(let i=0;i<rk.length-1;i++)if(rk[i].score+rk[i+1].score>rk[bi].score+rk[bi+1].score)bi=i;
+  return {p,sp,hours,day,win:[rk[bi].h,rk[bi+1].h+1]};
+}
+function bestFor(p,cond,sp){
+  if(sp)return evaluate(p,sp,cond);
+  const c=p.species.filter(s=>SPECIES[s]); return c.map(s=>evaluate(p,s,cond)).reduce((a,b)=>b.day>a.day?b:a);
+}
+
+// ───────── 실시간 예보 (Open-Meteo, 키 불필요) ─────────
+const LIVE={};
+async function fetchJson(url){
+  const ac=new AbortController(); const tm=setTimeout(()=>ac.abort(),9000);
+  try{const r=await fetch(url,{signal:ac.signal});if(!r.ok)throw new Error(r.status);return await r.json()}finally{clearTimeout(tm)}
+}
+async function loadLive(){
+  const tz="&timezone=Asia%2FSeoul";
+  const [wx,mar]=await Promise.all([
+    fetchJson(`https://api.open-meteo.com/v1/forecast?latitude=${C_LAT}&longitude=${C_LNG}&hourly=wind_speed_10m,wind_direction_10m,precipitation_probability,precipitation,pressure_msl&wind_speed_unit=ms&past_days=3&forecast_days=4${tz}`),
+    fetchJson(`https://marine-api.open-meteo.com/v1/marine?latitude=35.035&longitude=129.03&hourly=wave_height,wave_direction,swell_wave_height,swell_wave_direction,sea_surface_temperature,sea_level_height_msl,ocean_current_velocity,ocean_current_direction&cell_selection=sea&past_days=3&forecast_days=4${tz}`)
+  ]);
+  const tms=s=>{const [d,t]=s.split("T");return kstMs(d,+t.slice(0,2),+t.slice(3,5))};
+  LIVE.weather={};
+  LIVE.rainMm={}; LIVE.press={};
+  wx.hourly.time.forEach((s,i)=>{const t=tms(s);LIVE.weather[t]={wind:wx.hourly.wind_speed_10m[i]??0,dir:wx.hourly.wind_direction_10m[i]??0,rain:(wx.hourly.precipitation_probability?.[i]??0)>=60};
+    LIVE.rainMm[t]=wx.hourly.precipitation?.[i]??0; LIVE.press[t]=wx.hourly.pressure_msl?.[i]??null});
+  const mt=mar.hourly.time.map(tms);
+  LIVE.wave={}; LIVE.sst={};
+  LIVE.waveDir={};
+  mt.forEach((t,i)=>{LIVE.wave[t]=mar.hourly.wave_height[i];LIVE.sst[t]=mar.hourly.sea_surface_temperature[i];
+    const sw=mar.hourly.swell_wave_height?.[i], swd=mar.hourly.swell_wave_direction?.[i], wd=mar.hourly.wave_direction?.[i];
+    LIVE.waveDir[t]=(sw!=null&&sw>=.3&&swd!=null)?swd:(wd??null)});
+  // 해류(조류 포함) 예보: Copernicus SMOC – 윈디 해류 레이어와 같은 계열. 방향 = 흘러가는 쪽
+  LIVE.cur={};
+  mt.forEach((t,i)=>{const v=mar.hourly.ocean_current_velocity?.[i], d=mar.hourly.ocean_current_direction?.[i];
+    if(v!=null&&d!=null)LIVE.cur[t]={v,d}});
+  const lv=mar.hourly.sea_level_height_msl;
+  LIVE.tides=lv&&lv.some(x=>x!=null)?tidesFromLevel(mt,lv):null;
+  LIVE.flow=flowFromCurrents();
+  if(LIVE.flow){FLOOD=LIVE.flow.flood;EBB=LIVE.flow.ebb;for(const k in PROFILE)delete PROFILE[k]}
+  LIVE.ok=true;
+}
+// 예보 기간 동안 들물·날물(정조 근처 제외) 시간의 해류를 벡터 평균 → 그 기간의 실제 들물/날물 흐름 방향
+function flowFromCurrents(){
+  if(!LIVE.cur||!LIVE.tides||LIVE.tides.length<5)return null;
+  const acc={true:[0,0,0],false:[0,0,0]}, vs=[];
+  for(const k in LIVE.cur){const t=+k,c=LIVE.cur[k];vs.push(c.v);
+    const ts=tideState(t,LIVE.tides);if(!ts||ts.progress<.2||ts.progress>.8)continue;
+    const a=acc[ts.incoming],r=c.d*Math.PI/180;a[0]+=c.v*Math.sin(r);a[1]+=c.v*Math.cos(r);a[2]++}
+  const dir=a=>a[2]?((Math.atan2(a[0],a[1])*180/Math.PI)+360)%360:null;
+  const f=dir(acc[true]),e=dir(acc[false]); if(f==null||e==null)return null;
+  vs.sort((a,b)=>a-b);
+  return {flood:Math.round(f),ebb:Math.round(e),vRef:Math.max(.2,vs[Math.floor(vs.length*.8)]||.5),
+    vFlood:Math.hypot(acc[true][0],acc[true][1])/acc[true][2],vEbb:Math.hypot(acc[false][0],acc[false][1])/acc[false][2]};
+}
+function sstMean(ds){const v=[];for(let h=0;h<24;h++){const x=LIVE.sst[kstMs(ds,h)];if(x!=null)v.push(x)}return v.length?v.reduce((a,b)=>a+b)/v.length:null}
+
+// ───────── 상태 ─────────
+const today=dateStr(Date.now());
+const state={day:0,sp:null,sel:null,selHour:null,mode:"manual",
+  manual:{wind:3,dir:0,wave:.6,temp:MONTH_TEMP[kstParts(Date.now()).m-1]}};
+try{const s=JSON.parse(localStorage.getItem("dudo-manual")||"null");if(s)Object.assign(state.manual,s)}catch(e){}
+
+function buildCond(){
+  const ds=addDays(today,state.day), age=moonAge(kstMs(ds,12));
+  const cond={date:ds,month:+ds.slice(5,7),mul:mulName(ds),mulIdx:mulIndex(ds),rf:rangeFactor(age),sunrise:sunrise(ds),weather:{},tempChange:null,src:{}};
+  if(state.mode==="live"&&LIVE.ok){
+    for(let h=0;h<24;h++){const t=kstMs(ds,h);const w=LIVE.weather[t];
+      if(w)cond.weather[h]={...w,wave:LIVE.wave[t]??null,waveDir:LIVE.waveDir[t]??null,
+        dp:(LIVE.press[t]!=null&&LIVE.press[t-6*36e5]!=null)?LIVE.press[t]-LIVE.press[t-6*36e5]:null}}
+    // 물색 추정: 낚시 시작(05시) 전 48시간 강수량, 전날 최대 파고
+    const t0=kstMs(ds,5); let rain=0,maxWave=0,have=false;
+    for(let k=1;k<=48;k++){const t=t0-k*36e5;if(LIVE.rainMm[t]!=null){rain+=LIVE.rainMm[t];have=true}if(k<=24&&LIVE.wave[t]!=null)maxWave=Math.max(maxWave,LIVE.wave[t])}
+    if(have)cond.clarity={rain:Math.round(rain),wave:Math.round(maxWave*10)/10,
+      type:rain>=40?"뻘물":(rain>=5||maxWave>=1.2)?"적당히 탁함":(rain<1&&maxWave<.5)?"맑음(청물)":"보통"};
+    cond.weather.def={wind:3,dir:0,wave:null,rain:false};
+    if(LIVE.flow){cond.flow=LIVE.flow;cond.cur={};for(let h=0;h<24;h++){const c=LIVE.cur[kstMs(ds,h)];if(c)cond.cur[h]=c}}
+    const m=sstMean(ds), y=sstMean(addDays(ds,-1));
+    cond.temp=m??MONTH_TEMP[cond.month-1]; cond.tempChange=m!=null&&y!=null&&state.day===0?Math.round((m-y)*10)/10:null;
+    cond.tides=LIVE.tides&&LIVE.tides.length>4?LIVE.tides:tidesEstimate(ds);
+    cond.src.tide=LIVE.tides&&LIVE.tides.length>4?"해수면 예보":"천문 추정";
+    const stats=LIVE.tides&&LIVE.tides.length>4?rangeStats(LIVE.tides):null;
+    if(stats){
+      // 낚시 시간(05~13시)에 걸친 조석 구간들의 실제 조차
+      const rs=[];for(let h=5;h<13;h++){const ts=tideState(kstMs(ds,h,30),cond.tides);if(ts&&ts.range!=null)rs.push(ts.range)}
+      if(rs.length){const r=rs.reduce((a,b)=>a+b)/rs.length;
+        cond.rangeStats=stats; cond.rfAstro=cond.rf; cond.rf=rfFromRange(r,stats);
+        cond.rangeCm=Math.round(r*100); cond.src.rf="실제 조차";}
+    }
+  }else{
+    const M=state.manual;
+    cond.weather.def={wind:M.wind,dir:M.dir,wave:M.wave,rain:false};
+    cond.temp=M.temp; cond.tides=tidesEstimate(ds); cond.src.tide="천문 추정";
+  }
+  RECORDS.forEach(r=>{if(r._mul==null)r._mul=mulIndex(r.date)});
+  return cond;
+}
+
+// ───────── 그리기 ─────────
+const $=id=>document.getElementById(id);
+function gaugeSvg(score,size=50,stroke=5,label=false){
+  const r=(size-stroke)/2, c=size/2, L=2*Math.PI*r*.75, v=L*score/100;
+  return `<svg class="${size>60?"big":"gauge"}" viewBox="0 0 ${size} ${size}" aria-label="${score}점">
+  <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--surface2)" stroke-width="${stroke}" stroke-dasharray="${L} 999" stroke-linecap="round" transform="rotate(135 ${c} ${c})"/>
+  <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${scoreColor(score)}" stroke-width="${stroke}" stroke-dasharray="${v} 999" stroke-linecap="round" transform="rotate(135 ${c} ${c})"/>
+  <text x="${c}" y="${c+(label?1:5)}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-weight="600" font-size="${size/3}" fill="var(--fg)">${score}</text>
+  ${label?`<text x="${c}" y="${c+size*.24}" text-anchor="middle" font-size="${size/8}" font-weight="700" fill="${scoreColor(score)}">${scoreLabel(score)}</text>`:""}</svg>`;
+}
+function tagCls(type){return type.startsWith("들물")?"flood":type.startsWith("날물")?"ebb":"both"}
+
+function renderHeader(cond){
+  const day=cond.tides.filter(e=>dateStr(e.t)===cond.date);
+  const w12=cond.weather[12]||cond.weather.def;
+  const stats=[
+    ["물때",`${cond.mul}`,`음력 ${lunarDay(cond.date)}일`],
+    ...(cond.flow?[["조류 방향 (예보)",`들 ${compass(cond.flow.flood)} · 날 ${compass(cond.flow.ebb)}`,`들물 ${cond.flow.flood}° · 날물 ${cond.flow.ebb}° (해류 예보)`]]:[]),
+    ...(cond.rangeCm!=null?[["조차 (05~13시)",`${cond.rangeCm}cm`,`조류 세기 ${Math.round(cond.rf*100)}% · 물때 계산 ${Math.round(cond.rfAstro*100)}%`]]:[]),
+    ["만조",day.filter(e=>e.high).map(e=>hm(e.t)).join(" ")||"-",""],
+    ["간조",day.filter(e=>!e.high).map(e=>hm(e.t)).join(" ")||"-",""],
+    ["수온",`${cond.temp.toFixed(1)}°`,cond.tempChange!=null?`${cond.tempChange>=0?"+":""}${cond.tempChange} 어제 대비`:(state.mode==="live"?"예보":"입력값")],
+    ["바람 (정오)",`${w12.wind.toFixed(1)}`,`m/s ${compass(w12.dir)}풍`],
+    ["외해 파고",w12.wave!=null?`${w12.wave.toFixed(1)}`:"-","m"],
+    ...(cond.clarity?[["물색 추정",cond.clarity.type,`비 ${cond.clarity.rain}mm/48h`]]:[]),
+    ["일출",`${String(Math.floor(cond.sunrise/60)).padStart(2,"0")}:${String(cond.sunrise%60).padStart(2,"0")}`,""],
+  ];
+  $("cond").innerHTML=stats.map(([k,v,s])=>`<div class="stat"><div class="k">${k}</div><div class="v">${v} <small>${s}</small></div></div>`).join("");
+  // 물때 곡선
+  const T=cond.tides, start=kstMs(cond.date), lvl=t=>{let p=null,n=null;for(const e of T){if(e.t<=t)p=e;else{n=e;break}}if(!p||!n)return 0;const pv=p.high?1:-1,nv=n.high?1:-1,f=(t-p.t)/(n.t-p.t);return(pv+nv)/2+(pv-nv)/2*Math.cos(Math.PI*f)};
+  let d="",fill="";
+  for(let m=0;m<=1440;m+=10){const x=480*m/1440,y=35-lvl(start+m*6e4)*26;d+=(m?"L":"M")+x.toFixed(1)+" "+y.toFixed(1);}
+  fill=d+" L480 70 L0 70 Z";
+  const win=`<rect x="${480*5/24}" y="0" width="${480*8/24}" height="70" fill="rgba(255,255,255,.09)"/><rect x="${480*13/24}" y="0" width="${480*5/24}" height="70" fill="rgba(255,255,255,.04)"/>`;
+  const dots=day.map(e=>{const x=480*(e.t-start)/864e5;return `<circle cx="${x}" cy="${e.high?9:61}" r="3.5" fill="${e.high?"#5fc6c9":"#f2fbfc"}"/>`}).join("");
+  let now="";
+  if(state.day===0){const m=(Date.now()-start)/6e4;if(m>=0&&m<=1440){const x=480*m/1440,y=35-lvl(Date.now())*26;now=`<circle cx="${x}" cy="${y}" r="5.5" fill="#fff"/><circle cx="${x}" cy="${y}" r="3.5" fill="#ff6f45"/>`}}
+  $("tideSvg").innerHTML=`${win}<path d="${fill}" fill="rgba(95,198,201,.22)"/><path d="${d}" fill="none" stroke="#f2fbfc" stroke-width="2.2" vector-effect="non-scaling-stroke"/>${dots}${now}`;
+}
+
+function renderStatus(cond){
+  const live=state.mode==="live";
+  $("status").innerHTML=`<span><i class="dot" style="background:${live?"var(--good)":"var(--mid)"}"></i>${live?"실시간 예보 연결됨 (Open-Meteo 바람·파고·수온)":"직접 입력 모드 – 아래 값으로 계산해요"}</span>
+  <span>만조·간조: ${cond.src.tide}</span>
+  ${LIVE.ok?`<button class="btn" type="button" id="toggleMode">${live?"직접 입력으로 바꾸기":"실시간 예보로 돌아가기"}</button>`:""}`;
+  $("manual").hidden=live;
+  const tb=$("toggleMode"); if(tb)tb.onclick=()=>{state.mode=live?"manual":"live";render()};
+}
+
+const MAP={w:400,h:520};
+let PROJ=null;
+function project(lat,lng){
+  if(!PROJ){
+    const all=[...SHAPE.islands.flat(),...POINTS.map(p=>[p.lat,p.lng]),SHAPE.buoy];
+    const la=all.map(x=>x[0]), ln=all.map(x=>x[1]);
+    const k=Math.cos(C_LAT*Math.PI/180);
+    const minX=Math.min(...ln)*k, maxX=Math.max(...ln)*k, minY=Math.min(...la), maxY=Math.max(...la);
+    const pad=26, s=Math.min((MAP.w-2*pad)/(maxX-minX),(MAP.h-2*pad)/(maxY-minY));
+    PROJ={k,s,ox:(MAP.w-(maxX-minX)*s)/2-minX*s,oy:(MAP.h-(maxY-minY)*s)/2+maxY*s};
+  }
+  return [lng*PROJ.k*PROJ.s+PROJ.ox, PROJ.oy-lat*PROJ.s];
+}
+function renderMap(results){
+  const isl=SHAPE.islands.map(poly=>`<path d="${poly.map(([la,ln],i)=>{const [x,y]=project(la,ln);return(i?"L":"M")+x.toFixed(1)+" "+y.toFixed(1)}).join("")}Z" fill="var(--rockfill)" stroke="var(--rock)" stroke-width="1.5"/>`).join("");
+  const coast=(SHAPE.coast||[]).map(line=>`<path d="${line.map(([la,ln],i)=>{const [x,y]=project(la,ln);return(i?"L":"M")+x.toFixed(1)+" "+y.toFixed(1)}).join("")}" fill="none" stroke="var(--rock)" stroke-width="2"/>`).join("");
+  const [bx1,by1]=project(...SHAPE.breakwater[0]),[bx2,by2]=project(...SHAPE.breakwater[1]);
+  const [ux,uy]=project(...SHAPE.buoy);
+  const sel=results.find(r=>r.p.id===state.sel);
+  let aim="";
+  if(sel){const p=sel.p,[x,y]=project(p.lat,p.lng),a=p.facingDeg*Math.PI/180,L=p.targetDistance*2.2;
+    aim=`<line x1="${x}" y1="${y}" x2="${x+L*Math.sin(a)}" y2="${y-L*Math.cos(a)}" stroke="var(--fg)" stroke-width="2" stroke-dasharray="4 3"/><circle cx="${x+L*Math.sin(a)}" cy="${y-L*Math.cos(a)}" r="7" fill="none" stroke="var(--coral)" stroke-width="2.5"/>`}
+  const pins=[...results].sort((a,b)=>(a.p.id===state.sel)-(b.p.id===state.sel)).map(r=>{
+    const [x,y]=project(r.p.lat,r.p.lng), s=r.p.id===state.sel, rad=s?14:10.5;
+    const lab=r.p.name.replace("두도 ","").replace("번","").replace("직벽","벽");
+    return `<g class="pin" data-id="${r.p.id}" tabindex="0" role="button" aria-label="${r.p.name} ${r.day}점" style="cursor:pointer">
+      <circle cx="${x}" cy="${y}" r="${rad}" fill="${scoreColor(r.day)}" stroke="#fff" stroke-width="${s?2.5:1.5}"/>
+      <text x="${x}" y="${y+3.3}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="${lab.length>3?7:s?10:8.5}" font-weight="600" fill="#fff">${lab}</text></g>`}).join("");
+  const n=[MAP.w-24,24];
+  $("map").innerHTML=`${coast}<line x1="${bx1}" y1="${by1}" x2="${bx2}" y2="${by2}" stroke="var(--rock)" stroke-width="7" stroke-linecap="round" opacity=".7"/>${isl}
+   <circle cx="${ux}" cy="${uy}" r="4" fill="var(--bad)"/><text x="${ux+7}" y="${uy+4}" font-size="10" fill="var(--muted)">부표</text>
+   <text x="${n[0]}" y="${n[1]}" text-anchor="middle" font-size="12" font-weight="700" fill="var(--muted)">N ↑</text>
+   <text x="${bx2+8}" y="${by2+12}" font-size="10" fill="var(--muted)">방파제 → 송도</text>
+   <text x="20" y="${MAP.h-14}" font-size="11" fill="var(--muted)">↓ 외해</text>
+   ${aim}${pins}`;
+  $("map").querySelectorAll(".pin").forEach(g=>{g.onclick=()=>select(g.dataset.id);g.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();select(g.dataset.id)}}});
+}
+
+function renderList(results){
+  $("list").innerHTML=results.map((r,i)=>{
+    const prof=profile(r.p);
+    return `<button class="prow" type="button" data-id="${r.p.id}" aria-current="${r.p.id===state.sel}">
+      <span class="rank">${i+1}</span>${gaugeSvg(r.day)}
+      <span style="min-width:0"><span class="pname">${r.p.name}<span class="tag ${tagCls(prof.type)}">${prof.type}</span></span>
+      <span class="pmeta" style="display:block">${r.sp} · 최고 ${String(r.win[0]).padStart(2,"0")}~${String(r.win[1]).padStart(2,"0")}시 · ${r.p.terrain} · 수심 ${r.p.depth}</span></span>
+      <span class="bars" aria-hidden="true">${r.hours.map(x=>`<i style="height:${4+x.score*.22}px;background:${x.danger?"var(--warn)":scoreColor(x.score)}${x.h>=RANK_END?";opacity:.4":""}"></i>`).join("")}</span>
+    </button>`}).join("");
+  $("list").querySelectorAll(".prow").forEach(b=>b.onclick=()=>select(b.dataset.id));
+}
+
+function renderDetail(results){
+  const r=results.find(x=>x.p.id===state.sel)||results[0]; if(!r){$("detail").innerHTML="";return}
+  const prof=profile(r.p), bestH=r.hours.filter(x=>x.h<RANK_END).reduce((a,b)=>b.score>a.score?b:a);
+  const hs=r.hours.find(x=>x.h===state.selHour)||bestH;
+  const sum=hs.reasons.reduce((s,x)=>s+x[1],0);
+  $("detail").innerHTML=`<div class="dhead">${gaugeSvg(r.day,86,8,true)}
+    <div style="min-width:0"><div class="dname">${r.p.name}</div>
+    <div class="pmeta" style="white-space:normal">${r.sp} · 05~13시 평균 ${r.day}점 · 최고 ${String(r.win[0]).padStart(2,"0")}~${String(r.win[1]).padStart(2,"0")}시</div>
+    <div class="pmeta" style="white-space:normal">${r.p.target||""}</div></div></div>
+    <div class="pills">
+      <span class="pill">성격 <b>${prof.type}</b></span>
+      <span class="pill">들물 적합 <b>${r0(prof.flood*100)}</b> · 날물 적합 <b>${r0(prof.ebb*100)}</b></span>
+      <span class="pill">너울 <b>${prof.exposureText}</b></span>
+      <span class="pill">공략 <b>${compass(r.p.facingDeg)}쪽 ${r.p.targetDistance}m</b></span>
+      <span class="pill">수심 <b>${r.p.depth}</b></span><span class="pill">지형 <b>${r.p.terrain}</b></span>
+    </div>
+    <div class="hourscroll"><div class="hours" role="group" aria-label="시간별 확률">${r.hours.map(x=>`<button class="hcol${x.h>=RANK_END?" after":""}" type="button" data-h="${x.h}" aria-pressed="${x.h===hs.h}">
+      <div class="h">${String(x.h).padStart(2,"0")}시</div><div class="tank"><i style="height:${x.score}%;background:${x.danger?"var(--warn)":scoreColor(x.score)}"></i></div>
+      <div class="s">${x.score}</div><div class="ph">${x.phase}</div></button>`).join("")}</div></div>
+    <div class="sum">점선 칸(13시 이후)은 참고용이고 순위에는 들어가지 않아요.</div>
+    <h2 style="margin-top:16px">${String(hs.h).padStart(2,"0")}~${String(hs.h+1).padStart(2,"0")}시 ${hs.score}점 근거</h2>
+    ${hs.danger?`<div class="danger">⚠ ${hs.danger}</div>`:""}
+    <div class="reasons">${[...hs.reasons].sort((a,b)=>b[1]-a[1]).map(([t,d])=>{const c=d>0?"var(--good)":d<0?"var(--bad)":"var(--muted)";return `<div class="reason"><span class="d" style="background:${c}"></span><span>${t}</span><span class="n" style="color:${c}">${d>0?"+":""}${d}</span></div>`}).join("")}</div>
+    <div class="sum">가감 합계 ${sum>0?"+":""}${sum} → ${hs.score}점${hs.danger?" (위험 조건으로 15점 제한)":""}</div>`;
+  $("detail").querySelectorAll(".hcol").forEach(b=>b.onclick=()=>{state.selHour=+b.dataset.h;renderDetail(LAST)});
+}
+
+let LAST=[];
+function select(id){state.sel=id;state.selHour=null;renderMap(LAST);renderList(LAST);renderDetail(LAST);
+  if(window.innerWidth<860)$("detail").scrollIntoView({behavior:"smooth",block:"start"})}
+
+function renderSpecies(){
+  const opts=[[null,"최적 어종"],...Object.keys(SPECIES).map(s=>[s,s])];
+  $("spchips").innerHTML=opts.map(([v,l])=>`<button type="button" data-sp="${v??""}" aria-pressed="${state.sp===v}">${l}</button>`).join("");
+  $("spchips").querySelectorAll("button").forEach(b=>b.onclick=()=>{state.sp=b.dataset.sp||null;render()});
+}
+
+function syncManual(){
+  const M=state.manual;
+  $("inWind").value=M.wind;$("oWind").textContent=`${M.wind} m/s`;
+  $("inDir").value=String(M.dir);
+  $("inWave").value=M.wave;$("oWave").textContent=`${(+M.wave).toFixed(1)} m`;
+  $("inTemp").value=M.temp;$("oTemp").textContent=`${(+M.temp).toFixed(1)} °C`;
+}
+[["inWind","wind"],["inDir","dir"],["inWave","wave"],["inTemp","temp"]].forEach(([id,k])=>{
+  $(id).addEventListener("input",e=>{state.manual[k]=+e.target.value;try{localStorage.setItem("dudo-manual",JSON.stringify(state.manual))}catch(_){}syncManual();render()});
+});
+document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{state.day=+b.dataset.day;document.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed",x===b));render()});
+
+function render(){
+  const cond=buildCond();
+  renderHeader(cond);renderStatus(cond);renderSpecies();syncManual();
+  LAST=POINTS.map(p=>bestFor(p,cond,state.sp)).sort((a,b)=>b.day-a.day);
+  if(!state.sel||!LAST.some(r=>r.p.id===state.sel))state.sel=LAST[0].p.id;
+  renderMap(LAST);renderList(LAST);renderDetail(LAST);
+}
+render();
+loadLive().then(()=>{state.mode="live";render()}).catch(()=>{render()});
+</script>
+
+</body></html>
