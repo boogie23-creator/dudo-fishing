@@ -28,7 +28,23 @@ data class FishingPoint(
     /** 현지 경험 보정(점수 근거에 매시간 더함). 사용자가 "잘 안 나온다"고 한 자리는 음수 */
     val localBias: Int = 0,
     val localNote: String = "",
+    /** 물때에 따라 옮겨 설 수 있는 자리 (예: 14.5번 들물 때 남쪽 홈통) */
+    val altSpots: List<AltSpot> = emptyList(),
 )
+
+/** 들물(flood)·날물(ebb) 때 옮겨 서는 자리 */
+data class AltSpot(
+    val tide: String,
+    val label: String,
+    val lat: Double,
+    val lng: Double,
+    val facingDeg: Int,
+    val terrain: String?,
+    val targetDistance: Int?,
+    val target: String?,
+) {
+    val isFlood: Boolean get() = tide == "flood"
+}
 
 /** 1시간 단위 기상 예보 */
 data class HourWeather(

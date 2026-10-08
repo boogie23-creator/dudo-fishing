@@ -61,6 +61,18 @@ object PointRepository {
                 coordVerified = o.optBoolean("coordVerified", false),
                 localBias = o.optInt("localBias", 0),
                 localNote = o.optString("localNote"),
+                altSpots = o.optJSONArray("altSpots")?.let { a ->
+                    (0 until a.length()).map { j ->
+                        val s = a.getJSONObject(j)
+                        AltSpot(
+                            tide = s.getString("tide"), label = s.getString("label"),
+                            lat = s.getDouble("lat"), lng = s.getDouble("lng"), facingDeg = s.getInt("facingDeg"),
+                            terrain = s.optString("terrain").ifBlank { null },
+                            targetDistance = if (s.has("targetDistance")) s.getInt("targetDistance") else null,
+                            target = s.optString("target").ifBlank { null },
+                        )
+                    }
+                }.orEmpty(),
             )
         }
     }
