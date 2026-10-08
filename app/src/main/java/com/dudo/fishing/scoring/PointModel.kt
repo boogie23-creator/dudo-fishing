@@ -29,9 +29,9 @@ data class PointProfile(
         else -> "물돌이 포인트"
     }
     val exposureText: String get() = when {
-        exposure >= 0.9 -> "외해 정면 (너울 그대로)"
-        exposure >= 0.65 -> "반쯤 열림"
-        else -> "막힌 쪽 (너울 약함)"
+        exposure >= 0.9 -> "그대로 받음 (먼바다 쪽)"
+        exposure >= 0.65 -> "절반쯤 받음 (비스듬한 자리)"
+        else -> "약함 (섬·방파제가 막아줌)"
     }
 }
 

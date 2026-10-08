@@ -217,7 +217,7 @@ object ScoreEngine {
         // ── 체감 파고 (외해 파고 × 너울 노출도) ───────
         if (wave != null) {
             val swellText = swellDir?.let { ", ${compass(it)}쪽 너울" + when { swellAngle!! <= 70 -> " 정면"; swellAngle >= 110 -> " 등짐"; else -> "" } } ?: ""
-            val tag = "체감 파고 %.1fm (외해 %.1fm$swellText, ${prof.exposureText})".format(wave, seaWave ?: wave)
+            val tag = "체감 파고 %.1fm (외해 %.1fm$swellText, 너울 ${prof.exposureText})".format(wave, seaWave ?: wave)
             when {
                 wave >= 2.0 -> { danger = "파고 %.1fm – 갯바위 위험".format(wave); r += Reason(tag + " – 위험", -30) }
                 wave > s.waveLimit -> r += Reason("$tag – 높음", -12)
