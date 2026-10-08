@@ -286,7 +286,7 @@ function profile(p){
   const fl=suit(FLOOD), eb=suit(EBB), ex=Math.max(sec(b)*.6+sec(p.facingDeg)*.4,.3);
   const type=fl-eb>=.35?"들물 포인트":eb-fl>=.35?"날물 포인트":fl>.3&&eb>.3?"양물 포인트":"물돌이 포인트";
   return PROFILE[p.id]={flood:fl,ebb:eb,exposure:ex,bearing:b,type,suitAt:suit,
-    exposureText:ex>=.9?"외해 정면":ex>=.65?"반쯤 열림":"막힌 쪽"};
+    exposureText:ex>=.9?"그대로 받음 (먼바다 쪽)":ex>=.65?"절반쯤 받음 (비스듬한 자리)":"약함 (섬·방파제가 막아줌)"};
 }
 // 입질 지점: 기본 공략 지점(바라보는 방향 × 거리)에서 그 시간 흐름을 따라 밑밥·채비가 흘러가 모이는 곳
 function bitePoint(p,flowDeg,s){
@@ -472,7 +472,7 @@ function scoreHour(p,sp,cond,h){
   if(wind>=4&&wdir>=200&&wdir<=250)R.push(["남서풍 – 수온 하강·조황 저하 경향 (밴드 조황)",-3]);
   // 체감 파고
   if(wave!=null){
-    const tag=`체감 파고 ${wave.toFixed(1)}m (외해 ${sea.toFixed(1)}m${w.waveDir!=null?`, ${compass(w.waveDir)}쪽 너울${swellOn?" 정면":swellOn===false&&ang(w.waveDir,p.facingDeg)>=110?" 등짐":""}`:""}, ${prof.exposureText})`;
+    const tag=`체감 파고 ${wave.toFixed(1)}m (외해 ${sea.toFixed(1)}m${w.waveDir!=null?`, ${compass(w.waveDir)}쪽 너울${swellOn?" 정면":swellOn===false&&ang(w.waveDir,p.facingDeg)>=110?" 등짐":""}`:""}, 너울 ${prof.exposureText})`;
     if(wave>=2){danger=`파고 ${wave.toFixed(1)}m – 갯바위 위험`;R.push([tag+" – 위험",-30])}
     else if(wave>S.waveLimit)R.push([tag+" – 높음",-12]);
     else if(sp==="감성돔"&&wave>=.4&&wave<=1.2)R.push([tag+" – 적당한 포말",7]);
@@ -733,7 +733,7 @@ function renderDetail(results){
     <div class="pills">
       <span class="pill">성격 <b>${prof.type}</b></span>
       <span class="pill">들물 적합 <b>${r0(prof.flood*100)}</b> · 날물 적합 <b>${r0(prof.ebb*100)}</b></span>
-      <span class="pill">너울 <b>${prof.exposureText}</b></span>
+      <span class="pill">너울 영향 <b>${prof.exposureText}</b></span>
       <span class="pill">입질 지점(${String(hs.h).padStart(2,"0")}시) <b>${biteText(r.p,hs.bite||bitePoint(r.p,null,0))}</b></span>
       <span class="pill">수심 <b>${r.p.depth}</b></span><span class="pill">지형 <b>${r.p.terrain}</b></span>
     </div>
