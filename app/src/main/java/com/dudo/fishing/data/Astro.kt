@@ -20,16 +20,49 @@ object Astro {
 
     /** 월령(일). 0 = 그믐/삭, 약 14.8 = 보름 */
     fun moonAge(at: ZonedDateTime): Double {
-        val days = Duration.between(REF_NEW_MOON, at).seconds / 86400.0
-        return ((days % SYNODIC) + SYNODIC) % SYNODIC
+        // 평균 주기로 대략 위치를 잡은 뒤, 실제 합삭 시각(Meeus)으로 보정
+        val approxK = floor(Duration.between(REF_NEW_MOON, at).seconds / 86400.0 / SYNODIC).toInt()
+        var k = approxK + 1
+        while (newMoonKst(k).isAfter(at)) k--
+        return Duration.between(newMoonKst(k), at).seconds / 86400.0
     }
 
-    /** 대략적인 음력 날짜 (1~30) */
-    fun lunarDay(age: Double): Int = (floor(age).toInt() + 1).coerceIn(1, 30)
+    /**
+     * 음력 날짜 (1~30). 실제 삭(합삭) 시각을 Meeus 알고리즘(천문 알고리즘 49장)으로 계산해,
+     * 한국시간 기준 합삭이 든 날을 음력 1일로 센다. 물때 앱(바다타임 등)과 같은 기준.
+     */
+    fun lunarDay(date: LocalDate): Int {
+        val y = date.year + (date.dayOfYear - 0.5) / 365.25
+        var k = floor((y - 2000) * 12.3685).toInt() + 1
+        while (newMoonKst(k).toLocalDate().isAfter(date)) k--
+        return (java.time.temporal.ChronoUnit.DAYS.between(newMoonKst(k).toLocalDate(), date) + 1).toInt().coerceIn(1, 30)
+    }
+
+    /** k번째 삭의 한국시간 (k=0 ≈ 2000년 1월 6일) */
+    fun newMoonKst(k: Int): ZonedDateTime {
+        val kd = k.toDouble()
+        val t = kd / 1236.85
+        var jde = 2451550.09766 + 29.530588861 * kd + 0.00015437 * t * t - 0.000000150 * t * t * t + 0.00000000073 * t * t * t * t
+        val e = 1 - 0.002516 * t - 0.0000074 * t * t
+        fun r(d: Double) = Math.toRadians(d)
+        val m = r(2.5534 + 29.10535670 * kd - 0.0000014 * t * t)
+        val mp = r(201.5643 + 385.81693528 * kd + 0.0107582 * t * t + 0.00001238 * t * t * t)
+        val f = r(160.7108 + 390.67050284 * kd - 0.0016118 * t * t)
+        val om = r(124.7746 - 1.56375588 * kd + 0.0020672 * t * t)
+        jde += -0.40720 * sin(mp) + 0.17241 * e * sin(m) + 0.01608 * sin(2 * mp) + 0.01039 * sin(2 * f) +
+                0.00739 * e * sin(mp - m) - 0.00514 * e * sin(mp + m) + 0.00208 * e * e * sin(2 * m) -
+                0.00111 * sin(mp - 2 * f) - 0.00057 * sin(mp + 2 * f) + 0.00056 * e * sin(2 * mp + m) -
+                0.00042 * sin(3 * mp) + 0.00042 * e * sin(m + 2 * f) + 0.00038 * e * sin(m - 2 * f) -
+                0.00024 * e * sin(2 * mp - m) - 0.00017 * sin(om) - 0.00007 * sin(mp + 2 * m) +
+                0.00004 * sin(2 * mp - 2 * f) + 0.00004 * sin(3 * m) + 0.00003 * sin(mp + m - 2 * f) +
+                0.00003 * sin(2 * mp + 2 * f) - 0.00003 * sin(mp + m + 2 * f) + 0.00003 * sin(mp - m + 2 * f) -
+                0.00002 * sin(mp - m - 2 * f) - 0.00002 * sin(3 * mp + m) + 0.00002 * sin(4 * mp)
+        val unixSec = ((jde - 2440587.5) * 86400.0 - 69.0).toLong()   // TT → UT (ΔT 약 69초)
+        return java.time.Instant.ofEpochSecond(unixSec).atZone(ZoneId.of("Asia/Seoul"))
+    }
 
     /**
-     * 남해안식(8물때식) 물때 이름. 음력 1일 = 8물로 계산.
-     * 실제 물때표와 하루 정도 차이 날 수 있음.
+     * 남해안식(8물때식) 물때 이름. 음력 1일 = 8물, 7일 = 조금, 8일 = 무쉬, 9일 = 1물 … 30일 = 7물.
      */
     fun mulName(lunarDay: Int): String {
         val names = (1..13).map { "${it}물" } + listOf("조금", "무쉬")

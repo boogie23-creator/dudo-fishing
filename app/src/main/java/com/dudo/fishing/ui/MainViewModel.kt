@@ -64,10 +64,28 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** 데이터 현황: (포인트 기록, 두도 전체 조황 일수, 내 기록) */
+    fun dataSummary(): Triple<Int, Int, Int> = Triple(
+        history.count { !it.byUser && com.dudo.fishing.scoring.Factors.isPointRecord(it) },
+        history.count { !it.byUser && !com.dudo.fishing.scoring.Factors.isPointRecord(it) },
+        history.count { it.byUser },
+    )
+
+    /** 내 조과 기록을 JSON으로 공유 (카톡·메일로 보내 앱 데이터에 합칠 수 있게) */
+    fun shareMyRecords(context: android.content.Context) {
+        val json = historyRepo.exportUserRecords()
+        val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(android.content.Intent.EXTRA_SUBJECT, "두도 포인트 내 조과 기록")
+            putExtra(android.content.Intent.EXTRA_TEXT, json)
+        }
+        context.startActivity(android.content.Intent.createChooser(send, "내 조과 기록 보내기").addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+
     /** 이 포인트(또는 같은 방향) 관련 조과 기록 */
     fun recordsFor(point: FishingPoint): List<CatchRecord> =
         history.filter { it.pointId == point.id || (it.pointId == null && it.sideFacingDeg != null &&
-                com.dudo.fishing.scoring.Factors.angleDiff(it.sideFacingDeg, point.facingDeg) <= 60) }
+                com.dudo.fishing.scoring.Factors.angleDiff(it.sideFacingDeg, point.facingDeg) <= 50) }
             .sortedByDescending { it.date }
 
     /** 지금 조건과 함께 내 조과를 저장하고 점수를 다시 계산 */

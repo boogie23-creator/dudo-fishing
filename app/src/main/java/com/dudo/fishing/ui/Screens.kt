@@ -35,6 +35,8 @@ import androidx.compose.material.icons.filled.EditLocationAlt
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.GpsFixed
+import androidx.compose.material.icons.filled.Grain
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Phishing
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SetMeal
@@ -166,6 +168,23 @@ fun HomeScreen(vm: MainViewModel, onOpen: (String) -> Unit, onSettings: () -> Un
                             Icon(if (showNotices) Icons.Default.ExpandLess else Icons.Default.ExpandMore, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
                         }
                         if (showNotices) c.messages.forEach { Notice(it) }
+                    }
+                }
+                item {
+                    val (pt, day, mine) = vm.dataSummary()
+                    val ctx = androidx.compose.ui.platform.LocalContext.current
+                    Card(
+                        Modifier.fillMaxWidth().padding(horizontal = 16.dp), shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("조과 데이터", style = MaterialTheme.typography.titleMedium)
+                            Text("포인트 기록 ${pt}건 · 두도 전체 조황 ${day}일 · 내 기록 ${mine}건", fontWeight = FontWeight.Bold)
+                            Text("포인트 기록만 포인트 순위를 바꾸고, 두도 전체 조황은 모든 포인트에 똑같이 적용돼요. 낚시 후 포인트 화면에서 조과를 남길수록 정확해져요.",
+                                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            if (mine > 0) Text("내 기록 보내기", color = Tide, fontWeight = FontWeight.Bold,
+                                modifier = Modifier.clickable { vm.shareMyRecords(ctx) }.padding(top = 4.dp))
+                        }
                     }
                 }
                 item {
@@ -489,7 +508,9 @@ private fun TipRow(tip: Tip) {
         Tip.Kind.SPOT -> Icons.Default.GpsFixed to Coral
         Tip.Kind.CURRENT -> Icons.Default.Waves to Tide
         Tip.Kind.RIG -> Icons.Default.Phishing to DeepSea
+        Tip.Kind.CHUM -> Icons.Default.Grain to Tide
         Tip.Kind.BAIT -> Icons.Default.SetMeal to Good
+        Tip.Kind.FIX -> Icons.Default.Build to Rock
         Tip.Kind.TIMING -> Icons.Default.Schedule to Mid
     }
     Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), verticalAlignment = Alignment.Top) {

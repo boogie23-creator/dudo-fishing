@@ -93,8 +93,9 @@ class ConditionsRepository(
             tideIsEstimated = tideEstimated,
             waterTemp = waterTemp,
             waterTempIsEstimated = manual == null && buoy == null,
+            waterTempChange = if (manual == null && buoy != null && date == now.toLocalDate()) buoyChange else null,
             moonAge = age,
-            mulName = Astro.mulName(Astro.lunarDay(age)),
+            mulName = Astro.mulName(Astro.lunarDay(date)),
             tideRangeFactor = Astro.tideRangeFactor(age),
             sunrise = rise,
             sunset = set,
@@ -103,6 +104,14 @@ class ConditionsRepository(
     }
 
     private var buoyCache: Triple<LocalDateTime, BeachApi.Beach, BeachApi.Reading>? = null
+    private var buoyChange: Double? = null
+
+    /** 같은 해수욕장의 24시간 전 수온과 비교 (감성돔은 수온이 0.1도라도 오르면 활성이 산다는 게 정설) */
+    private fun fetchChange(key: String, b: BeachApi.Beach, now: LocalDateTime, r: BeachApi.Reading, msgs: MutableList<String>) {
+        val prev = runCatching { BeachApi.waterTemp(key, b.num, now.minusHours(24)) }.getOrNull()
+        buoyChange = prev?.let { ((r.value - it.value) * 10).let { v -> kotlin.math.round(v) / 10.0 } }
+        buoyChange?.let { msgs += "수온 변화 %+.1f°C (24시간 전 대비)".format(it) }
+    }
 
     /** 수온·조석을 조회할 해수욕장 후보: 설정에 번호가 있으면 그것, 없으면 두도에서 가까운 순 (25km 이내) */
     private fun candidateBeaches(): List<BeachApi.Beach> {
@@ -119,12 +128,14 @@ class ConditionsRepository(
     private fun buoyWaterTemp(now: LocalDateTime, msgs: MutableList<String>): Double? {
         val key = settings.dataGoKrKey
         if (key.isBlank()) return null
-        buoyCache?.let { (t, b, r) -> if (t.isAfter(now.minusMinutes(30))) return r.value.also { note(msgs, b, r) } }
+        buoyCache?.let { (t, b, r) -> if (t.isAfter(now.minusMinutes(30))) return r.value.also {
+            note(msgs, b, r); buoyChange?.let { c -> msgs += "수온 변화 %+.1f°C (24시간 전 대비)".format(c) } } }
 
         for (b in candidateBeaches()) {
             val r = runCatching { BeachApi.waterTemp(key, b.num, now) }.getOrNull() ?: continue
             buoyCache = Triple(now, b, r)
             note(msgs, b, r)
+            fetchChange(key, b, now, r, msgs)
             return r.value
         }
         msgs += "근처 해수욕장 부이 수온이 없어요(해수욕장 운영 기간 외에는 관측이 없을 수 있어요)."

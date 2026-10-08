@@ -168,7 +168,7 @@ private fun offset(from: GeoPoint, bearingDeg: Double, meters: Double): GeoPoint
 /** 번호가 적힌 원형 마커 이미지 */
 private fun pinDrawable(context: Context, label: String, score: Int?, selected: Boolean, dimmed: Boolean): BitmapDrawable {
     val density = context.resources.displayMetrics.density
-    val sizeDp = if (selected) 40 else 28
+    val sizeDp = if (selected) 30 else 20
     val size = (sizeDp * density).toInt()
     val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val c = Canvas(bmp)
@@ -178,7 +178,7 @@ private fun pinDrawable(context: Context, label: String, score: Int?, selected: 
     }
     val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = (if (selected) 3.5f else 2f) * density
+        strokeWidth = (if (selected) 2.5f else 1.5f) * density
         color = android.graphics.Color.WHITE
     }
     val r = size / 2f - ring.strokeWidth
@@ -188,7 +188,7 @@ private fun pinDrawable(context: Context, label: String, score: Int?, selected: 
         color = android.graphics.Color.WHITE
         textAlign = Paint.Align.CENTER
         typeface = Typeface.DEFAULT_BOLD
-        textSize = (if (label.length > 3) 9f else if (selected) 13f else 11f) * density
+        textSize = (if (label.length > 3) (if (selected) 8f else 6.5f) else if (selected) 11f else 8.5f) * density
     }
     val y = size / 2f - (text.descent() + text.ascent()) / 2
     c.drawText(if (label == "직벽") "벽" else label, size / 2f, y, text)

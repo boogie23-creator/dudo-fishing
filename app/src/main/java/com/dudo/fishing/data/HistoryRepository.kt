@@ -39,6 +39,10 @@ class HistoryRepository(private val context: Context) {
         return (0 until arr.length()).map { fromJson(arr.getJSONObject(it), byUser = true) }
     }
 
+    /** 내 기록 전체를 catches.json 과 같은 형식의 JSON 문자열로 (공유·백업용) */
+    fun exportUserRecords(): String =
+        JSONObject().put("records", JSONArray(prefs.getString("user_records", "[]"))).toString(1)
+
     fun addUserRecord(r: CatchRecord) {
         val arr = JSONArray(prefs.getString("user_records", "[]"))
         arr.put(toJson(r))

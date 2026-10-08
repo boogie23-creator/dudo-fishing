@@ -119,37 +119,66 @@ object Factors {
      * 물때·계절이 비슷해야 기본 유사도가 생기고, 바람·파고·수온·시간대가 비슷할수록 커진다.
      * 같은 포인트 기록은 가중치 1, 같은 방향(서편 등)이면 0.6, 근처 다른 포인트는 0.1~0.4.
      */
+    /** 포인트를 특정할 수 있는 기록인지 (번호 또는 방향이 있는 기록) */
+    fun isPointRecord(r: CatchRecord) = r.pointId != null || r.sideFacingDeg != null
+
+    /**
+     * 두도 전체 조황(밴드 일일 조황 등 포인트 없는 기록)으로 본 '오늘 바다 상태'.
+     * 모든 포인트에 똑같이 적용되므로 포인트 간 순위는 바꾸지 않고 전체 수준만 올리거나 내린다.
+     */
+    fun dayReasons(
+        s: Species, c: DayConditions, slot: TimeSlot, wind: Double, windDir: Int, wave: Double?, ctx: ScoreContext,
+    ): List<Reason> {
+        val nowMul = mulIndex(c.date)
+        var good = 0.0; var poor = 0.0; var nGood = 0; var nPoor = 0
+        for (rec in ctx.history) {
+            if (isPointRecord(rec)) continue
+            val isPoor = s.label in rec.poorSpecies
+            val n = rec.catches[s.label] ?: continue
+            if (n <= 0 && !isPoor) continue
+            val sim = similarity(rec, c, slot, nowMul, wind, windDir, wave)
+            if (sim < 0.25) continue
+            if (isPoor) { poor += sim; nPoor++ } else { good += sim * ln(1.0 + n) / ln(13.0); nGood++ }
+        }
+        if (nGood + nPoor == 0) return emptyList()
+        val net = good - poor * 0.9
+        val delta = (net * 4).roundToInt().coerceIn(-8, 10)
+        val text = "두도 전체 – 비슷한 물때·날씨 날 조황 (좋음 ${nGood}일 · 부진 ${nPoor}일)"
+        return listOf(Reason(text, delta))
+    }
+
+    /**
+     * 이 포인트(또는 같은 방향·인접 포인트)에서 실제로 잡힌 기록만으로 포인트 간 차등을 준다.
+     * 물때·계절이 비슷하고 바람·파고·수온·시간대가 비슷할수록 가점.
+     */
     fun historyReasons(
         p: FishingPoint, s: Species, c: DayConditions, slot: TimeSlot,
         wind: Double, windDir: Int, wave: Double?, ctx: ScoreContext,
     ): List<Reason> {
         if (ctx.history.isEmpty()) return emptyList()
-        val nowMul = mulIndex(c.moonAge)
+        val nowMul = mulIndex(c.date)
         var total = 0.0
         var count = 0
         var best: Pair<CatchRecord, Double>? = null
-        var pointRecords = 0
-
+        var exact = 0
         var poorTotal = 0.0
         var poorCount = 0
         for (rec in ctx.history) {
+            if (!isPointRecord(rec)) continue
             val poor = s.label in rec.poorSpecies
             val n = rec.catches[s.label] ?: continue
             if (n <= 0 && !poor) continue
             val pw = pointWeight(p, rec, ctx)
-            if (pw <= 0.05) continue
-            if (rec.pointId == p.id && !poor) pointRecords++
+            if (pw <= 0.0) continue
+            if (rec.pointId == p.id && !poor) exact++
             val sim = similarity(rec, c, slot, nowMul, wind, windDir, wave)
             if (sim <= 0.0) continue
-
             if (poor) {
-                // 비슷한 조건에서 조황이 부진했던 날 → 감점 근거
                 val neg = sim * pw
                 if (neg >= 0.05) { poorTotal += neg; poorCount++ }
                 continue
             }
-            val mag = ln(1.0 + n) / ln(16.0)
-            val contrib = sim * pw * mag
+            val contrib = sim * pw * ln(1.0 + n) / ln(16.0)
             if (contrib < 0.05) continue
             total += contrib
             count++
@@ -159,16 +188,20 @@ object Factors {
         val out = mutableListOf<Reason>()
         if (best != null) {
             val b = best.first
-            val where = b.pointId?.let { ctx.pointsById[it]?.name?.removePrefix("두도 ") } ?: b.sideFacingDeg?.let { ScoreEngine.compass(it) + "편" } ?: "두도"
+            val where = when {
+                b.pointId == p.id -> "이 자리"
+                b.pointId != null -> ctx.pointsById[b.pointId]?.name?.removePrefix("두도 ") ?: "인접 자리"
+                else -> ScoreEngine.compass(b.sideFacingDeg ?: 0) + "편"
+            }
             out += Reason(
-                "비슷한 물때·조건 조과 ${count}건 (예: ${b.date} $where ${s.label} ${qtyText(b, s.label)})",
+                "비슷한 조건 포인트 조과 ${count}건 (예: ${b.date} $where ${s.label} ${qtyText(b, s.label)})",
                 min(18, (total * 14).roundToInt()).coerceAtLeast(2)
             )
-        } else if (pointRecords > 0) {
-            out += Reason("이 포인트 ${s.label} 조과 기록 ${pointRecords}건", 3)
+        } else if (exact > 0) {
+            out += Reason("이 포인트 ${s.label} 조과 기록 ${exact}건 (다른 계절·물때)", 2)
         }
         if (poorCount > 0) {
-            out += Reason("비슷한 물때·조건에 ${s.label} 조황 부진 기록 ${poorCount}건", -min(8, (poorTotal * 12).roundToInt()).coerceAtLeast(2))
+            out += Reason("비슷한 조건에 이 쪽 ${s.label} 부진 기록 ${poorCount}건", -min(8, (poorTotal * 12).roundToInt()).coerceAtLeast(2))
         }
         return out
     }
@@ -178,8 +211,7 @@ object Factors {
         rec: CatchRecord, c: DayConditions, slot: TimeSlot, nowMul: Int,
         wind: Double, windDir: Int, wave: Double?,
     ): Double {
-        val recAge = Astro.moonAge(rec.date.atTime(12, 0).atZone(ZONE))
-        val mul = when (cyclicDiff(nowMul, mulIndex(recAge), 15)) { 0 -> 1.0; 1 -> 0.85; 2 -> 0.6; 3 -> 0.35; else -> 0.0 }
+        val mul = when (cyclicDiff(nowMul, mulIndex(rec.date), 15)) { 0 -> 1.0; 1 -> 0.85; 2 -> 0.6; 3 -> 0.35; else -> 0.0 }
         val season = when (cyclicDiff(c.date.monthValue, rec.date.monthValue, 12)) { 0 -> 1.0; 1 -> 0.7; 2 -> 0.3; else -> 0.0 }
         if (mul == 0.0 || season == 0.0) return 0.0
 
@@ -217,18 +249,30 @@ object Factors {
         } else "${n}마리"
     }
 
+    /**
+     * 기록이 이 포인트에 얼마나 해당하는지.
+     * 같은 번호 1.0 / 35m 이내 + 공략 방향 비슷 0.45 / 70m 이내 + 같은 지형 0.2 / 같은 방향(서편 등) 기록 0.5
+     */
     private fun pointWeight(p: FishingPoint, rec: CatchRecord, ctx: ScoreContext): Double {
         rec.pointId?.let { id ->
             if (id == p.id) return 1.0
-            val rp = ctx.pointsById[id] ?: return 0.1
-            return if (angleDiff(rp.facingDeg, p.facingDeg) <= 40 && rp.terrain == p.terrain) 0.4 else 0.1
+            val rp = ctx.pointsById[id] ?: return 0.0
+            val d = distanceM(rp.lat, rp.lng, p.lat, p.lng)
+            return when {
+                d <= 35 && angleDiff(rp.facingDeg, p.facingDeg) <= 50 -> 0.45
+                d <= 70 && rp.terrain == p.terrain -> 0.2
+                else -> 0.0
+            }
         }
-        rec.sideFacingDeg?.let { return if (angleDiff(it, p.facingDeg) <= 60) 0.6 else 0.05 }
-        return 0.25
+        rec.sideFacingDeg?.let { return if (angleDiff(it, p.facingDeg) <= 50) 0.5 else 0.0 }
+        return 0.0
     }
 
+    fun distanceM(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double =
+        kotlin.math.hypot((lat1 - lat2) * 111_320.0, (lng1 - lng2) * 111_320.0 * kotlin.math.cos(Math.toRadians(lat1)))
+
     /** 15물때 주기 안의 위치(0~14) */
-    fun mulIndex(moonAge: Double): Int = (Astro.lunarDay(moonAge) - 1 + 7) % 15
+    fun mulIndex(date: java.time.LocalDate): Int = (Astro.lunarDay(date) - 1 + 7) % 15
 
     private fun cyclicDiff(a: Int, b: Int, n: Int): Int {
         val d = abs(a - b) % n

@@ -79,6 +79,8 @@ data class DayConditions(
     val tideIsEstimated: Boolean,
     val waterTemp: Double,
     val waterTempIsEstimated: Boolean,
+    /** 24시간 전 대비 수온 변화(°C). 부이 실측이 있을 때만 */
+    val waterTempChange: Double? = null,
     val moonAge: Double,
     val mulName: String,
     /** 0.0 = 조금(조차 최소) ~ 1.0 = 사리(조차 최대) */

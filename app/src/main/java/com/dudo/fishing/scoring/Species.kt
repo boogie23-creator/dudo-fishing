@@ -25,7 +25,7 @@ enum class Species(
         Activity.TWILIGHT, likesIncoming = true, likesSomeWave = true, waveLimit = 1.5
     ),
     BENGAE(
-        "벵에돔", 17.0..23.0, 14.0..26.0,
+        "벵에돔", 18.0..24.0, 15.0..26.0,
         intArrayOf(0, 0, 0, 1, 2, 3, 3, 3, 3, 3, 2, 1),
         Activity.DAY, likesIncoming = false, likesSomeWave = true, waveLimit = 1.5
     ),

@@ -81,6 +81,20 @@ object ScoreEngine {
             else -> r += Reason("수온 %.1f°C – 선호 범위 밖".format(t), -15)
         }
 
+        // 2-1. 수온 변화 (24시간 전 대비) – 오르면 활성↑, 급락하면 입을 닫음
+        c.waterTempChange?.let { d ->
+            when {
+                d >= 0.3 -> r += Reason("수온 상승 %+.1f°C – 활성 오름".format(d), if (s == Species.GAMSEONG || s == Species.BENGAE) 5 else 3)
+                d <= -1.5 -> r += Reason("수온 급락 %+.1f°C – 입을 닫기 쉬움".format(d), -8)
+                d <= -0.5 -> r += Reason("수온 하락 %+.1f°C".format(d), -4)
+            }
+        }
+        // 2-2. 저수온기 감성돔: 북서풍을 등지고 볕 드는 남향 자리, 깊은 곳이 유리 (영등철 공략)
+        if (s == Species.GAMSEONG && t < 13.5) {
+            if (p.facingDeg in 120..240) r += Reason("저수온기 – 볕 드는 남향 자리", 4)
+            if (p.depthMax >= 10) r += Reason("저수온기 – 수온 안정된 깊은 수심", 3)
+        }
+
         // 3. 대표 어종 여부
         if (s.label !in p.species) r += Reason("이 포인트의 대표 어종 아님", -10)
 
@@ -147,6 +161,8 @@ object ScoreEngine {
 
         // 12. 과거 조과 기록 – 비슷한 물때·계절·바람·파고·수온일 때 가점
         r += Factors.historyReasons(p, s, c, slot, wind, windDir, wave, ctx)
+        // 12-1. 두도 전체 조황 (모든 포인트 공통 – 순위는 바꾸지 않음)
+        r += Factors.dayReasons(s, c, slot, wind, windDir, wave, ctx)
 
         var score = toScore(r.sumOf { it.delta })
         if (danger != null) score = score.coerceAtMost(15)
