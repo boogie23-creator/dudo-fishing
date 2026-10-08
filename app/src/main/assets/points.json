@@ -377,7 +377,7 @@
       "coordVerified": false,
       "terrain": "곶부리",
       "targetDistance": 10,
-      "target": "동남 부속섬 동쪽 아래 – 들물 북동류가 붙어 흐르는 외해면(수심 8~12m)"
+      "target": "동남 부속섬 동쪽 아래 – 날물 북동류가 붙어 흐르는 외해면(수심 8~12m)"
     },
     {
       "id": "dudo_12_5",
@@ -466,7 +466,7 @@
       "coordVerified": false,
       "terrain": "평면",
       "targetDistance": 10,
-      "target": "동편 직선 갯바위 앞 – 들물 북동류가 갯바위를 따라 흐르는 띠(수심 4~8m)"
+      "target": "동편 직선 갯바위 앞 – 날물 북동류가 갯바위를 따라 흐르는 띠(수심 4~8m)"
     },
     {
       "id": "dudo_14_5",
@@ -534,7 +534,7 @@
       "coordVerified": false,
       "terrain": "평면",
       "targetDistance": 10,
-      "target": "북동 돌출부 – 날물 남서류가 돌아 나가는 조경지대"
+      "target": "북동 돌출부 – 들물 남서류가 돌아 나가는 조경지대"
     },
     {
       "id": "dudo_16_5",

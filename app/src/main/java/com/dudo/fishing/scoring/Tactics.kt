@@ -72,7 +72,7 @@ object Tactics {
 
     private fun currentText(p: FishingPoint, t: TideState?, strength: Double): String {
         if (t == null) return "조석 정보가 없어요. 찌가 흐르는 방향을 먼저 확인하고, 밑밥은 그보다 위쪽에 뿌리세요."
-        val tideName = if (t.incoming) "들물(북동쪽으로 흐름)" else "날물(남서쪽으로 흐름)"
+        val tideName = if (t.incoming) "들물(남서쪽으로 흐름)" else "날물(북동쪽으로 흐름)"
         if (t.nearSlack) return "물돌이 무렵이라 조류가 거의 멈춰요. 밑밥이 발 앞에 고이니 공략 거리를 짧게 잡고, 같은 자리에 밑밥을 쌓으세요. " +
                 "조류가 다시 살아나는 방향을 지켜보다가 그 위쪽으로 밑밥을 옮기세요."
         val flowDeg = if (t.incoming) Factors.FLOOD_FLOW_DEG else Factors.EBB_FLOW_DEG
