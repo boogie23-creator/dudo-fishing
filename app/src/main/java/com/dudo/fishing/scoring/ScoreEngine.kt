@@ -108,7 +108,8 @@ object ScoreEngine {
         val fit = PointModel.depthFit(p, pref)
         r += Reason("수심 ${p.depth} – 지금 수온의 ${s.label} 선호 수심 %.0f~%.0fm".format(pref.start, pref.endInclusive) +
                 if (fit >= 0.6) " (맞음)" else if (fit > 0.2) " (일부)" else " (벗어남)", (fit * 14 - 5).roundToInt())
-        terrainFit(p, s, t)?.let { r += it }
+        terrainFit(p, s, t, c.date.monthValue)?.let { r += it }
+        if (s == Species.GAMSEONG && c.date.monthValue == 5) r += Reason("5월 감성돔 금어기(5/1~5/31) – 잡으면 바로 방생", -15)
         if (s.habitat) habitatFit(p, s, prof)?.let { r += it }
         else if (s.label !in p.species) r += Reason("이 자리 대표 어종 아님", -8)
         if (p.localBias != 0) r += Reason(p.localNote.ifBlank { "현지 경험 보정" }, p.localBias)
@@ -237,14 +238,31 @@ object ScoreEngine {
         return SlotScore(slot, score, r, danger, wind, windDir, wave, phaseText)
     }
 
-    /** 어종 × 지형 × 계절 */
-    private fun terrainFit(p: FishingPoint, s: Species, t: Double): Reason? = when (s) {
-        Species.GAMSEONG -> when {
-            t >= 13.5 && p.terrain == "여밭" -> Reason("여밭 – 가을 감성돔이 붙는 지형", 6)
-            t < 13.5 && (p.terrain == "직벽" || p.depthMax >= 11) -> Reason("깊은 직벽·수로 – 저수온기 감성돔 은신처", 6)
-            p.terrain == "홈통" -> Reason("홈통 – 밑밥이 모이는 지형", 3)
-            p.terrain == "곶부리" -> Reason("곶부리 – 조류 경계", 2)
-            else -> null
+    /**
+     * 어종 × 지형 × 계절. 감성돔 계절 이동: 봄 오름(3~4월, 조류 잘 가는 여밭·곶부리) → 산란(5~6월, 해조류 붙은 얕은 홈통·여밭)
+     * → 고수온기(7~8월, 조류 소통 좋은 곶부리) → 가을 연안 회유(9~11월, 여밭) → 겨울(12~2월, 깊은 직벽·수로)
+     */
+    private fun terrainFit(p: FishingPoint, s: Species, t: Double, m: Int): Reason? = when (s) {
+        Species.GAMSEONG -> {
+            val tr = p.terrain
+            val deep = tr == "직벽" || p.depthMax >= 11
+            when {
+                t < 13.5 && deep -> Reason("깊은 직벽·수로 – 저수온기 감성돔 은신처", 6)
+                m in 9..11 -> when (tr) {
+                    "여밭" -> Reason("가을 연안 회유 – 여밭에 붙는 시기", 6)
+                    "홈통" -> Reason("홈통 – 밑밥이 모이는 지형", 3)
+                    "곶부리" -> Reason("곶부리 – 조류 경계", 2)
+                    else -> null
+                }
+                m == 12 || m <= 2 -> if (deep) Reason("겨울 – 깊은 직벽·수로로 빠지는 시기", 5) else if (p.depthMax <= 6) Reason("겨울 – 얕은 자리에선 빠짐", -3) else null
+                m == 3 || m == 4 -> if (tr == "여밭" || tr == "곶부리") Reason("봄 오름 – 조류 잘 가는 여밭·곶부리", 4) else null
+                m == 5 || m == 6 -> if (tr == "홈통" || tr == "여밭") Reason("산란기 – 해조류 붙은 얕은 홈통·여밭", 3) else null
+                else -> when (tr) {
+                    "곶부리" -> Reason("고수온기 – 조류 소통 좋은 곶부리", 3)
+                    "홈통" -> Reason("고수온기 – 물이 고이는 홈통", -2)
+                    else -> null
+                }
+            }
         }
         Species.BENGAE -> when (p.terrain) {
             "곶부리" -> Reason("곶부리 – 조류 받는 벵에 자리", 5)
