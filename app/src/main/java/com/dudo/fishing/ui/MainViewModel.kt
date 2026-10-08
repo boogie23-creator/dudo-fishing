@@ -104,6 +104,19 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         rank(c)
     }
 
+    fun movedPointCount(): Int = PointRepository.movedCount(getApplication())
+
+    /** 지도에서 고친 포인트 위치를 공유 (Claude에게 붙여넣으면 기본 데이터에 반영) */
+    fun sharePointLocations(context: android.content.Context) {
+        val text = "두도 포인트 위치 수정\n" + PointRepository.exportLocations(getApplication())
+        val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(android.content.Intent.EXTRA_SUBJECT, "두도 포인트 위치 수정")
+            putExtra(android.content.Intent.EXTRA_TEXT, text)
+        }
+        context.startActivity(android.content.Intent.createChooser(send, "고친 위치 보내기").addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+
     /** 지도에서 탭한 위치로 포인트 좌표를 옮겨 저장 */
     fun movePoint(id: String, lat: Double, lng: Double) {
         PointRepository.saveLocation(getApplication(), id, lat, lng)

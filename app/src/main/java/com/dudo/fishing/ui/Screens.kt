@@ -184,6 +184,9 @@ fun HomeScreen(vm: MainViewModel, onOpen: (String) -> Unit, onSettings: () -> Un
                                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             if (mine > 0) Text("내 기록 보내기", color = Tide, fontWeight = FontWeight.Bold,
                                 modifier = Modifier.clickable { vm.shareMyRecords(ctx) }.padding(top = 4.dp))
+                            val movedN = vm.movedPointCount()
+                            if (movedN > 0) Text("내가 고친 포인트 위치 보내기 (${movedN}곳)", color = Tide, fontWeight = FontWeight.Bold,
+                                modifier = Modifier.clickable { vm.sharePointLocations(ctx) }.padding(top = 4.dp))
                         }
                     }
                 }
@@ -446,6 +449,11 @@ fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit, onOpen:
             ) {
                 if (editMode) Text(if (moved) "✅ 위치를 저장했어요. 다시 탭하면 또 옮겨져요." else "지도에서 실제 자리를 탭하세요",
                     color = Coral, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                if (moved) {
+                    val shareCtx = androidx.compose.ui.platform.LocalContext.current
+                    Text("고친 위치 보내기 ›", color = Foam, fontWeight = FontWeight.Bold, fontSize = 13.sp,
+                        modifier = Modifier.clickable { vm.sharePointLocations(shareCtx) }.padding(vertical = 4.dp))
+                }
                 Text(r.point.name, color = Foam, fontWeight = FontWeight.ExtraBold, fontSize = 24.sp)
                 Text("${slot.slot.label} 입질 지점: ${Factors.biteText(r.point, bite)}",
                     color = Foam, fontWeight = FontWeight.Bold, fontSize = 13.sp)
