@@ -174,6 +174,9 @@ const SPECIES = {
   "벵에돔": {ideal:[18,24], season:[0,0,0,1,2,3,3,3,3,2,1,0], waveLimit:1.5, likesWave:true},
   "볼락":   {ideal:[10,16], season:[3,3,3,3,2,1,0,0,0,1,2,3], waveLimit:1.2, likesWave:false},
   "무늬오징어": {ideal:[17,24], season:[0,0,0,1,2,2,1,1,3,3,2,1], waveLimit:1.0, likesWave:false},
+  // 부수 어종(초기값 – 두도 조황 기록이 쌓이면 보정). 포인트의 대표 어종 목록 대신 지형·노출도로 자리를 판정
+  "참돔":   {ideal:[16,23], season:[0,0,0,1,3,3,2,1,2,3,2,1], waveLimit:1.5, likesWave:true, habitat:true},
+  "농어":   {ideal:[14,22], season:[1,0,0,2,3,3,2,1,2,3,3,2], waveLimit:1.9, likesWave:true, habitat:true},
 };
 const MONTH_TEMP = [13,12,12.5,14,16.5,19,21.5,24,23.5,21,18,15];
 let FLOOD = 250, EBB = 60;           // 들물 남서류(250°), 날물 북동류(60°) – 감천항 입구 실측(창 1.9kn, 낙 1.6kn)
@@ -290,7 +293,23 @@ function profile(p){
 function preferredDepth(sp,t){
   if(sp==="감성돔")return t>=20?[3,8]:t>=15?[4,8]:t>=13.5?[6,12]:[8,15];
   if(sp==="벵에돔")return t>=18?[3,10]:[6,12];
+  if(sp==="참돔")return [8,20];      // 본류대 깊은 곳
+  if(sp==="농어")return [2,8];       // 포말 지는 얕은 여·곶부리
   return sp==="볼락"?[2,8]:[3,10];
+}
+// 부수 어종 자리 판정 (대표 어종 목록에 없을 때 대신 씀)
+function habitatFit(p,sp,prof){
+  if(sp==="참돔"){
+    if(prof.exposure>=.9&&p.depthMax>=10)return ["외해 본류대·깊은 수심 – 참돔 회유 길목",6];
+    if(prof.exposure>=.65&&p.depthMax>=8)return ["반쯤 열린 깊은 자리 – 참돔 가능",1];
+    return ["막혔거나 얕은 자리 – 참돔 회유 적음",-6];
+  }
+  if(sp==="농어"){
+    if((p.terrain==="곶부리"||p.terrain==="여밭")&&prof.exposure>=.65)return ["포말 지는 곶부리·여밭 – 농어 사냥터",6];
+    if(prof.exposure>=.65)return ["열린 갯바위 – 농어 가능",1];
+    return ["막힌 홈통·안쪽 – 농어 적음",-5];
+  }
+  return null;
 }
 const depthFit=(p,[a,b])=>Math.max(0,Math.min(1,(Math.min(p.depthMax,b)-Math.max(p.depthMin,a))/Math.max(1,p.depthMax-p.depthMin)));
 function terrainFit(p,sp,t){
@@ -385,7 +404,8 @@ function scoreHour(p,sp,cond,h){
   const pref=preferredDepth(sp,t), fit=depthFit(p,pref);
   R.push([`수심 ${p.depth} · 지금 수온 선호 ${pref[0]}~${pref[1]}m ${fit>=.6?"(맞음)":fit>.2?"(일부)":"(벗어남)"}`,r0(fit*14-5)]);
   const tf=terrainFit(p,sp,t); if(tf)R.push(tf);
-  if(!p.species.includes(sp))R.push(["이 자리 대표 어종 아님",-8]);
+  if(S.habitat){const hf=habitatFit(p,sp,prof);if(hf)R.push(hf)}
+  else if(!p.species.includes(sp))R.push(["이 자리 대표 어종 아님",-8]);
   if(p.localBias)R.push([p.localNote||"현지 경험 보정",p.localBias]);
   // 물때·조류
   const at=kstMs(cond.date,h,30), ts=tideState(at,cond.tides);
@@ -395,7 +415,7 @@ function scoreHour(p,sp,cond,h){
     phase=`${ts.incoming?"들물":"날물"} ${r0(ts.progress*100)}%`;
     if(ts.nearSlack){
       const which=(ts.progress<.5)===ts.prevHigh?"만조":"간조";
-      R.push(sp==="감성돔"?[`${which} 물돌이 – 대물 입질 시간 (밴드 조황)`,9]:sp==="벵에돔"?[`${which} 정조 – 벵에는 조류가 있어야`,-4]:[`${which} 물돌이`,2]);
+      R.push(sp==="감성돔"?[`${which} 물돌이 – 대물 입질 시간 (밴드 조황)`,9]:sp==="벵에돔"?[`${which} 정조 – 벵에는 조류가 있어야`,-4]:sp==="참돔"?[`${which} 정조 – 참돔은 조류가 멈추면 입질 끊김`,-4]:[`${which} 물돌이`,2]);
     }else{
       const cur=cond.cur?.[h];
       const suit=cur?prof.suitAt(cur.d):(ts.incoming?prof.flood:prof.ebb);
@@ -405,18 +425,23 @@ function scoreHour(p,sp,cond,h){
       R.push([`${phase} – ${how} (${prof.type})`,r0(suit*14*power)]);
       if(sp==="감성돔"&&ts.incoming&&ts.progress>=.4)R.push(["중들물~끝들물",5]);
       if(sp==="벵에돔"&&ts.progress>=.25&&ts.progress<=.75)R.push(["조류 활발한 중간 물때",4]);
+      if(sp==="참돔"&&st>.55&&suit>=.75)R.push(["센 본류가 앞으로 뻗음 – 참돔 회유",5]);
+      if(sp==="농어"&&ts.progress>=.2&&ts.progress<=.7)R.push(["물이 살아 움직이는 시간 – 농어 사냥",3]);
       if(st>.65&&p.terrain==="곶부리"&&suit<.85)R.push(["센 조류 – 곶부리 정면은 너무 빠름",-4]);
       if(st>.65&&p.terrain==="홈통")R.push(["센 조류 – 홈통 반탄류",4]);
       if(st<.3&&p.terrain==="곶부리")R.push(["약한 조류 – 물이 가는 곶부리 유리",4]);
     }
   }
   const f=cond.rf, ml=cond.rangeCm!=null?`${cond.mul}(실제 조차 ${cond.rangeCm}cm)`:cond.mul;
+  if(sp==="참돔"&&f>.75)R.push(["사리 – 참돔은 센 물때 선호",3]);
   R.push(f<.2?[`${ml} – 조류 거의 없음`,-6]:f>=.35&&f<=.8?[`${ml} – 적당한 조류`,5]:f>.9?[`${ml} – 사리, 조류 강함`,p.depthMax>=10?1:-3]:[ml,1]);
   // 빛
   const sr=h*60+30-cond.sunrise;
   if(sp==="감성돔")R.push(sr>=-60&&sr<=60?["해 뜰 무렵 피딩타임",10]:sr>60&&sr<=150?["아침 – 입질 이어짐",5]:h>=11?["한낮 – 경계심 커짐",-3]:sr<-60?["해 뜨기 전",2]:["오전",0]);
   else if(sp==="벵에돔")R.push(sr<0?["해 뜨기 전 – 벵에 활성 낮음",-5]:h>=7&&h<=11?["오전 – 벵에 활성 시간",5]:["주간",2]);
   else if(sp==="볼락")R.push(sr<30?["새벽 – 볼락 활성",8]:["낮 – 볼락 활성 낮음",-10]);
+  else if(sp==="참돔")R.push(sr>=-60&&sr<=60?["해 뜰 무렵 – 참돔 피딩",8]:sr>60&&sr<=180?["아침",3]:h>=11?["한낮",-2]:["주간",0]);
+  else if(sp==="농어")R.push(sr<=60?["새벽·해 뜰 무렵 – 농어 활성 최고",9]:sr<=150?["아침",3]:["낮 – 농어 경계심↑",-5]);
   else R.push(sr>=-60&&sr<=90?["아침 피딩",8]:["주간",-2]);
   // 바람
   const dt=compass(wdir);
@@ -434,6 +459,9 @@ function scoreHour(p,sp,cond,h){
     else if(wave>S.waveLimit)R.push([tag+" – 높음",-12]);
     else if(sp==="감성돔"&&wave>=.4&&wave<=1.2)R.push([tag+" – 적당한 포말",7]);
     else if(sp==="벵에돔"&&wave>=.3&&wave<=1)R.push([tag+" – 적당한 물결",4]);
+    else if(sp==="농어"&&wave>=.8)R.push([tag+" – 파도·포말, 농어 최적",8]);
+    else if(sp==="농어"&&wave<.5)R.push([tag+" – 잔잔하면 농어 경계",-6]);
+    else if(sp==="참돔"&&wave>=.5&&wave<=1.5)R.push([tag+" – 적당한 물결",3]);
     else if(wave<.3&&S.likesWave)R.push([tag+" – 너무 잔잔함",-4]);
     else R.push([tag,0]);
     if((swellOn??on)&&wave>=1.5&&!danger)danger="정면 너울 – 갯바위 진입 주의";
@@ -446,6 +474,10 @@ function scoreHour(p,sp,cond,h){
     else if(w.dp>=3)R.push([`기압 급상승 +${w.dp.toFixed(1)}hPa/6h – 고기압 직후 경계심↑`,-3]);
   }
   // 물색 (최근 48시간 비·전날 파고로 추정)
+  if(cond.clarity&&sp==="농어"){
+    const c=cond.clarity, txt=`물색 추정: ${c.type}`;
+    R.push(c.type==="적당히 탁함"?[txt+" – 농어가 붙는 물색",5]:c.type==="뻘물"?[txt,-2]:c.type==="맑음(청물)"?[txt+" – 맑으면 농어 경계",-4]:[txt,0]);
+  }
   if(cond.clarity&&(sp==="감성돔"||sp==="벵에돔")){
     const c=cond.clarity, txt=`물색 추정: ${c.type} (48시간 비 ${c.rain}mm, 전날 파고 ${c.wave}m)`;
     if(sp==="감성돔")R.push(c.type==="뻘물"?[txt+" – 흙탕물은 입을 닫음",-5]:c.type==="적당히 탁함"?[txt+" – 감성돔이 경계를 푸는 물색 (밴드: 물색 흐려지니 다시 보임)",4]:c.type==="맑음(청물)"?[txt+" – 맑으면 경계심↑, 원투·가는 목줄",-3]:[txt,0]);
