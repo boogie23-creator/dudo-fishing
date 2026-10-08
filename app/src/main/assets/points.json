@@ -473,7 +473,19 @@
       "coordVerified": true,
       "terrain": "곶부리",
       "targetDistance": 12,
-      "target": "동편 돌출부 끝 – 조류가 가장 잘 받히는 곶부리. 약한 물때 1순위"
+      "target": "동편 돌출부 끝 – 조류가 가장 잘 받히는 곶부리. 약한 물때 1순위",
+      "altSpots": [
+        {
+          "tide": "flood",
+          "label": "남쪽 홈통",
+          "lat": 35.04839,
+          "lng": 129.015771,
+          "facingDeg": 95,
+          "terrain": "홈통",
+          "targetDistance": 8,
+          "target": "14.5번 남쪽 홈통 – 들물 남서류를 곶부리가 막아 주는 홈통 안 완류, 밑밥이 모이는 자리"
+        }
+      ]
     },
     {
       "id": "dudo_15",
