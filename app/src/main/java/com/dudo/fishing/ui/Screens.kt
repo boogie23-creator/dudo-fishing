@@ -488,7 +488,7 @@ fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit, onOpen:
             // ── 포인트 정보 ──
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 InfoPill("성격", r.profile.tideType)
-                InfoPill("너울", r.profile.exposureText)
+                InfoPill("너울 영향", r.profile.exposureText)
                 InfoPill("수심", r.point.depth)
                 InfoPill("지형", r.point.terrain)
                 InfoPill("바닥", r.point.bottom)
