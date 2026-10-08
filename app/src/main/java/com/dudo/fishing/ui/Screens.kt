@@ -410,7 +410,8 @@ fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit, onOpen:
         ts != null && cond != null -> (Factors.currentStrength(ts, cond.tideRangeFactor) / 0.6).coerceIn(0.0, 1.0)
         else -> 0.0
     }
-    val bite = Factors.bitePoint(r.point, flowDeg, flowStrength)
+    val here = slot.spot ?: r.point   // 이 시간에 서는 자리 (물때별 자리 이동 반영)
+    val bite = Factors.bitePoint(here, flowDeg, flowStrength)
 
     Column(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
@@ -419,7 +420,7 @@ fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit, onOpen:
         // ── 위성지도 ──
         Box(Modifier.fillMaxWidth().height(300.dp)) {
             PointsMap(
-                pins = st.results.map { MapPin(it.point, it.dayScore) },
+                pins = st.results.map { MapPin(if (it.point.id == pointId) here else it.point, it.dayScore) },
                 selectedId = pointId, editMode = editMode, flowDeg = flowDeg, bite = bite,
                 modifier = Modifier.fillMaxSize(),
                 onPinClick = { id -> if (!editMode && id != pointId) onOpen(id) },
@@ -455,7 +456,11 @@ fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit, onOpen:
                         modifier = Modifier.clickable { vm.sharePointLocations(shareCtx) }.padding(vertical = 4.dp))
                 }
                 Text(r.point.name, color = Foam, fontWeight = FontWeight.ExtraBold, fontSize = 24.sp)
-                Text("${slot.slot.label} 입질 지점: ${Factors.biteText(r.point, bite)}",
+                slot.spotLabel?.let { Text("${slot.slot.label} 자리: $it (물때에 맞춰 이동)", color = Coral, fontWeight = FontWeight.Bold, fontSize = 13.sp) }
+                if (slot.spotLabel == null && r.point.altSpots.isNotEmpty())
+                    Text(r.point.altSpots.joinToString(" · ") { "${if (it.isFlood) "들물" else "날물"} 때 ${it.label}도 가능" },
+                        color = Foam.copy(alpha = 0.8f), fontSize = 12.sp)
+                Text("${slot.slot.label} 입질 지점: ${Factors.biteText(here, bite)}",
                     color = Foam, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 Text("점선 = 공략 방향 · 원 = 입질 지점 · 하늘색 화살표 = ${slot.slot.label} 흐름",
                     color = Foam.copy(alpha = 0.8f), fontSize = 12.sp)
@@ -605,7 +610,7 @@ private fun SlotBar(s: SlotScore, selected: Boolean, onClick: () -> Unit) {
     ) {
         Column(Modifier.width(78.dp)) {
             Text(s.slot.label, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-            Text(s.tidePhase, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(s.spotLabel?.let { "↪ $it · " + s.tidePhase } ?: s.tidePhase, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Box(Modifier.weight(1f).height(14.dp).clip(RoundedCornerShape(7.dp)).background(MaterialTheme.colorScheme.surfaceVariant)) {
             Box(Modifier.fillMaxWidth(s.score / 100f).height(14.dp).clip(RoundedCornerShape(7.dp))
