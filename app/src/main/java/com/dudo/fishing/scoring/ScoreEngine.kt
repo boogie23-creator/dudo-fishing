@@ -101,7 +101,11 @@ object ScoreEngine {
                 d <= -1.5 -> r += Reason("수온 급락 %+.1f°C – 입을 닫기 쉬움".format(d), -8)
                 d <= -0.5 -> r += Reason("수온 하락 %+.1f°C".format(d), -4)
             }
+            if (s == Species.BENGAE && d <= -1.0) r += Reason("벵에돔은 수온 하락에 특히 약함 – 떠오르지 않음", -4)
         }
+        // 여름 냉수대: 부산·남해 동부는 6~9월에 남풍 계열 바람으로 찬물이 솟아 수온이 갑자기 17°C 아래로 떨어지는 일이 잦음
+        if (c.date.monthValue in 6..9 && t < 17 && (s == Species.BENGAE || s == Species.GAMSEONG))
+            r += Reason("여름 냉수대 의심 (수온 %.1f°C)".format(t), if (s == Species.BENGAE) -6 else -3)
 
         // ── 포인트 × 계절: 수온별 선호 수심, 지형 ───────────
         val pref = PointModel.preferredDepth(s, t)
