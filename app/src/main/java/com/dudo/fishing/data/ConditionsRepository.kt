@@ -5,6 +5,7 @@ import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
+import com.dudo.fishing.scoring.Factors
 
 /** 날짜별 낚시 조건(날씨·물때·수온·해 뜨고 지는 시각)을 모은다 */
 class ConditionsRepository(
@@ -85,6 +86,41 @@ class ConditionsRepository(
         val age = Astro.moonAge(date.atTime(12, 0).atZone(zone))
         val (rise, set) = Astro.sunTimes(date, areaLat, areaLng, zone)
 
+        // 5) 해양 예보(Open-Meteo, 키 불필요): 해류(조류 포함)·너울 방향·해수면
+        val marine = runCatching { MarineApi.fetch(now) }
+            .onFailure { msgs += "해류 예보를 못 불러왔어요 (${it.message}) – 조류 방향은 기본값(들물 남서·날물 북동)" }
+            .getOrNull()
+        val levelTides = marine?.let { MarineApi.tidesFromLevel(it.seaLevel) }.orEmpty()
+        val flow = marine?.let { MarineApi.flowDirections(it.currents, levelTides.ifEmpty { tides }) }
+        Factors.FLOOD_FLOW_DEG = flow?.floodDeg ?: Factors.DEFAULT_FLOOD_DEG
+        Factors.EBB_FLOW_DEG = flow?.ebbDeg ?: Factors.DEFAULT_EBB_DEG
+        flow?.let { msgs += "조류 방향(해류 예보): 들물 ${it.floodDeg}° · 날물 ${it.ebbDeg}°" }
+        val currents = marine?.currents.orEmpty().filterKeys { it.toLocalDate() == date }.mapKeys { it.key.hour }
+        val waveDir = marine?.waveDir.orEmpty().filterKeys { it.toLocalDate() == date }.mapKeys { it.key.hour }
+
+        // 6) 실제 조차: 조석표 높이 > 해수면 예보. 05~13시에 걸친 구간들의 평균 조차
+        val astroRf = Astro.tideRangeFactor(age)
+        fun rangeIn(ev: List<TideEvent>): Int? {
+            val rs = (5 until 13).mapNotNull { h ->
+                val at = date.atTime(h, 30)
+                val prev = ev.lastOrNull { !it.time.isAfter(at) } ?: return@mapNotNull null
+                val next = ev.firstOrNull { it.time.isAfter(at) } ?: return@mapNotNull null
+                if (prev.levelCm == null || next.levelCm == null) null else kotlin.math.abs(next.levelCm - prev.levelCm)
+            }
+            return if (rs.isEmpty()) null else rs.average().toInt()
+        }
+        // 부산 조차: 조금 ≈ 40cm, 사리 ≈ 120cm (조석표 기준)
+        val tableRange = rangeIn(tides)
+        val levelRange = if (tableRange == null) rangeIn(levelTides) else null
+        val levelMean = levelTides.zipWithNext { a, b -> kotlin.math.abs(a.levelCm!! - b.levelCm!!) }.takeIf { it.size >= 6 }?.average()
+        val realRf = when {
+            tableRange != null -> ((tableRange - 40) / 80.0).coerceIn(0.0, 1.0)
+            levelRange != null && levelMean != null -> (0.5 + (levelRange / levelMean - 1)).coerceIn(0.0, 1.0)
+            else -> null
+        }
+        val rangeCm = tableRange ?: levelRange
+        rangeCm?.let { msgs += "05~13시 실제 조차 ${it}cm – 조류 세기 ${((realRf ?: astroRf) * 100).toInt()}% (물때 계산 ${(astroRf * 100).toInt()}%)" }
+
         DayConditions(
             date = date,
             weather = dayWeather,
@@ -96,7 +132,12 @@ class ConditionsRepository(
             waterTempChange = if (manual == null && buoy != null && date == now.toLocalDate()) buoyChange else null,
             moonAge = age,
             mulName = Astro.mulName(Astro.lunarDay(date)),
-            tideRangeFactor = Astro.tideRangeFactor(age),
+            tideRangeFactor = realRf ?: astroRf,
+            tideRangeFactorAstro = astroRf,
+            tideRangeCm = rangeCm,
+            currents = currents,
+            flow = flow,
+            waveDir = waveDir,
             sunrise = rise,
             sunset = set,
             messages = msgs,

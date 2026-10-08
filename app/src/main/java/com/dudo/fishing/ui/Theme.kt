@@ -27,17 +27,28 @@ val Good = Color(0xFF16A06A)       // 좋음
 val Mid = Color(0xFFE5A50A)        // 보통
 val Bad = Color(0xFFD6493B)        // 나쁨
 
+// 확률 색: 높음→낮음 = 파랑·초록·노랑·주황·빨강
+val S1Blue = Color(0xFF2F6FD6)
+val S2Green = Color(0xFF25A35A)
+val S3Yellow = Color(0xFFE0B400)
+val S4Orange = Color(0xFFF08A1C)
+val S5Red = Color(0xFFE03B2F)
+/** 위험(너울·강풍) 시간 표시용 회색 – 빨강은 비추천에 쓰므로 구분 */
+val Warn = Color(0xFF6B7A86)
+
 fun scoreColor(score: Int) = when {
-    score >= 75 -> Coral
-    score >= 62 -> Good
-    score >= 45 -> Mid
-    else -> Bad
+    score >= 75 -> S1Blue
+    score >= 62 -> S2Green
+    score >= 50 -> S3Yellow
+    score >= 38 -> S4Orange
+    else -> S5Red
 }
 
 fun scoreLabel(score: Int) = when {
     score >= 75 -> "강력 추천"
     score >= 62 -> "좋음"
-    score >= 45 -> "보통"
+    score >= 50 -> "보통"
+    score >= 38 -> "낮음"
     else -> "비추천"
 }
 

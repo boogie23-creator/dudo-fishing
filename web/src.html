@@ -7,7 +7,8 @@
 :root{
   --abyss:#08223a; --deep:#0d3a5c; --tide:#0e7c8c; --shallow:#5fc6c9; --foam:#f2fbfc; --coral:#ff6f45;
   --bg:#eef4f6; --surface:#ffffff; --surface2:#e1edf1; --fg:#0b2236; --muted:#557083; --line:#cddde3;
-  --good:#16a06a; --mid:#d99a00; --bad:#d6493b; --rock:#8a8572; --rockfill:#c9c2a8; --sea:#d4e8ee;
+  --good:#16a06a; --mid:#d99a00; --bad:#d6493b;
+  --s1:#e03b2f; --s2:#f08a1c; --s3:#e0b400; --s4:#25a35a; --s5:#2f6fd6; --warn:#6b7a86; --rock:#8a8572; --rockfill:#c9c2a8; --sea:#d4e8ee;
   --f-display:"Black Han Sans","Noto Sans KR",system-ui,sans-serif;
   --f-body:"Noto Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
   --f-num:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
@@ -139,10 +140,11 @@ h1{font-family:var(--f-display);font-weight:400;font-size:clamp(28px,5vw,40px);l
       <p class="hint">원 안 번호 = 포인트, 색 = 05~13시 평균 확률. 원을 누르면 시간별 근거가 나와요.</p>
       <div class="mapbox"><svg id="map" viewBox="0 0 400 520" role="img" aria-label="두도 포인트 지도"></svg></div>
       <div class="legend">
-        <span><i class="dot" style="background:var(--coral)"></i>75↑ 강력 추천</span>
-        <span><i class="dot" style="background:var(--good)"></i>62↑ 좋음</span>
-        <span><i class="dot" style="background:var(--mid)"></i>45↑ 보통</span>
-        <span><i class="dot" style="background:var(--bad)"></i>비추천</span>
+        <span><i class="dot" style="background:var(--s5)"></i>75↑ 강력 추천</span>
+        <span><i class="dot" style="background:var(--s4)"></i>62↑ 좋음</span>
+        <span><i class="dot" style="background:var(--s3)"></i>50↑ 보통</span>
+        <span><i class="dot" style="background:var(--s2)"></i>38↑ 낮음</span>
+        <span><i class="dot" style="background:var(--s1)"></i>비추천</span>
       </div>
     </section>
     <section class="panel">
@@ -171,7 +173,7 @@ const SPECIES = {
   "무늬오징어": {ideal:[17,24], season:[0,0,0,1,2,2,1,1,3,3,2,1], waveLimit:1.0, likesWave:false},
 };
 const MONTH_TEMP = [13,12,12.5,14,16.5,19,21.5,24,23.5,21,18,15];
-const FLOOD = 250, EBB = 60;           // 들물 남서류(250°), 날물 북동류(60°) – 감천항 입구 실측(창 1.9kn, 낙 1.6kn)
+let FLOOD = 250, EBB = 60;           // 들물 남서류(250°), 날물 북동류(60°) – 감천항 입구 실측(창 1.9kn, 낙 1.6kn)
 const C_LAT = 35.0488, C_LNG = 129.0150;
 const ang = (a,b)=>{let d=Math.abs(a-b)%360;return d>180?360-d:d};
 const COMPASS = ["북","북동","동","남동","남","남서","서","북서"];
@@ -182,8 +184,9 @@ const kstMs = (ds,h=0,mi=0)=>{const [y,m,d]=ds.split("-").map(Number);return Dat
 const dateStr = ms=>{const p=kstParts(ms);return `${p.y}-${String(p.m).padStart(2,"0")}-${String(p.d).padStart(2,"0")}`};
 const addDays = (ds,n)=>dateStr(kstMs(ds,12)+n*864e5);
 const hm = ms=>{const p=kstParts(ms);return `${String(p.h).padStart(2,"0")}:${String(p.mi).padStart(2,"0")}`};
-const scoreColor = s=>s>=75?"var(--coral)":s>=62?"var(--good)":s>=45?"var(--mid)":"var(--bad)";
-const scoreLabel = s=>s>=75?"강력 추천":s>=62?"좋음":s>=45?"보통":"비추천";
+// 확률 색: 높음→낮음 = 파랑·초록·노랑·주황·빨강
+const scoreColor = s=>s>=75?"var(--s5)":s>=62?"var(--s4)":s>=50?"var(--s3)":s>=38?"var(--s2)":"var(--s1)";
+const scoreLabel = s=>s>=75?"강력 추천":s>=62?"좋음":s>=50?"보통":s>=38?"낮음":"비추천";
 
 // ───────── 천문: 합삭(Meeus) · 음력 · 물때 · 일출 ─────────
 function newMoonMs(k){
@@ -249,8 +252,16 @@ function tideState(t,tides){
   for(const e of tides){if(e.t<=t)prev=e;else{next=e;break}}
   if(!prev||!next)return null;
   const total=Math.max(1,(next.t-prev.t)/6e4), el=(t-prev.t)/6e4;
-  return {incoming:!prev.high,progress:el/total,nearSlack:el<40||total-el<40,prevHigh:prev.high};
+  const range=prev.level!=null&&next.level!=null?Math.abs(next.level-prev.level):null;
+  return {incoming:!prev.high,progress:el/total,nearSlack:el<40||total-el<40,prevHigh:prev.high,range};
 }
+// 실제 조차 → 조류 세기(0~1). 예보 구간의 평균 조차 대비 비율로 본다(사리 ≈ 평균의 1.5배, 조금 ≈ 0.5배).
+// 모델 해수면의 절대 진폭이 실제와 달라도 비율은 유지되므로 평균 대비로 정규화한다.
+function rangeStats(tides){
+  const r=[];for(let i=1;i<tides.length;i++){const a=tides[i-1],b=tides[i];if(a.level!=null&&b.level!=null&&a.high!==b.high)r.push(Math.abs(b.level-a.level))}
+  return r.length>=6?{mean:r.reduce((x,y)=>x+y)/r.length}:null;
+}
+const rfFromRange=(range,stats)=>Math.max(0,Math.min(1,.5+(range/stats.mean-1)));
 const strengthOf=(ts,rf)=>Math.max(0,Math.sin(Math.PI*ts.progress))*(0.4+0.6*rf);
 
 // ───────── 포인트 고정 성격 ─────────
@@ -270,7 +281,7 @@ function profile(p){
   const sec=x=>x>=110&&x<=250?1:x>250&&x<=300?.75:x>=60&&x<110?.7:.35;
   const fl=suit(FLOOD), eb=suit(EBB), ex=Math.max(sec(b)*.6+sec(p.facingDeg)*.4,.3);
   const type=fl-eb>=.35?"들물 포인트":eb-fl>=.35?"날물 포인트":fl>.3&&eb>.3?"양물 포인트":"물돌이 포인트";
-  return PROFILE[p.id]={flood:fl,ebb:eb,exposure:ex,bearing:b,type,
+  return PROFILE[p.id]={flood:fl,ebb:eb,exposure:ex,bearing:b,type,suitAt:suit,
     exposureText:ex>=.9?"외해 정면":ex>=.65?"반쯤 열림":"막힌 쪽"};
 }
 function preferredDepth(sp,t){
@@ -372,9 +383,10 @@ function scoreHour(p,sp,cond,h){
   R.push([`수심 ${p.depth} · 지금 수온 선호 ${pref[0]}~${pref[1]}m ${fit>=.6?"(맞음)":fit>.2?"(일부)":"(벗어남)"}`,r0(fit*14-5)]);
   const tf=terrainFit(p,sp,t); if(tf)R.push(tf);
   if(!p.species.includes(sp))R.push(["이 자리 대표 어종 아님",-8]);
+  if(p.localBias)R.push([p.localNote||"현지 경험 보정",p.localBias]);
   // 물때·조류
   const at=kstMs(cond.date,h,30), ts=tideState(at,cond.tides);
-  const st=ts?strengthOf(ts,cond.rf):.3;
+  const st=ts?strengthOf(ts,(ts.range!=null&&cond.rangeStats)?rfFromRange(ts.range,cond.rangeStats):cond.rf):.3;
   let phase="정보 없음";
   if(ts){
     phase=`${ts.incoming?"들물":"날물"} ${r0(ts.progress*100)}%`;
@@ -382,7 +394,10 @@ function scoreHour(p,sp,cond,h){
       const which=(ts.progress<.5)===ts.prevHigh?"만조":"간조";
       R.push(sp==="감성돔"?[`${which} 물돌이 – 대물 입질 시간 (밴드 조황)`,9]:sp==="벵에돔"?[`${which} 정조 – 벵에는 조류가 있어야`,-4]:[`${which} 물돌이`,2]);
     }else{
-      const suit=ts.incoming?prof.flood:prof.ebb, power=Math.max(.3,Math.min(1,st/.5));
+      const cur=cond.cur?.[h];
+      const suit=cur?prof.suitAt(cur.d):(ts.incoming?prof.flood:prof.ebb);
+      const power=cur?Math.max(.3,Math.min(1,cur.v/cond.flow.vRef)):Math.max(.3,Math.min(1,st/.5));
+      if(cur)phase+=` · ${compass(cur.d)}류 ${(cur.v/1.852).toFixed(1)}kn`;
       const how=suit>=.9?"조류가 공략 지점으로 뻗어 나감":suit>=.75?"섬 하류 쪽 조경지대":suit>=.5?"갯바위 따라 흐름":suit>0?"홈통 안으로 도는 물":"갯바위로 받혀 채비가 밀려옴";
       R.push([`${phase} – ${how} (${prof.type})`,r0(suit*14*power)]);
       if(sp==="감성돔"&&ts.incoming&&ts.progress>=.4)R.push(["중들물~끝들물",5]);
@@ -392,8 +407,8 @@ function scoreHour(p,sp,cond,h){
       if(st<.3&&p.terrain==="곶부리")R.push(["약한 조류 – 물이 가는 곶부리 유리",4]);
     }
   }
-  const f=cond.rf;
-  R.push(f<.2?[`${cond.mul} – 조류 거의 없음`,-6]:f>=.35&&f<=.8?[`${cond.mul} – 적당한 조류`,5]:f>.9?[`${cond.mul} – 사리, 조류 강함`,p.depthMax>=10?1:-3]:[cond.mul,1]);
+  const f=cond.rf, ml=cond.rangeCm!=null?`${cond.mul}(실제 조차 ${cond.rangeCm}cm)`:cond.mul;
+  R.push(f<.2?[`${ml} – 조류 거의 없음`,-6]:f>=.35&&f<=.8?[`${ml} – 적당한 조류`,5]:f>.9?[`${ml} – 사리, 조류 강함`,p.depthMax>=10?1:-3]:[ml,1]);
   // 빛
   const sr=h*60+30-cond.sunrise;
   if(sp==="감성돔")R.push(sr>=-60&&sr<=60?["해 뜰 무렵 피딩타임",10]:sr>60&&sr<=150?["아침 – 입질 이어짐",5]:h>=11?["한낮 – 경계심 커짐",-3]:sr<-60?["해 뜨기 전",2]:["오전",0]);
@@ -462,7 +477,7 @@ async function loadLive(){
   const tz="&timezone=Asia%2FSeoul";
   const [wx,mar]=await Promise.all([
     fetchJson(`https://api.open-meteo.com/v1/forecast?latitude=${C_LAT}&longitude=${C_LNG}&hourly=wind_speed_10m,wind_direction_10m,precipitation_probability,precipitation,pressure_msl&wind_speed_unit=ms&past_days=3&forecast_days=4${tz}`),
-    fetchJson(`https://marine-api.open-meteo.com/v1/marine?latitude=35.035&longitude=129.03&hourly=wave_height,wave_direction,swell_wave_height,swell_wave_direction,sea_surface_temperature,sea_level_height_msl&past_days=3&forecast_days=4${tz}`)
+    fetchJson(`https://marine-api.open-meteo.com/v1/marine?latitude=35.035&longitude=129.03&hourly=wave_height,wave_direction,swell_wave_height,swell_wave_direction,sea_surface_temperature,sea_level_height_msl,ocean_current_velocity,ocean_current_direction&cell_selection=sea&past_days=3&forecast_days=4${tz}`)
   ]);
   const tms=s=>{const [d,t]=s.split("T");return kstMs(d,+t.slice(0,2),+t.slice(3,5))};
   LIVE.weather={};
@@ -475,9 +490,28 @@ async function loadLive(){
   mt.forEach((t,i)=>{LIVE.wave[t]=mar.hourly.wave_height[i];LIVE.sst[t]=mar.hourly.sea_surface_temperature[i];
     const sw=mar.hourly.swell_wave_height?.[i], swd=mar.hourly.swell_wave_direction?.[i], wd=mar.hourly.wave_direction?.[i];
     LIVE.waveDir[t]=(sw!=null&&sw>=.3&&swd!=null)?swd:(wd??null)});
+  // 해류(조류 포함) 예보: Copernicus SMOC – 윈디 해류 레이어와 같은 계열. 방향 = 흘러가는 쪽
+  LIVE.cur={};
+  mt.forEach((t,i)=>{const v=mar.hourly.ocean_current_velocity?.[i], d=mar.hourly.ocean_current_direction?.[i];
+    if(v!=null&&d!=null)LIVE.cur[t]={v,d}});
   const lv=mar.hourly.sea_level_height_msl;
   LIVE.tides=lv&&lv.some(x=>x!=null)?tidesFromLevel(mt,lv):null;
+  LIVE.flow=flowFromCurrents();
+  if(LIVE.flow){FLOOD=LIVE.flow.flood;EBB=LIVE.flow.ebb;for(const k in PROFILE)delete PROFILE[k]}
   LIVE.ok=true;
+}
+// 예보 기간 동안 들물·날물(정조 근처 제외) 시간의 해류를 벡터 평균 → 그 기간의 실제 들물/날물 흐름 방향
+function flowFromCurrents(){
+  if(!LIVE.cur||!LIVE.tides||LIVE.tides.length<5)return null;
+  const acc={true:[0,0,0],false:[0,0,0]}, vs=[];
+  for(const k in LIVE.cur){const t=+k,c=LIVE.cur[k];vs.push(c.v);
+    const ts=tideState(t,LIVE.tides);if(!ts||ts.progress<.2||ts.progress>.8)continue;
+    const a=acc[ts.incoming],r=c.d*Math.PI/180;a[0]+=c.v*Math.sin(r);a[1]+=c.v*Math.cos(r);a[2]++}
+  const dir=a=>a[2]?((Math.atan2(a[0],a[1])*180/Math.PI)+360)%360:null;
+  const f=dir(acc[true]),e=dir(acc[false]); if(f==null||e==null)return null;
+  vs.sort((a,b)=>a-b);
+  return {flood:Math.round(f),ebb:Math.round(e),vRef:Math.max(.2,vs[Math.floor(vs.length*.8)]||.5),
+    vFlood:Math.hypot(acc[true][0],acc[true][1])/acc[true][2],vEbb:Math.hypot(acc[false][0],acc[false][1])/acc[false][2]};
 }
 function sstMean(ds){const v=[];for(let h=0;h<24;h++){const x=LIVE.sst[kstMs(ds,h)];if(x!=null)v.push(x)}return v.length?v.reduce((a,b)=>a+b)/v.length:null}
 
@@ -500,10 +534,19 @@ function buildCond(){
     if(have)cond.clarity={rain:Math.round(rain),wave:Math.round(maxWave*10)/10,
       type:rain>=40?"뻘물":(rain>=5||maxWave>=1.2)?"적당히 탁함":(rain<1&&maxWave<.5)?"맑음(청물)":"보통"};
     cond.weather.def={wind:3,dir:0,wave:null,rain:false};
+    if(LIVE.flow){cond.flow=LIVE.flow;cond.cur={};for(let h=0;h<24;h++){const c=LIVE.cur[kstMs(ds,h)];if(c)cond.cur[h]=c}}
     const m=sstMean(ds), y=sstMean(addDays(ds,-1));
     cond.temp=m??MONTH_TEMP[cond.month-1]; cond.tempChange=m!=null&&y!=null&&state.day===0?Math.round((m-y)*10)/10:null;
     cond.tides=LIVE.tides&&LIVE.tides.length>4?LIVE.tides:tidesEstimate(ds);
     cond.src.tide=LIVE.tides&&LIVE.tides.length>4?"해수면 예보":"천문 추정";
+    const stats=LIVE.tides&&LIVE.tides.length>4?rangeStats(LIVE.tides):null;
+    if(stats){
+      // 낚시 시간(05~13시)에 걸친 조석 구간들의 실제 조차
+      const rs=[];for(let h=5;h<13;h++){const ts=tideState(kstMs(ds,h,30),cond.tides);if(ts&&ts.range!=null)rs.push(ts.range)}
+      if(rs.length){const r=rs.reduce((a,b)=>a+b)/rs.length;
+        cond.rangeStats=stats; cond.rfAstro=cond.rf; cond.rf=rfFromRange(r,stats);
+        cond.rangeCm=Math.round(r*100); cond.src.rf="실제 조차";}
+    }
   }else{
     const M=state.manual;
     cond.weather.def={wind:M.wind,dir:M.dir,wave:M.wave,rain:false};
@@ -530,6 +573,8 @@ function renderHeader(cond){
   const w12=cond.weather[12]||cond.weather.def;
   const stats=[
     ["물때",`${cond.mul}`,`음력 ${lunarDay(cond.date)}일`],
+    ...(cond.flow?[["조류 방향 (예보)",`들 ${compass(cond.flow.flood)} · 날 ${compass(cond.flow.ebb)}`,`들물 ${cond.flow.flood}° · 날물 ${cond.flow.ebb}° (해류 예보)`]]:[]),
+    ...(cond.rangeCm!=null?[["조차 (05~13시)",`${cond.rangeCm}cm`,`조류 세기 ${Math.round(cond.rf*100)}% · 물때 계산 ${Math.round(cond.rfAstro*100)}%`]]:[]),
     ["만조",day.filter(e=>e.high).map(e=>hm(e.t)).join(" ")||"-",""],
     ["간조",day.filter(e=>!e.high).map(e=>hm(e.t)).join(" ")||"-",""],
     ["수온",`${cond.temp.toFixed(1)}°`,cond.tempChange!=null?`${cond.tempChange>=0?"+":""}${cond.tempChange} 어제 대비`:(state.mode==="live"?"예보":"입력값")],
@@ -605,7 +650,7 @@ function renderList(results){
       <span class="rank">${i+1}</span>${gaugeSvg(r.day)}
       <span style="min-width:0"><span class="pname">${r.p.name}<span class="tag ${tagCls(prof.type)}">${prof.type}</span></span>
       <span class="pmeta" style="display:block">${r.sp} · 최고 ${String(r.win[0]).padStart(2,"0")}~${String(r.win[1]).padStart(2,"0")}시 · ${r.p.terrain} · 수심 ${r.p.depth}</span></span>
-      <span class="bars" aria-hidden="true">${r.hours.map(x=>`<i style="height:${4+x.score*.22}px;background:${x.danger?"var(--bad)":scoreColor(x.score)}${x.h>=RANK_END?";opacity:.4":""}"></i>`).join("")}</span>
+      <span class="bars" aria-hidden="true">${r.hours.map(x=>`<i style="height:${4+x.score*.22}px;background:${x.danger?"var(--warn)":scoreColor(x.score)}${x.h>=RANK_END?";opacity:.4":""}"></i>`).join("")}</span>
     </button>`}).join("");
   $("list").querySelectorAll(".prow").forEach(b=>b.onclick=()=>select(b.dataset.id));
 }
@@ -627,7 +672,7 @@ function renderDetail(results){
       <span class="pill">수심 <b>${r.p.depth}</b></span><span class="pill">지형 <b>${r.p.terrain}</b></span>
     </div>
     <div class="hourscroll"><div class="hours" role="group" aria-label="시간별 확률">${r.hours.map(x=>`<button class="hcol${x.h>=RANK_END?" after":""}" type="button" data-h="${x.h}" aria-pressed="${x.h===hs.h}">
-      <div class="h">${String(x.h).padStart(2,"0")}시</div><div class="tank"><i style="height:${x.score}%;background:${x.danger?"var(--bad)":scoreColor(x.score)}"></i></div>
+      <div class="h">${String(x.h).padStart(2,"0")}시</div><div class="tank"><i style="height:${x.score}%;background:${x.danger?"var(--warn)":scoreColor(x.score)}"></i></div>
       <div class="s">${x.score}</div><div class="ph">${x.phase}</div></button>`).join("")}</div></div>
     <div class="sum">점선 칸(13시 이후)은 참고용이고 순위에는 들어가지 않아요.</div>
     <h2 style="margin-top:16px">${String(hs.h).padStart(2,"0")}~${String(hs.h+1).padStart(2,"0")}시 ${hs.score}점 근거</h2>

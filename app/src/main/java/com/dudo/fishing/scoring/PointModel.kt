@@ -42,7 +42,7 @@ object PointModel {
 
     private val cache = HashMap<String, PointProfile>()
 
-    fun profile(p: FishingPoint): PointProfile = cache.getOrPut("${p.id}:${p.lat}:${p.lng}:${p.facingDeg}") {
+    fun profile(p: FishingPoint): PointProfile = cache.getOrPut("${p.id}:${p.lat}:${p.lng}:${p.facingDeg}:${Factors.FLOOD_FLOW_DEG}:${Factors.EBB_FLOW_DEG}") {
         val dy = (p.lat - C_LAT) * 111_320.0
         val dx = (p.lng - C_LNG) * 111_320.0 * cos(Math.toRadians(C_LAT))
         val bearing = ((Math.toDegrees(atan2(dx, dy)) + 360) % 360).toInt()
@@ -53,6 +53,9 @@ object PointModel {
             bearing = bearing,
         )
     }
+
+    /** 지금 실제로 흐르는 방향(해류 예보)에 대한 이 자리의 적합도 -1~1 */
+    fun suitAt(p: FishingPoint, flowDeg: Int): Double = suit(p, profile(p).bearing, flowDeg)
 
     private fun suit(p: FishingPoint, bearing: Int, flowDeg: Int): Double {
         val a = Factors.angleDiff(flowDeg, p.facingDeg)

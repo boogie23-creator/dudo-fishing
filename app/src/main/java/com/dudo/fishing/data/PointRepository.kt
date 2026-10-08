@@ -45,6 +45,8 @@ object PointRepository {
                 species = (0 until sp.length()).map { sp.getString(it) },
                 note = o.optString("note"),
                 coordVerified = o.optBoolean("coordVerified", false),
+                localBias = o.optInt("localBias", 0),
+                localNote = o.optString("localNote"),
             )
         }
     }

@@ -148,7 +148,7 @@ fun HomeScreen(vm: MainViewModel, onOpen: (String) -> Unit, onSettings: () -> Un
                                 onPinClick = onOpen,
                             )
                         }
-                        Text("숫자는 포인트 번호, 색은 점수 (주황 강력추천 · 초록 좋음 · 노랑 보통 · 빨강 비추천)",
+                        Text("숫자는 포인트 번호, 색은 점수 (파랑 강력추천 · 초록 좋음 · 노랑 보통 · 주황 낮음 · 빨강 비추천)",
                             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp))
                     }
@@ -360,7 +360,7 @@ private fun HourStrip(r: PointResult, light: Boolean) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 val after = s.slot.startHour >= com.dudo.fishing.scoring.TimeSlot.FISHING_END
                 Box(Modifier.width(11.dp).height((4 + s.score * 0.22).dp).clip(RoundedCornerShape(3.dp))
-                    .background((if (s.danger != null) Bad else scoreColor(s.score)).copy(alpha = if (after) 0.4f else 1f)))
+                    .background((if (s.danger != null) Warn else scoreColor(s.score)).copy(alpha = if (after) 0.4f else 1f)))
                 Text("${s.slot.startHour}", fontSize = 8.sp,
                     color = if (light) Foam.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant)
             }

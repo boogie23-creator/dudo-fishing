@@ -78,7 +78,12 @@ object ScoreEngine {
         val wind = hw.map { it.windSpeed }.average().takeIf { !it.isNaN() } ?: 0.0
         val windDir = hw.firstOrNull()?.windDir ?: 0
         val seaWave = hw.mapNotNull { it.wave }.maxOrNull()
-        val wave = PointModel.effectiveWave(prof, p, seaWave, wind, windDir)
+        var wave = PointModel.effectiveWave(prof, p, seaWave, wind, windDir)
+        // 실제 너울이 오는 방향: 정면이면 더 크게, 등지면 작게
+        val swellDir = c.waveDir[slot.startHour]
+        val swellAngle = swellDir?.let { Factors.angleDiff(it, p.facingDeg) }
+        if (wave != null && swellAngle != null)
+            wave = ((wave * if (swellAngle <= 70) 1.2 else if (swellAngle >= 110) 0.7 else 1.0) * 10).toInt() / 10.0
         val rainy = hw.any { it.precipType != 0 }
         var danger: String? = null
         val t = c.waterTemp
@@ -105,6 +110,7 @@ object ScoreEngine {
                 if (fit >= 0.6) " (맞음)" else if (fit > 0.2) " (일부)" else " (벗어남)", (fit * 14 - 5).roundToInt())
         terrainFit(p, s, t)?.let { r += it }
         if (s.label !in p.species) r += Reason("이 자리 대표 어종 아님", -8)
+        if (p.localBias != 0) r += Reason(p.localNote.ifBlank { "현지 경험 보정" }, p.localBias)
 
         // ── 물때·조류 (이 시각) ────────────────
         val ts = Factors.tideState(at, c.tides)
@@ -120,9 +126,12 @@ object ScoreEngine {
                     else -> Reason("$which 물돌이", 2)
                 }
             } else {
-                val suit = if (ts.incoming) prof.floodSuit else prof.ebbSuit
+                val cur = c.currents[slot.startHour]
+                val suit = cur?.let { PointModel.suitAt(p, it.dirDeg) } ?: if (ts.incoming) prof.floodSuit else prof.ebbSuit
                 val tideName = if (ts.incoming) "들물" else "날물"
-                val power = (strength / 0.5).coerceIn(0.3, 1.0)
+                val curText = cur?.let { " · ${compass(it.dirDeg)}류 %.1fkn".format(it.speedKmh / 1.852) } ?: ""
+                val power = if (cur != null && c.flow != null) (cur.speedKmh / c.flow.vRef).coerceIn(0.3, 1.0)
+                    else (strength / 0.5).coerceIn(0.3, 1.0)
                 val pts = (suit * 14 * power).roundToInt()
                 val how = when {
                     suit >= 0.9 -> "조류가 공략 지점으로 뻗어 나감"
@@ -131,7 +140,7 @@ object ScoreEngine {
                     suit > 0 -> "홈통 안으로 도는 물"
                     else -> "조류가 갯바위로 받혀 채비가 밀려옴"
                 }
-                r += Reason("$tideName ${(ts.progress * 100).roundToInt()}% – $how (${prof.tideType})", pts)
+                r += Reason("$tideName ${(ts.progress * 100).roundToInt()}%$curText – $how (${prof.tideType})", pts)
                 // 감성돔은 중들물~끝들물, 벵에돔은 조류가 살아 있는 중간 시간
                 if (s == Species.GAMSEONG && ts.incoming && ts.progress >= 0.4) r += Reason("중들물~끝들물", 5)
                 if (s == Species.BENGAE && ts.progress in 0.25..0.75) r += Reason("조류 활발한 중간 물때", 4)
@@ -141,11 +150,12 @@ object ScoreEngine {
             }
         }
         val f = c.tideRangeFactor
+        val ml = c.tideRangeCm?.let { "${c.mulName}(실제 조차 ${it}cm)" } ?: c.mulName
         r += when {
-            f < 0.2 -> Reason("${c.mulName} – 조류 거의 없음", -6)
-            f in 0.35..0.8 -> Reason("${c.mulName} – 적당한 조류", 5)
-            f > 0.9 -> Reason("${c.mulName} – 사리, 조류 강함", if (p.depthMax >= 10) 1 else -3)
-            else -> Reason(c.mulName, 1)
+            f < 0.2 -> Reason("$ml – 조류 거의 없음", -6)
+            f in 0.35..0.8 -> Reason("$ml – 적당한 조류", 5)
+            f > 0.9 -> Reason("$ml – 사리, 조류 강함", if (p.depthMax >= 10) 1 else -3)
+            else -> Reason(ml, 1)
         }
 
         // ── 빛 (해 뜨는 시각 기준) ──────────────
@@ -185,7 +195,8 @@ object ScoreEngine {
 
         // ── 체감 파고 (외해 파고 × 너울 노출도) ───────
         if (wave != null) {
-            val tag = "체감 파고 %.1fm (외해 %.1fm, ${prof.exposureText})".format(wave, seaWave ?: wave)
+            val swellText = swellDir?.let { ", ${compass(it)}쪽 너울" + when { swellAngle!! <= 70 -> " 정면"; swellAngle >= 110 -> " 등짐"; else -> "" } } ?: ""
+            val tag = "체감 파고 %.1fm (외해 %.1fm$swellText, ${prof.exposureText})".format(wave, seaWave ?: wave)
             when {
                 wave >= 2.0 -> { danger = "파고 %.1fm – 갯바위 위험".format(wave); r += Reason(tag + " – 위험", -30) }
                 wave > s.waveLimit -> r += Reason("$tag – 높음", -12)
@@ -194,7 +205,7 @@ object ScoreEngine {
                 wave < 0.3 && s.likesSomeWave -> r += Reason("$tag – 너무 잔잔함", -4)
                 else -> r += Reason(tag, 0)
             }
-            if (onshore && wave >= 1.5 && danger == null) danger = "정면 너울 – 갯바위 진입 주의"
+            if ((onshore || (swellAngle != null && swellAngle <= 70)) && wave >= 1.5 && danger == null) danger = "정면 너울 – 갯바위 진입 주의"
         }
         if (rainy) r += Reason("강수 예보", -3)
 

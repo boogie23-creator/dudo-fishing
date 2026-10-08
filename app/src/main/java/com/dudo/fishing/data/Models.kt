@@ -25,6 +25,9 @@ data class FishingPoint(
     val species: List<String>,
     val note: String,
     val coordVerified: Boolean,
+    /** 현지 경험 보정(점수 근거에 매시간 더함). 사용자가 "잘 안 나온다"고 한 자리는 음수 */
+    val localBias: Int = 0,
+    val localNote: String = "",
 )
 
 /** 1시간 단위 기상 예보 */
@@ -85,6 +88,16 @@ data class DayConditions(
     val mulName: String,
     /** 0.0 = 조금(조차 최소) ~ 1.0 = 사리(조차 최대) */
     val tideRangeFactor: Double,
+    /** 물때(월령)로 계산한 조류 세기 – 실제 조차로 바꿨을 때 비교용 */
+    val tideRangeFactorAstro: Double = tideRangeFactor,
+    /** 05~13시 실제 조차(cm). 조석 높이 자료가 있을 때만 */
+    val tideRangeCm: Int? = null,
+    /** 시간(0~23)별 해류 예보 (조류 포함, 흘러가는 방향) */
+    val currents: Map<Int, MarineApi.Current> = emptyMap(),
+    /** 예보 기간의 실제 들물/날물 흐름 방향 */
+    val flow: MarineApi.Flow? = null,
+    /** 시간(0~23)별 너울이 오는 방향 */
+    val waveDir: Map<Int, Int> = emptyMap(),
     val sunrise: LocalTime,
     val sunset: LocalTime,
     val messages: List<String>,

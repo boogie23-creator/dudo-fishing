@@ -37,11 +37,14 @@ object Factors {
 
     /**
      * 부산 연안 조류 방향(흘러가는 쪽, 도).
-     * 감천항 입구 조류 실측(창조류 250° 1.9노트, 낙조류 060° 1.6노트)을 따라
+     * 기본값은 감천항 입구 조류 실측(창조류 250° 1.9노트, 낙조류 060° 1.6노트)을 따라
      * 들물은 남서쪽, 날물은 북동쪽으로 흐른다고 본다. 두도는 감천항 입구 동쪽 바로 앞이다.
      */
-    const val FLOOD_FLOW_DEG = 250
-    const val EBB_FLOW_DEG = 60
+    const val DEFAULT_FLOOD_DEG = 250
+    const val DEFAULT_EBB_DEG = 60
+    /** 해류 예보가 있으면 그 기간의 실제 들물/날물 방향으로 바뀐다 (ConditionsRepository) */
+    @Volatile var FLOOD_FLOW_DEG = DEFAULT_FLOOD_DEG
+    @Volatile var EBB_FLOW_DEG = DEFAULT_EBB_DEG
 
     fun tideState(at: LocalDateTime, tides: List<TideEvent>): TideState? {
         val prev = tides.lastOrNull { !it.time.isAfter(at) } ?: return null
