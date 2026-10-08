@@ -397,10 +397,17 @@ fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit, onOpen:
     var moved by remember { mutableStateOf(false) }
     val slot = r.slots.first { it.slot == selected }
     val cond = st.conditions
-    val flowDeg = cond?.let { c ->
-        val center = c.date.atTime(slot.slot.startHour, 0).plusMinutes(((slot.slot.endHour - slot.slot.startHour) * 30).toLong())
-        Factors.tideState(center, c.tides)?.takeIf { !it.nearSlack }?.let { if (it.incoming) Factors.FLOOD_FLOW_DEG else Factors.EBB_FLOW_DEG }
+    // 그 시간 실제 흐름: 해류 예보(조류+해류)가 있으면 그것, 없으면 조석 성분 방향
+    val center = cond?.let { c -> c.date.atTime(slot.slot.startHour, 30) }
+    val ts = if (cond != null && center != null) Factors.tideState(center, cond.tides) else null
+    val cur = cond?.currents?.get(slot.slot.startHour)
+    val flowDeg: Int? = cur?.dirDeg ?: ts?.takeIf { !it.nearSlack }?.let { if (it.incoming) Factors.FLOOD_FLOW_DEG else Factors.EBB_FLOW_DEG }
+    val flowStrength = when {
+        cur != null && cond?.flow != null -> (cur.speedKmh / cond.flow.vRef).coerceIn(0.0, 1.0)
+        ts != null && cond != null -> (Factors.currentStrength(ts, cond.tideRangeFactor) / 0.6).coerceIn(0.0, 1.0)
+        else -> 0.0
     }
+    val bite = Factors.bitePoint(r.point, flowDeg, flowStrength)
 
     Column(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
@@ -410,7 +417,7 @@ fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit, onOpen:
         Box(Modifier.fillMaxWidth().height(300.dp)) {
             PointsMap(
                 pins = st.results.map { MapPin(it.point, it.dayScore) },
-                selectedId = pointId, editMode = editMode, flowDeg = flowDeg,
+                selectedId = pointId, editMode = editMode, flowDeg = flowDeg, bite = bite,
                 modifier = Modifier.fillMaxSize(),
                 onPinClick = { id -> if (!editMode && id != pointId) onOpen(id) },
                 onMapTap = { lat, lng -> vm.movePoint(pointId, lat, lng); moved = true },
@@ -440,7 +447,9 @@ fun DetailScreen(vm: MainViewModel, pointId: String, onBack: () -> Unit, onOpen:
                 if (editMode) Text(if (moved) "✅ 위치를 저장했어요. 다시 탭하면 또 옮겨져요." else "지도에서 실제 자리를 탭하세요",
                     color = Coral, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 Text(r.point.name, color = Foam, fontWeight = FontWeight.ExtraBold, fontSize = 24.sp)
-                Text("${ScoreEngine.compass(r.point.facingDeg)}쪽 공략 · 점선 끝 원 = 공략 지점 · 하늘색 화살표 = ${slot.slot.label} 조류",
+                Text("${slot.slot.label} 입질 지점: ${Factors.biteText(r.point, bite)}",
+                    color = Foam, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                Text("점선 = 공략 방향 · 원 = 입질 지점 · 하늘색 화살표 = ${slot.slot.label} 흐름",
                     color = Foam.copy(alpha = 0.8f), fontSize = 12.sp)
             }
         }

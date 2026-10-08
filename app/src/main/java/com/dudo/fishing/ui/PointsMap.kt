@@ -60,6 +60,8 @@ fun PointsMap(
     editMode: Boolean = false,
     /** 선택 시간대의 조류가 흘러가는 방향(도). 있으면 공략 지점에 화살표로 표시 */
     flowDeg: Int? = null,
+    /** 그 시간 흐름으로 옮겨진 입질 지점 */
+    bite: com.dudo.fishing.scoring.Factors.Bite? = null,
     onPinClick: (String) -> Unit = {},
     onMapTap: (Double, Double) -> Unit = { _, _ -> },
 ) {
@@ -109,7 +111,9 @@ fun PointsMap(
         selected?.let { s ->
             val p = s.point
             val start = GeoPoint(p.lat, p.lng)
-            val target = offset(start, p.facingDeg.toDouble(), p.targetDistance.toDouble())
+            val target = offset(start, p.facingDeg.toDouble(), (bite?.dist ?: p.targetDistance).toDouble())
+            val sd = bite?.shiftDeg
+            val biteSpot = if (bite != null && sd != null && bite.shift > 0) offset(target, sd.toDouble(), bite.shift.toDouble()) else target
             map.overlays += Polyline(map).apply {
                 setPoints(listOf(start, target))
                 outlinePaint.color = Foam.toArgb()
@@ -118,11 +122,17 @@ fun PointsMap(
                 title = "공략 방향"
             }
             map.overlays += Polygon(map).apply {
-                points = Polygon.pointsAsCircle(target, 3.5)
+                points = Polygon.pointsAsCircle(biteSpot, 3.5)
                 fillPaint.color = Coral.copy(alpha = 0.35f).toArgb()
                 outlinePaint.color = Coral.toArgb()
                 outlinePaint.strokeWidth = 4f
-                title = "공략 지점"
+                title = "입질 지점"
+            }
+            if (biteSpot != target) map.overlays += Polyline(map).apply {
+                setPoints(listOf(target, biteSpot))
+                outlinePaint.color = Coral.toArgb()
+                outlinePaint.strokeWidth = 4f
+                title = "밑밥·채비가 흘러가는 길"
             }
             if (flowDeg != null) {
                 val from = offset(target, flowDeg + 180.0, 11.0)
