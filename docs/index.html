@@ -1,0 +1,640 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<title>두도 포인트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: 바다색 헤더 → 오늘 조건 → [섬 지도 | 순위] 2단 (좁으면 1단) → 선택 포인트 시간별 상세 */
+:root{
+  --abyss:#08223a; --deep:#0d3a5c; --tide:#0e7c8c; --shallow:#5fc6c9; --foam:#f2fbfc; --coral:#ff6f45;
+  --bg:#eef4f6; --surface:#ffffff; --surface2:#e1edf1; --fg:#0b2236; --muted:#557083; --line:#cddde3;
+  --good:#16a06a; --mid:#d99a00; --bad:#d6493b; --rock:#8a8572; --rockfill:#c9c2a8; --sea:#d4e8ee;
+  --f-display:"Black Han Sans","Noto Sans KR",system-ui,sans-serif;
+  --f-body:"Noto Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#061827; --surface:#0c2740; --surface2:#123452; --fg:#e6f3f6; --muted:#9db8c6; --line:#1f4766;
+  --rock:#b9b39a; --rockfill:#3c4a4f; --sea:#0a3049; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#061827; --surface:#0c2740; --surface2:#123452; --fg:#e6f3f6; --muted:#9db8c6; --line:#1f4766;
+  --rock:#b9b39a; --rockfill:#3c4a4f; --sea:#0a3049; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:0 40px}
+header.top{background:linear-gradient(180deg,var(--deep),var(--abyss));color:var(--foam);padding-block:20px 34px;position:relative;overflow:hidden}
+header.top::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:22px;background:var(--bg);
+  -webkit-mask:radial-gradient(28px 12px at 50% 0,transparent 98%,#000) 0 0/56px 22px repeat-x;mask:radial-gradient(28px 12px at 50% 0,transparent 98%,#000) 0 0/56px 22px repeat-x}
+.toprow{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end;justify-content:space-between}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(28px,5vw,40px);letter-spacing:.5px;margin:0;line-height:1.05;text-wrap:balance}
+.sub{color:var(--shallow);font-size:13px;margin-top:4px}
+.seg{display:flex;background:rgba(255,255,255,.1);border-radius:999px;padding:4px;gap:2px}
+.seg button{border:0;background:transparent;color:var(--foam);font:700 14px var(--f-body);padding:8px 16px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--foam);color:var(--abyss)}
+.seg button:focus-visible,.btn:focus-visible,.prow:focus-visible{outline:2px solid var(--coral);outline-offset:2px}
+.cond{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:18px}
+.stat{background:rgba(255,255,255,.08);border-radius:14px;padding:10px 12px;min-width:0}
+.stat .k{font-size:11px;color:rgba(242,251,252,.7);letter-spacing:.3px}
+.stat .v{font:600 18px var(--f-num);font-variant-numeric:tabular-nums}
+.stat .v small{font:500 12px var(--f-body);color:rgba(242,251,252,.75)}
+.tidebar{margin-top:14px}
+.tidebar svg{width:100%;height:70px;display:block}
+.tideticks{display:flex;justify-content:space-between;font:500 10px var(--f-num);color:rgba(242,251,252,.7)}
+.status{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-top:18px;font-size:13px;color:var(--muted)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--fg);font:700 13px var(--f-body);padding:7px 12px;border-radius:999px;cursor:pointer}
+.manual{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:12px}
+.manual label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.manual output{font:600 14px var(--f-num);color:var(--fg);float:right}
+.manual input[type=range]{width:100%;accent-color:var(--tide)}
+.manual select{width:100%;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:14px var(--f-body)}
+.spchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+.spchips button{border:1px solid var(--line);background:var(--surface);color:var(--fg);font:500 13px var(--f-body);padding:6px 13px;border-radius:999px;cursor:pointer}
+.spchips button[aria-pressed="true"]{background:var(--tide);border-color:var(--tide);color:#fff;font-weight:700}
+.grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:18px;margin-top:16px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px;min-width:0}
+.panel h2{font:700 16px var(--f-body);margin:0 0 4px}
+.panel .hint{font-size:12px;color:var(--muted);margin:0 0 8px}
+.mapbox{position:relative}
+#map{width:100%;height:auto;display:block;border-radius:12px;background:var(--sea)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.list{display:flex;flex-direction:column;gap:6px}
+.prow{display:grid;grid-template-columns:26px 50px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 8px;border-radius:12px;cursor:pointer;border:1px solid transparent;background:none;text-align:left;color:inherit;font:inherit;width:100%}
+.prow:hover{background:var(--surface2)}
+.prow[aria-current="true"]{border-color:var(--tide);background:var(--surface2)}
+.rank{font:600 13px var(--f-num);color:var(--muted);text-align:center}
+.gauge{width:50px;height:50px}
+.pname{font-weight:700;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tag{font-size:10.5px;font-weight:700;color:var(--tide);background:color-mix(in srgb,var(--tide) 14%,transparent);padding:1px 6px;border-radius:6px}
+.tag.ebb{color:#7a5bd0;background:color-mix(in srgb,#7a5bd0 14%,transparent)}
+.tag.flood{color:var(--tide)}
+.tag.both{color:var(--good);background:color-mix(in srgb,var(--good) 14%,transparent)}
+.pmeta{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bars{display:flex;gap:2px;align-items:flex-end;height:26px}
+.bars i{display:block;width:7px;border-radius:2px}
+.detail{margin-top:18px}
+.dhead{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center}
+.dhead .big{width:86px;height:86px}
+.dname{font-family:var(--f-display);font-size:26px;font-weight:400;line-height:1.1}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.pill{font-size:12px;background:var(--surface2);border-radius:9px;padding:4px 9px}
+.pill b{font-weight:700}
+.hours{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;margin-top:14px}
+.hcol{border:1px solid var(--line);border-radius:12px;padding:6px 4px 8px;text-align:center;cursor:pointer;background:var(--surface);color:inherit;font:inherit}
+.hcol[aria-pressed="true"]{border-color:var(--tide);background:var(--surface2)}
+.hcol .h{font:600 12px var(--f-num)}
+.hcol .tank{height:70px;margin:6px auto;width:60%;background:var(--surface2);border-radius:6px;position:relative;overflow:hidden}
+.hcol .tank i{position:absolute;left:0;right:0;bottom:0;border-radius:6px}
+.hcol .s{font:600 15px var(--f-num)}
+.hcol .ph{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reasons{margin-top:14px;display:flex;flex-direction:column;gap:5px}
+.reason{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:8px;align-items:baseline;font-size:14px}
+.reason .d{width:8px;height:8px;border-radius:50%;align-self:center}
+.reason .n{font:600 13px var(--f-num)}
+.sum{font-size:12px;color:var(--muted);margin-top:10px}
+.foot{font-size:12px;color:var(--muted);margin-top:22px;max-width:70ch}
+.danger{color:var(--bad);font-weight:700;font-size:13px}
+@media (prefers-reduced-motion:no-preference){.hcol .tank i,.bars i{transition:height .35s ease}}
+@media (max-width:520px){.hours{grid-template-columns:repeat(4,minmax(0,1fr))}.prow{grid-template-columns:22px 44px minmax(0,1fr)}.prow .bars{grid-column:3}.gauge{width:44px;height:44px}}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="toprow">
+      <div>
+        <h1>두도 포인트</h1>
+        <div class="sub">부산 송도 두도 갯바위 찌낚시 · 05~13시 평균 확률 순위</div>
+      </div>
+      <div class="seg" role="group" aria-label="날짜">
+        <button type="button" data-day="0" aria-pressed="true">오늘</button>
+        <button type="button" data-day="1" aria-pressed="false">내일</button>
+        <button type="button" data-day="2" aria-pressed="false">모레</button>
+      </div>
+    </div>
+    <div class="cond" id="cond"></div>
+    <div class="tidebar">
+      <svg id="tideSvg" viewBox="0 0 480 70" preserveAspectRatio="none" aria-label="하루 물때 곡선"></svg>
+      <div class="tideticks"><span>0시</span><span>6시</span><span>12시</span><span>18시</span><span>24시</span></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="status" id="status"></div>
+  <div class="manual" id="manual" hidden>
+    <div><label for="inWind">풍속 <output id="oWind"></output></label><input type="range" id="inWind" min="0" max="14" step="0.5"></div>
+    <div><label for="inDir">바람 방향 (불어오는 쪽)</label>
+      <select id="inDir"><option value="0">북</option><option value="45">북동</option><option value="90">동</option><option value="135">남동</option><option value="180">남</option><option value="225">남서</option><option value="270">서</option><option value="315">북서</option></select></div>
+    <div><label for="inWave">외해 파고 <output id="oWave"></output></label><input type="range" id="inWave" min="0" max="3" step="0.1"></div>
+    <div><label for="inTemp">수온 <output id="oTemp"></output></label><input type="range" id="inTemp" min="8" max="28" step="0.5"></div>
+  </div>
+  <div class="spchips" id="spchips" role="group" aria-label="대상어"></div>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>섬 지도</h2>
+      <p class="hint">원 안 번호 = 포인트, 색 = 05~13시 평균 확률. 원을 누르면 시간별 근거가 나와요.</p>
+      <div class="mapbox"><svg id="map" viewBox="0 0 400 520" role="img" aria-label="두도 포인트 지도"></svg></div>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--coral)"></i>75↑ 강력 추천</span>
+        <span><i class="dot" style="background:var(--good)"></i>62↑ 좋음</span>
+        <span><i class="dot" style="background:var(--mid)"></i>45↑ 보통</span>
+        <span><i class="dot" style="background:var(--bad)"></i>비추천</span>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>추천 순위</h2>
+      <p class="hint">막대 8개 = 05·06·…·12시 확률</p>
+      <div class="list" id="list"></div>
+    </section>
+  </div>
+
+  <section class="panel detail" id="detail"></section>
+
+  <p class="foot" id="foot">점수는 물때·조류 방향·바람·체감 파고·수온·포인트 수심과 지형·과거 조과(인낚 조행기, 송도 은파낚시 밴드 조황)로 계산한 참고값입니다. 갯바위 출조 전 기상특보와 현장 상황을 꼭 확인하세요.</p>
+</main>
+
+<script>
+const SHAPE={"islands": [[[35.050501, 129.014562], [35.050451, 129.014738], [35.050432, 129.014951], [35.050355, 129.015126], [35.050231, 129.015247], [35.050101, 129.015296], [35.049917, 129.015361], [35.049799, 129.015535], [35.049728, 129.01564], [35.049572, 129.015706], [35.04947, 129.015774], [35.049372, 129.015877], [35.049212, 129.015908], [35.048947, 129.015971], [35.048791, 129.016037], [35.04862, 129.015961], [35.048449, 129.015885], [35.048232, 129.015878], [35.048084, 129.015767], [35.047957, 129.015585], [35.047881, 129.01537], [35.047821, 129.015048], [35.04785, 129.0148], [35.047934, 129.014554], [35.047959, 129.014271], [35.048019, 129.014059], [35.048141, 129.013921], [35.048308, 129.013962], [35.048537, 129.014075], [35.048758, 129.014118], [35.048965, 129.014017], [35.049187, 129.01406], [35.049412, 129.014138], [35.049634, 129.01418], [35.049855, 129.014222], [35.05005, 129.014264], [35.050248, 129.014341], [35.050395, 129.014452]], [[35.047639, 129.014865], [35.047766, 129.015046], [35.04784, 129.015369], [35.04779, 129.015545], [35.04765, 129.015505], [35.047527, 129.015359], [35.047423, 129.015143], [35.047429, 129.01493], [35.047501, 129.014843]], [[35.047791, 129.015687], [35.04785, 129.015866], [35.047783, 129.016006], [35.047599, 129.016072], [35.04738, 129.016047], [35.047183, 129.015988], [35.047033, 129.015841], [35.04696, 129.015661], [35.047084, 129.015541], [35.047298, 129.015512], [35.047519, 129.015554], [35.047688, 129.015613]]], "breakwater": [[35.050501, 129.014562], [35.050981, 129.014605]], "buoy": [35.047227, 129.014682]};
+const POINTS=[{"id": "dudo_1", "name": "두도 1번", "lat": 35.05028, "lng": 129.014326, "facingDeg": 300, "depthMin": 6, "depthMax": 10, "depth": "6~10m", "terrain": "곶부리", "species": ["감성돔", "벵에돔", "볼락"], "target": "방파제(테트라포드)와 섬이 만나는 모서리 앞. 방파제를 따라 흐르는 조류와 섬을 돌아 나오는 조류가 만나는 조경지대", "targetDistance": 10}, {"id": "dudo_1_5", "name": "두도 1.5번", "lat": 35.050118, "lng": 129.014266, "facingDeg": 285, "depthMin": 4, "depthMax": 8, "depth": "4~8m", "terrain": "여밭", "species": ["감성돔", "벵에돔", "볼락", "무늬오징어"], "target": "방파제 안쪽 홈. 날물 때 방파제에 막힌 물이 돌아 나가는 와류 지대", "targetDistance": 12}, {"id": "dudo_2", "name": "두도 2번", "lat": 35.04997, "lng": 129.014234, "facingDeg": 275, "depthMin": 3, "depthMax": 6, "depth": "3~6m", "terrain": "여밭", "species": ["감성돔", "볼락", "무늬오징어"], "target": "전방 10~15m 여밭 끝자락(수심 3~6m). 들물에 감성돔이 여밭 위로 올라붙는 자리", "targetDistance": 12}, {"id": "dudo_2_5", "name": "두도 2.5번", "lat": 35.049741, "lng": 129.014227, "facingDeg": 270, "depthMin": 2.5, "depthMax": 6, "depth": "2.5~6m", "terrain": "여밭", "species": ["감성돔", "벵에돔", "볼락", "무늬오징어"], "target": "전방 10~15m 수심 4~6m 여밭 – 조행기상 가을 감성돔 마릿수 자리. 여 사이 골창을 흘림", "targetDistance": 12}, {"id": "dudo_3", "name": "두도 3번", "lat": 35.049634, "lng": 129.014201, "facingDeg": 265, "depthMin": 4, "depthMax": 8, "depth": "4~8m", "terrain": "여밭", "species": ["감성돔", "벵에돔", "볼락", "무늬오징어"], "target": "전방 10~15m 여밭과 모래 경계(수심 4~8m). 경계선을 따라 채비가 지나가게", "targetDistance": 13}, {"id": "dudo_4", "name": "두도 4번", "lat": 35.04923, "lng": 129.014095, "facingDeg": 265, "depthMin": 4, "depthMax": 7, "depth": "4~7m", "terrain": "평면", "species": ["감성돔", "볼락", "무늬오징어"], "target": "작은 돌출부 끝 – 발 앞 수중여 끝자락에서 조류가 꺾이는 지점", "targetDistance": 10}, {"id": "dudo_4_5", "name": "두도 4.5번", "lat": 35.04892, "lng": 129.014095, "facingDeg": 250, "depthMin": 4.5, "depthMax": 6, "depth": "4.5~6m", "terrain": "홈통", "species": ["감성돔", "볼락", "무늬오징어"], "target": "서편 홈통 입구(수심 4.5~6m). 센 물때에 홈통 안으로 도는 반탄류", "targetDistance": 8}, {"id": "dudo_5", "name": "두도 5번", "lat": 35.048153, "lng": 129.013964, "facingDeg": 225, "depthMin": 5, "depthMax": 8, "depth": "5~8m", "terrain": "평면", "species": ["감성돔", "벵에돔", "볼락", "무늬오징어"], "target": "남서쪽 곶부리 끝 – 들물·날물이 갈라지는 본류대 가장자리, 곶부리 뒤 지류와의 경계", "targetDistance": 12}, {"id": "dudo_6", "name": "두도 6번", "lat": 35.047951, "lng": 129.014293, "facingDeg": 200, "depthMin": 6, "depthMax": 12, "depth": "6~12m", "terrain": "곶부리", "species": ["감성돔", "벵에돔", "볼락"], "target": "본섬과 가운데 부속섬 사이 수로 입구(수심 6~12m). 수로로 빨려드는 조류의 가장자리", "targetDistance": 10}, {"id": "dudo_6_5", "name": "두도 6.5번", "lat": 35.047878, "lng": 129.014556, "facingDeg": 175, "depthMin": 6, "depthMax": 11, "depth": "6~11m", "terrain": "홈통", "species": ["감성돔", "벵에돔", "볼락"], "target": "수로 안쪽 직벽 아래(수심 6~11m). 수로를 통과하며 빨라진 물살 옆 완류대", "targetDistance": 8}, {"id": "dudo_7", "name": "두도 7번", "lat": 35.047789, "lng": 129.015023, "facingDeg": 355, "depthMin": 6, "depthMax": 10, "depth": "6~10m", "terrain": "평면", "species": ["감성돔", "벵에돔", "볼락"], "target": "가운데 부속섬 북쪽 – 본섬 사이 좁은 수로. 물돌이 직후 조류가 살아날 때 발밑~5m", "targetDistance": 6}, {"id": "dudo_8", "name": "두도 8번", "lat": 35.047466, "lng": 129.014901, "facingDeg": 245, "depthMin": 6, "depthMax": 9, "depth": "6~9m", "terrain": "평면", "species": ["감성돔", "벵에돔", "볼락"], "target": "가운데 부속섬 서쪽 끝, 앞쪽 수중여(부표 쪽) 주변. 여 뒤편에 생기는 와류", "targetDistance": 10}, {"id": "dudo_9", "name": "두도 9번", "lat": 35.047474, "lng": 129.015162, "facingDeg": 146, "depthMin": 6, "depthMax": 10, "depth": "6~10m", "terrain": "홈통", "species": ["감성돔", "벵에돔", "볼락"], "target": "가운데 부속섬 남쪽 – 외해 쪽 조류가 섬을 돌며 생기는 조경지대", "targetDistance": 10}, {"id": "dudo_wall", "name": "두도 직벽", "lat": 35.047412, "lng": 129.015561, "facingDeg": 280, "depthMin": 11, "depthMax": 15, "depth": "11~15m", "terrain": "직벽", "species": ["감성돔", "벵에돔", "볼락"], "target": "동남 부속섬 서쪽 직벽(수심 11~15m) – 두 부속섬 사이 수로로 흐르는 본류 옆. 직벽을 따라 바닥층", "targetDistance": 6}, {"id": "dudo_10", "name": "두도 10번", "lat": 35.047182, "lng": 129.015498, "facingDeg": 250, "depthMin": 8, "depthMax": 12, "depth": "8~12m", "terrain": "곶부리", "species": ["감성돔", "벵에돔", "볼락"], "target": "동남 부속섬 서쪽 – 직벽 바로 아래쪽. 가운데 부속섬과의 수로 남쪽 출구(수심 8~12m), 수로를 빠져나가는 조류 가장자리", "targetDistance": 10}, {"id": "dudo_11", "name": "두도 11번", "lat": 35.047015, "lng": 129.01567, "facingDeg": 191, "depthMin": 8, "depthMax": 12, "depth": "8~12m", "terrain": "곶부리", "species": ["감성돔", "벵에돔", "볼락"], "target": "동남 부속섬 남쪽 끝 곶부리 – 외해 본류와 수로 조류가 만나는 조경지대", "targetDistance": 12}, {"id": "dudo_12", "name": "두도 12번", "lat": 35.047321, "lng": 129.01601, "facingDeg": 122, "depthMin": 8, "depthMax": 12, "depth": "8~12m", "terrain": "곶부리", "species": ["감성돔", "벵에돔", "볼락"], "target": "동남 부속섬 동쪽 아래 – 들물 북동류가 붙어 흐르는 외해면(수심 8~12m)", "targetDistance": 10}, {"id": "dudo_12_5", "name": "두도 12.5번", "lat": 35.04762, "lng": 129.016008, "facingDeg": 42, "depthMin": 8, "depthMax": 12, "depth": "8~12m", "terrain": "곶부리", "species": ["감성돔", "벵에돔", "볼락"], "target": "동남 부속섬 동쪽 위 – 조류가 섬에 부딪혀 꺾이는 반탄류", "targetDistance": 10}, {"id": "dudo_13", "name": "두도 13번", "lat": 35.047798, "lng": 129.015943, "facingDeg": 17, "depthMin": 8, "depthMax": 10, "depth": "8~10m", "terrain": "평면", "species": ["감성돔", "벵에돔", "볼락"], "target": "동남 부속섬 북쪽 – 본섬과의 수로(수심 8~10m). 물돌이 전후 수로 안 완류", "targetDistance": 8}, {"id": "dudo_13_5", "name": "두도 13.5번", "lat": 35.047829, "lng": 129.015795, "facingDeg": 150, "depthMin": 8, "depthMax": 10, "depth": "8~10m", "terrain": "홈통", "species": ["감성돔", "벵에돔", "볼락"], "target": "본섬과 동남 부속섬 사이 수로 입구(수심 8~10m) – 물돌이 전후 수로 안 완류", "targetDistance": 8}, {"id": "dudo_14", "name": "두도 14번", "lat": 35.04831, "lng": 129.015845, "facingDeg": 131, "depthMin": 4, "depthMax": 8, "depth": "4~8m", "terrain": "평면", "species": ["감성돔", "벵에돔", "볼락", "무늬오징어"], "target": "동편 직선 갯바위 앞 – 들물 북동류가 갯바위를 따라 흐르는 띠(수심 4~8m)", "targetDistance": 10}, {"id": "dudo_14_5", "name": "두도 14.5번", "lat": 35.048731, "lng": 129.015982, "facingDeg": 105, "depthMin": 4, "depthMax": 9, "depth": "4~9m", "terrain": "곶부리", "species": ["감성돔", "벵에돔", "볼락", "무늬오징어"], "target": "동편 돌출부 끝 – 조류가 가장 잘 받히는 곶부리. 약한 물때 1순위", "targetDistance": 12}, {"id": "dudo_15", "name": "두도 15번", "lat": 35.049361, "lng": 129.015771, "facingDeg": 55, "depthMin": 6, "depthMax": 9, "depth": "6~9m", "terrain": "평면", "species": ["감성돔", "벵에돔", "볼락"], "target": "동편 홈 – 곶부리 뒤로 생기는 지류·와류(수심 6~9m)", "targetDistance": 10}, {"id": "dudo_16", "name": "두도 16번", "lat": 35.049697, "lng": 129.015603, "facingDeg": 32, "depthMin": 5, "depthMax": 8, "depth": "5~8m", "terrain": "평면", "species": ["감성돔", "벵에돔", "볼락", "무늬오징어"], "target": "북동 돌출부 – 날물 남서류가 돌아 나가는 조경지대", "targetDistance": 10}, {"id": "dudo_16_5", "name": "두도 16.5번", "lat": 35.049864, "lng": 129.015377, "facingDeg": 18, "depthMin": 6, "depthMax": 9, "depth": "6~9m", "terrain": "홈통", "species": ["감성돔", "벵에돔", "볼락"], "target": "북동 홈통 – 조행기상 감성돔·벵에돔 조과 자리. 홈통 안 완류에 밑밥을 가둠", "targetDistance": 10}, {"id": "dudo_17", "name": "두도 17번", "lat": 35.050173, "lng": 129.015263, "facingDeg": 10, "depthMin": 5, "depthMax": 9, "depth": "5~9m", "terrain": "평면", "species": ["감성돔", "벵에돔", "볼락", "무늬오징어"], "target": "북동 갯바위 앞 여밭(수심 5~9m)", "targetDistance": 10}, {"id": "dudo_17_5", "name": "두도 17.5번", "lat": 35.050295, "lng": 129.015124, "facingDeg": 4, "depthMin": 4, "depthMax": 7, "depth": "4~7m", "terrain": "평면", "species": ["감성돔", "볼락", "무늬오징어"], "target": "북쪽 – 방파제 동쪽 홈(수심 4~7m)", "targetDistance": 8}, {"id": "dudo_18", "name": "두도 18번", "lat": 35.05037, "lng": 129.014878, "facingDeg": 357, "depthMin": 3, "depthMax": 6, "depth": "3~6m", "terrain": "곶부리", "species": ["감성돔", "볼락", "무늬오징어"], "target": "북쪽 끝 방파제 동쪽 모서리 – 방파제를 타고 흐르는 조류", "targetDistance": 8}];
+const RECORDS=[{"date": "2023-07-26", "startHour": 8, "endHour": 14, "pointId": "dudo_2_5", "catches": {"벵에돔": 20, "감성돔": 10}, "source": "인낚 조행기 (2023.07.29)"}, {"date": "2023-08-13", "startHour": 5, "endHour": 11, "pointId": "dudo_16_5", "catches": {"감성돔": 10, "벵에돔": 10}, "source": "인낚 조행기 (2023.08.14)"}, {"date": "2023-09-14", "startHour": 7, "endHour": 13, "sideFacingDeg": 270, "catches": {"감성돔": 15}, "source": "인낚 조행기 (2023.09.15, 2일 출조 중 1일차)"}, {"date": "2023-09-15", "startHour": 7, "endHour": 13, "sideFacingDeg": 270, "catches": {"감성돔": 15}, "source": "인낚 조행기 (2023.09.15, 2일 출조 중 2일차)"}, {"date": "2026-09-12", "startHour": 7, "endHour": 13, "pointId": "dudo_2_5", "catches": {"감성돔": 15}, "source": "인낚 조행기 (2026.09.13)"}, {"date": "2018-09-03", "startHour": 6, "endHour": 12, "catches": {"감성돔": 1}, "source": "인낚 스태프 조행기 (2018.09.03)"}, {"date": "2021-07-31", "startHour": 13, "endHour": 17, "pointId": "dudo_1", "catches": {"무늬오징어": 10}, "source": "월간낚시21 기사 (2021.07.31 출조)"}, {"date": "2026-10-05", "startHour": 5, "endHour": 12, "catches": {"감성돔": 0}, "rating": {"감성돔": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-10-05)"}, {"date": "2026-10-04", "startHour": 5, "endHour": 12, "catches": {"감성돔": 12}, "rating": {"감성돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2026-10-04)"}, {"date": "2026-09-30", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-09-30)"}, {"date": "2026-09-27", "startHour": 5, "endHour": 12, "catches": {"감성돔": 12}, "rating": {"감성돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2026-09-27)"}, {"date": "2026-09-26", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-09-26)"}, {"date": "2026-09-24", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2026-09-24)"}, {"date": "2026-09-13", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-09-13)"}, {"date": "2026-09-12", "startHour": 5, "endHour": 12, "catches": {"감성돔": 12}, "rating": {"감성돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2026-09-12)"}, {"date": "2026-09-08", "startHour": 5, "endHour": 12, "catches": {"벵에돔": 6, "감성돔": 2}, "rating": {"벵에돔": 1, "감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2026-09-08)"}, {"date": "2026-08-27", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-08-27)"}, {"date": "2026-08-22", "startHour": 5, "endHour": 12, "catches": {"벵에돔": 6, "감성돔": 2}, "rating": {"벵에돔": 1, "감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2026-08-22)"}, {"date": "2026-08-14", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2026-08-14)"}, {"date": "2026-08-07", "startHour": 5, "endHour": 12, "catches": {"무늬오징어": 12}, "rating": {"무늬오징어": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2026-08-07)"}, {"date": "2026-06-08", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-06-08)"}, {"date": "2026-06-07", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6, "벵에돔": 0}, "rating": {"감성돔": 1, "벵에돔": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-06-07)"}, {"date": "2026-06-03", "startHour": 5, "endHour": 12, "catches": {"벵에돔": 12}, "rating": {"벵에돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2026-06-03)"}, {"date": "2026-06-03", "startHour": 5, "endHour": 12, "sideFacingDeg": 90, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-06-03)"}, {"date": "2026-05-30", "startHour": 5, "endHour": 12, "catches": {"벵에돔": 6}, "rating": {"벵에돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-05-30)"}, {"date": "2026-05-23", "startHour": 5, "endHour": 12, "catches": {"벵에돔": 6}, "rating": {"벵에돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-05-23)"}, {"date": "2026-05-07", "startHour": 5, "endHour": 12, "catches": {"벵에돔": 2}, "rating": {"벵에돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2026-05-07)"}, {"date": "2026-05-06", "startHour": 5, "endHour": 12, "catches": {"벵에돔": 0}, "rating": {"벵에돔": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-05-06)"}, {"date": "2026-04-30", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-04-30)"}, {"date": "2026-04-29", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6, "벵에돔": 6}, "rating": {"감성돔": 1, "벵에돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-04-29)"}, {"date": "2026-04-25", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2026-04-25)"}, {"date": "2026-04-18", "startHour": 5, "endHour": 12, "catches": {"감성돔": 12}, "rating": {"감성돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2026-04-18)"}, {"date": "2026-04-11", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-04-11)"}, {"date": "2026-04-05", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2026-04-05)"}, {"date": "2026-03-14", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-03-14)"}, {"date": "2026-03-09", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-03-09)"}, {"date": "2026-03-07", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2026-03-07)"}, {"date": "2026-03-06", "startHour": 5, "endHour": 12, "catches": {"감성돔": 0}, "rating": {"감성돔": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-03-06)"}, {"date": "2026-02-20", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2026-02-20)"}, {"date": "2026-02-15", "startHour": 5, "endHour": 12, "catches": {"감성돔": 0}, "rating": {"감성돔": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-02-15)"}, {"date": "2026-02-13", "startHour": 5, "endHour": 12, "catches": {"감성돔": 0}, "rating": {"감성돔": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-02-13)"}, {"date": "2026-02-05", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-02-05)"}, {"date": "2026-01-25", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2, "볼락": 6}, "rating": {"감성돔": 0, "볼락": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2026-01-25)"}, {"date": "2026-01-24", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2026-01-24)"}, {"date": "2026-01-17", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2026-01-17)"}, {"date": "2025-12-31", "startHour": 5, "endHour": 12, "catches": {"감성돔": 0}, "rating": {"감성돔": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-12-31)"}, {"date": "2025-12-29", "startHour": 5, "endHour": 12, "catches": {"감성돔": 0}, "rating": {"감성돔": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-12-29)"}, {"date": "2025-12-23", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2025-12-23)"}, {"date": "2025-12-22", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-12-22)"}, {"date": "2025-12-07", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2025-12-07)"}, {"date": "2025-12-06", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-12-06)"}, {"date": "2025-12-01", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2025-12-01)"}, {"date": "2025-11-29", "startHour": 5, "endHour": 12, "catches": {"감성돔": 12}, "rating": {"감성돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2025-11-29)"}, {"date": "2025-11-23", "startHour": 5, "endHour": 12, "catches": {"감성돔": 12}, "rating": {"감성돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2025-11-23)"}, {"date": "2025-11-22", "startHour": 5, "endHour": 12, "catches": {"감성돔": 12}, "rating": {"감성돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2025-11-22)"}, {"date": "2025-11-20", "startHour": 5, "endHour": 12, "catches": {"볼락": 0}, "rating": {"볼락": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-11-20)"}, {"date": "2025-11-16", "startHour": 5, "endHour": 12, "catches": {"감성돔": 0}, "rating": {"감성돔": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-11-16)"}, {"date": "2025-10-31", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-10-31)"}, {"date": "2025-10-25", "startHour": 5, "endHour": 12, "catches": {"감성돔": 12}, "rating": {"감성돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2025-10-25)"}, {"date": "2025-10-24", "startHour": 5, "endHour": 12, "catches": {"감성돔": 0}, "rating": {"감성돔": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-10-24)"}, {"date": "2025-10-21", "startHour": 5, "endHour": 12, "catches": {"감성돔": 12}, "rating": {"감성돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2025-10-21)"}, {"date": "2025-10-20", "startHour": 5, "endHour": 12, "catches": {"감성돔": 12}, "rating": {"감성돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2025-10-20)"}, {"date": "2025-10-05", "startHour": 5, "endHour": 12, "catches": {"감성돔": 0}, "rating": {"감성돔": -1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-10-05)"}, {"date": "2025-09-25", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-09-25)"}, {"date": "2025-09-24", "startHour": 5, "endHour": 12, "catches": {"감성돔": 12}, "rating": {"감성돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2025-09-24)"}, {"date": "2025-09-16", "startHour": 5, "endHour": 12, "catches": {"무늬오징어": 6}, "rating": {"무늬오징어": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-09-16)"}, {"date": "2025-09-09", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6, "벵에돔": 6}, "rating": {"감성돔": 1, "벵에돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-09-09)"}, {"date": "2025-08-29", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-08-29)"}, {"date": "2025-08-28", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2025-08-28)"}, {"date": "2025-08-27", "startHour": 5, "endHour": 12, "catches": {"벵에돔": 12}, "rating": {"벵에돔": 2}, "source": "송도 은파낚시 밴드 선장 조황 (2025-08-27)"}, {"date": "2025-08-22", "startHour": 5, "endHour": 12, "pointId": "dudo_8", "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-08-22)"}, {"date": "2025-08-22", "startHour": 5, "endHour": 12, "pointId": "dudo_9", "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-08-22)"}, {"date": "2025-08-22", "startHour": 5, "endHour": 12, "pointId": "dudo_12", "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-08-22)"}, {"date": "2025-08-21", "startHour": 5, "endHour": 12, "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2025-08-21)"}, {"date": "2025-08-16", "startHour": 5, "endHour": 12, "catches": {"감성돔": 6}, "rating": {"감성돔": 1}, "source": "송도 은파낚시 밴드 선장 조황 (2025-08-16)"}, {"date": "2025-08-22", "startHour": 5, "endHour": 12, "pointId": "dudo_2_5", "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2025-08-22)"}, {"date": "2025-08-22", "startHour": 5, "endHour": 12, "pointId": "dudo_11", "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2025-08-22)"}, {"date": "2025-08-22", "startHour": 5, "endHour": 12, "pointId": "dudo_13", "catches": {"감성돔": 2}, "rating": {"감성돔": 0}, "source": "송도 은파낚시 밴드 선장 조황 (2025-08-22)"}];
+</script>
+<script>
+"use strict";
+// ───────── 기본 ─────────
+const KST = 9 * 3600e3;
+const SPECIES = {
+  "감성돔": {ideal:[15,22], season:[3,3,2,2,2,1,1,2,3,3,3,3], waveLimit:1.5, likesWave:true},
+  "벵에돔": {ideal:[18,24], season:[0,0,0,1,2,3,3,3,3,2,1,0], waveLimit:1.5, likesWave:true},
+  "볼락":   {ideal:[10,16], season:[3,3,3,3,2,1,0,0,0,1,2,3], waveLimit:1.2, likesWave:false},
+  "무늬오징어": {ideal:[17,24], season:[0,0,0,1,2,2,1,1,3,3,2,1], waveLimit:1.0, likesWave:false},
+};
+const MONTH_TEMP = [13,12,12.5,14,16.5,19,21.5,24,23.5,21,18,15];
+const FLOOD = 60, EBB = 240;           // 들물 북동류, 날물 남서류
+const C_LAT = 35.0488, C_LNG = 129.0150;
+const ang = (a,b)=>{let d=Math.abs(a-b)%360;return d>180?360-d:d};
+const COMPASS = ["북","북동","동","남동","남","남서","서","북서"];
+const compass = d=>COMPASS[Math.floor((((d%360)+360+22)%360)/45)];
+const r0 = Math.round;
+const kstParts = ms=>{const d=new Date(ms+KST);return {y:d.getUTCFullYear(),m:d.getUTCMonth()+1,d:d.getUTCDate(),h:d.getUTCHours(),mi:d.getUTCMinutes()}};
+const kstMs = (ds,h=0,mi=0)=>{const [y,m,d]=ds.split("-").map(Number);return Date.UTC(y,m-1,d,h,mi)-KST};
+const dateStr = ms=>{const p=kstParts(ms);return `${p.y}-${String(p.m).padStart(2,"0")}-${String(p.d).padStart(2,"0")}`};
+const addDays = (ds,n)=>dateStr(kstMs(ds,12)+n*864e5);
+const hm = ms=>{const p=kstParts(ms);return `${String(p.h).padStart(2,"0")}:${String(p.mi).padStart(2,"0")}`};
+const scoreColor = s=>s>=75?"var(--coral)":s>=62?"var(--good)":s>=45?"var(--mid)":"var(--bad)";
+const scoreLabel = s=>s>=75?"강력 추천":s>=62?"좋음":s>=45?"보통":"비추천";
+
+// ───────── 천문: 합삭(Meeus) · 음력 · 물때 · 일출 ─────────
+function newMoonMs(k){
+  const T=k/1236.85, R=Math.PI/180;
+  let jde=2451550.09766+29.530588861*k+0.00015437*T*T-0.00000015*T**3+0.00000000073*T**4;
+  const E=1-0.002516*T-0.0000074*T*T;
+  const M=R*(2.5534+29.1053567*k-0.0000014*T*T), Mp=R*(201.5643+385.81693528*k+0.0107582*T*T+0.00001238*T**3);
+  const F=R*(160.7108+390.67050284*k-0.0016118*T*T), O=R*(124.7746-1.56375588*k+0.0020672*T*T);
+  const s=Math.sin;
+  jde+=-0.4072*s(Mp)+0.17241*E*s(M)+0.01608*s(2*Mp)+0.01039*s(2*F)+0.00739*E*s(Mp-M)-0.00514*E*s(Mp+M)+0.00208*E*E*s(2*M)
+    -0.00111*s(Mp-2*F)-0.00057*s(Mp+2*F)+0.00056*E*s(2*Mp+M)-0.00042*s(3*Mp)+0.00042*E*s(M+2*F)+0.00038*E*s(M-2*F)
+    -0.00024*E*s(2*Mp-M)-0.00017*s(O)-0.00007*s(Mp+2*M)+0.00004*s(2*Mp-2*F)+0.00004*s(3*M)+0.00003*s(Mp+M-2*F)
+    +0.00003*s(2*Mp+2*F)-0.00003*s(Mp+M+2*F)+0.00003*s(Mp-M+2*F)-0.00002*s(Mp-M-2*F)-0.00002*s(3*Mp+M)+0.00002*s(4*Mp);
+  return (jde-2440587.5)*864e5-69e3;
+}
+function lastNewMoonK(ms){let k=Math.floor((ms-Date.UTC(2000,0,6,18,14))/864e5/29.530588853)+1;while(newMoonMs(k)>ms)k--;return k}
+function lunarDay(ds){
+  const end=kstMs(ds,23,59); const k=lastNewMoonK(end);
+  return Math.min(30,Math.round((kstMs(ds,12)-kstMs(dateStr(newMoonMs(k)),12))/864e5)+1);
+}
+const moonAge = ms=>(ms-newMoonMs(lastNewMoonK(ms)))/864e5;
+const mulIndex = ds=>(lunarDay(ds)-1+7)%15;
+const MUL_NAMES=[...Array.from({length:13},(_,i)=>`${i+1}물`),"조금","무쉬"];
+const mulName = ds=>MUL_NAMES[mulIndex(ds)];
+const rangeFactor = age=>(1+Math.cos(4*Math.PI*(age-1.5)/29.530588853))/2;
+function sunrise(ds){
+  const [y,m,d]=ds.split("-").map(Number); const n=Math.round((Date.UTC(y,m-1,d)-Date.UTC(y,0,0))/864e5);
+  const g=2*Math.PI/365*(n-1);
+  const eq=229.18*(0.000075+0.001868*Math.cos(g)-0.032077*Math.sin(g)-0.014615*Math.cos(2*g)-0.040849*Math.sin(2*g));
+  const dec=0.006918-0.399912*Math.cos(g)+0.070257*Math.sin(g)-0.006758*Math.cos(2*g)+0.000907*Math.sin(2*g)-0.002697*Math.cos(3*g)+0.00148*Math.sin(3*g);
+  const lat=C_LAT*Math.PI/180;
+  const ha=Math.acos(Math.cos(90.833*Math.PI/180)/(Math.cos(lat)*Math.cos(dec))-Math.tan(lat)*Math.tan(dec))*180/Math.PI;
+  return Math.round(720-4*(C_LNG+ha)-eq+540);  // KST 분
+}
+
+// ───────── 조석: 실시간(해수면 예보) 또는 천문 추정 ─────────
+function tidesEstimate(ds){
+  const ev=[];
+  for(let o=-1;o<=1;o++){
+    const day=addDays(ds,o); const age=moonAge(kstMs(day,12));
+    const transit=12*60+24+age*50.47; const HWI=515;     // 부산 고조간격 근사 (바다타임과 대조해 보정)
+    const base=kstMs(day)+(((transit+HWI)%745)+745)%745*60e3;
+    for(let n=-1;n<=2;n++){const h=base+n*745*60e3;ev.push({t:h,high:true});ev.push({t:h-372.5*60e3,high:false})}
+  }
+  const a=kstMs(ds)-8*36e5,b=kstMs(ds)+32*36e5;
+  // 같은 극치가 이웃 날짜 계산에서 겹치면 하나만
+  const out=[];for(const e of ev.filter(e=>e.t>a&&e.t<b).sort((x,y)=>x.t-y.t)){const l=out[out.length-1];if(l&&l.high===e.high&&e.t-l.t<4*36e5){l.t=(l.t+e.t)/2;continue}out.push(e)}
+  return out;
+}
+function tidesFromLevel(times,levels){
+  const ev=[];
+  for(let i=1;i<levels.length-1;i++){
+    const a=levels[i-1],b=levels[i],c=levels[i+1];
+    if(a==null||b==null||c==null)continue;
+    const hi=b>=a&&b>c, lo=b<=a&&b<c; if(!hi&&!lo)continue;
+    const den=a-2*b+c; const off=den!==0?0.5*(a-c)/den:0;   // 포물선 보정으로 정확한 시각
+    ev.push({t:times[i]+off*36e5,high:hi,level:b});
+  }
+  return ev;
+}
+function tideState(t,tides){
+  let prev=null,next=null;
+  for(const e of tides){if(e.t<=t)prev=e;else{next=e;break}}
+  if(!prev||!next)return null;
+  const total=Math.max(1,(next.t-prev.t)/6e4), el=(t-prev.t)/6e4;
+  return {incoming:!prev.high,progress:el/total,nearSlack:el<40||total-el<40,prevHigh:prev.high};
+}
+const strengthOf=(ts,rf)=>Math.max(0,Math.sin(Math.PI*ts.progress))*(0.4+0.6*rf);
+
+// ───────── 포인트 고정 성격 ─────────
+const PROFILE={};
+function profile(p){
+  if(PROFILE[p.id])return PROFILE[p.id];
+  const dy=(p.lat-C_LAT)*111320, dx=(p.lng-C_LNG)*111320*Math.cos(C_LAT*Math.PI/180);
+  const b=((Math.atan2(dx,dy)*180/Math.PI)+360)%360;
+  const suit=F=>{
+    const a=ang(F,p.facingDeg), lee=Math.cos((b-F)*Math.PI/180);
+    let v=a<=50?1:a<130?(lee>.3?.85:lee>-.3?.6:.4):p.terrain==="홈통"?.15:-.6;
+    if(p.terrain==="곶부리")v+=lee>.3?.1:-.1;
+    if(p.terrain==="홈통"&&a>=50&&a<130)v+=.1;
+    if(p.terrain==="직벽")v+=.05;
+    return Math.max(-1,Math.min(1,v));
+  };
+  const sec=x=>x>=110&&x<=250?1:x>250&&x<=300?.75:x>=60&&x<110?.7:.35;
+  const fl=suit(FLOOD), eb=suit(EBB), ex=Math.max(sec(b)*.6+sec(p.facingDeg)*.4,.3);
+  const type=fl-eb>=.35?"들물 포인트":eb-fl>=.35?"날물 포인트":fl>.3&&eb>.3?"양물 포인트":"물돌이 포인트";
+  return PROFILE[p.id]={flood:fl,ebb:eb,exposure:ex,bearing:b,type,
+    exposureText:ex>=.9?"외해 정면":ex>=.65?"반쯤 열림":"막힌 쪽"};
+}
+function preferredDepth(sp,t){
+  if(sp==="감성돔")return t>=20?[3,8]:t>=15?[4,8]:t>=13.5?[6,12]:[8,15];
+  if(sp==="벵에돔")return t>=18?[3,10]:[6,12];
+  return sp==="볼락"?[2,8]:[3,10];
+}
+const depthFit=(p,[a,b])=>Math.max(0,Math.min(1,(Math.min(p.depthMax,b)-Math.max(p.depthMin,a))/Math.max(1,p.depthMax-p.depthMin)));
+function terrainFit(p,sp,t){
+  const tr=p.terrain;
+  if(sp==="감성돔"){
+    if(t>=13.5&&tr==="여밭")return ["여밭 – 가을 감성돔이 붙는 지형",6];
+    if(t<13.5&&(tr==="직벽"||p.depthMax>=11))return ["깊은 직벽·수로 – 저수온기 은신처",6];
+    if(tr==="홈통")return ["홈통 – 밑밥이 모이는 지형",3];
+    if(tr==="곶부리")return ["곶부리 – 조류 경계",2];
+    return null;
+  }
+  if(sp==="벵에돔")return tr==="곶부리"?["곶부리 – 조류 받는 벵에 자리",5]:tr==="직벽"?["직벽 – 벵에 은신처",4]:tr==="여밭"?["여밭 – 수중여 주변",3]:null;
+  if(sp==="볼락")return (tr==="여밭"||tr==="홈통")?["여밭·홈통 – 볼락 은신처",4]:null;
+  return (tr==="곶부리"||tr==="직벽")?["돌출부·직벽 – 에깅 유리",4]:null;
+}
+
+// ───────── 과거 조과 ─────────
+const cyc=(a,b,n)=>{const d=Math.abs(a-b)%n;return Math.min(d,n-d)};
+const BYID=Object.fromEntries(POINTS.map(p=>[p.id,p]));
+const isPointRec=r=>r.pointId!=null||r.sideFacingDeg!=null;
+function similarity(rec,cond,h){
+  const m=[1,.85,.6,.35][cyc(cond.mulIdx,rec._mul,15)]??0;
+  const s=[1,.7,.3][cyc(cond.month,+rec.date.slice(5,7),12)]??0;
+  if(!m||!s)return 0;
+  const ov=Math.min(h+1,rec.endHour)-Math.max(h,rec.startHour);
+  return m*s*(ov>0?1:.5);
+}
+function distM(a,b){return Math.hypot((a.lat-b.lat)*111320,(a.lng-b.lng)*111320*Math.cos(a.lat*Math.PI/180))}
+function pointWeight(p,r){
+  if(r.pointId){
+    if(r.pointId===p.id)return 1;
+    const q=BYID[r.pointId]; if(!q)return 0;
+    const d=distM(q,p);
+    return d<=35&&ang(q.facingDeg,p.facingDeg)<=50?.45:d<=70&&q.terrain===p.terrain?.2:0;
+  }
+  return ang(r.sideFacingDeg,p.facingDeg)<=50?.5:0;
+}
+function historyReasons(p,sp,cond,h){
+  let total=0,count=0,best=null,poorT=0,poorN=0; const out=[];
+  for(const r of RECORDS){
+    if(!isPointRec(r))continue;
+    const poor=(r.rating||{})[sp]<0, n=r.catches[sp];
+    if(n==null||(n<=0&&!poor))continue;
+    const pw=pointWeight(p,r); if(pw<=0)continue;
+    const sim=similarity(r,cond,h); if(sim<=0)continue;
+    if(poor){if(sim*pw>=.05){poorT+=sim*pw;poorN++}continue}
+    const c=sim*pw*Math.log(1+n)/Math.log(16); if(c<.05)continue;
+    total+=c;count++; if(!best||c>best[1])best=[r,c];
+  }
+  if(best){
+    const r=best[0]; const where=r.pointId===p.id?"이 자리":r.pointId?(BYID[r.pointId]?.name.replace("두도 ","")||"인접 자리"):compass(r.sideFacingDeg)+"편";
+    out.push([`비슷한 물때 조과 ${count}건 (예: ${r.date} ${where})`,Math.max(2,Math.min(18,r0(total*14)))]);
+  }
+  if(poorN)out.push([`비슷한 물때에 이쪽 부진 기록 ${poorN}건`,-Math.max(2,Math.min(8,r0(poorT*12)))]);
+  return out;
+}
+function dayReason(sp,cond,h){
+  let good=0,poor=0,ng=0,np=0;
+  for(const r of RECORDS){
+    if(isPointRec(r))continue;
+    const isPoor=(r.rating||{})[sp]<0, n=r.catches[sp];
+    if(n==null||(n<=0&&!isPoor))continue;
+    const sim=similarity(r,cond,h); if(sim<.25)continue;
+    if(isPoor){poor+=sim;np++}else{good+=sim*Math.log(1+n)/Math.log(13);ng++}
+  }
+  if(!ng&&!np)return null;
+  return [`두도 전체 – 비슷한 물때 날 조황 (좋음 ${ng}일 · 부진 ${np}일)`,Math.max(-8,Math.min(10,r0((good-poor*.9)*4)))];
+}
+
+// ───────── 시간별 점수 ─────────
+const toScore=sum=>Math.max(1,Math.min(99,Math.round(100/(1+Math.exp(-(sum-44)/13)))));
+function scoreHour(p,sp,cond,h){
+  const S=SPECIES[sp], prof=profile(p), R=[]; let danger=null;
+  const w=cond.weather[h]||cond.weather.def;
+  const wind=w.wind, wdir=w.dir, sea=w.wave, t=cond.temp;
+  const on=ang(wdir,p.facingDeg)<=60;
+  let wave=null;
+  if(sea!=null){wave=sea*(.35+.65*prof.exposure); if(wind>=4)wave*=on?1.15:.85; wave=Math.floor(wave*10)/10}
+  // 계절
+  const season=S.season[cond.month-1];
+  R.push([`${sp} 시즌 ${"★".repeat(season)}${"☆".repeat(3-season)}`,r0((season-1.5)*7)]);
+  const mid=(S.ideal[0]+S.ideal[1])/2, half=(S.ideal[1]-S.ideal[0])/2+2;
+  R.push([`수온 ${t.toFixed(1)}°C (적정 ${S.ideal[0]}~${S.ideal[1]}°C)`,r0(Math.exp(-(((t-mid)/half)**2))*18-8)]);
+  if(cond.tempChange!=null){const d=cond.tempChange;
+    if(d>=.3)R.push([`수온 상승 ${d>0?"+":""}${d.toFixed(1)}°C – 활성 오름`,5]);
+    else if(d<=-1.5)R.push([`수온 급락 ${d.toFixed(1)}°C`,-8]); else if(d<=-.5)R.push([`수온 하락 ${d.toFixed(1)}°C`,-4]);}
+  const pref=preferredDepth(sp,t), fit=depthFit(p,pref);
+  R.push([`수심 ${p.depth} · 지금 수온 선호 ${pref[0]}~${pref[1]}m ${fit>=.6?"(맞음)":fit>.2?"(일부)":"(벗어남)"}`,r0(fit*14-5)]);
+  const tf=terrainFit(p,sp,t); if(tf)R.push(tf);
+  if(!p.species.includes(sp))R.push(["이 자리 대표 어종 아님",-8]);
+  // 물때·조류
+  const at=kstMs(cond.date,h,30), ts=tideState(at,cond.tides);
+  const st=ts?strengthOf(ts,cond.rf):.3;
+  let phase="정보 없음";
+  if(ts){
+    phase=`${ts.incoming?"들물":"날물"} ${r0(ts.progress*100)}%`;
+    if(ts.nearSlack){
+      const which=(ts.progress<.5)===ts.prevHigh?"만조":"간조";
+      R.push(sp==="감성돔"?[`${which} 물돌이 – 대물 입질 시간 (밴드 조황)`,9]:sp==="벵에돔"?[`${which} 정조 – 벵에는 조류가 있어야`,-4]:[`${which} 물돌이`,2]);
+    }else{
+      const suit=ts.incoming?prof.flood:prof.ebb, power=Math.max(.3,Math.min(1,st/.5));
+      const how=suit>=.9?"조류가 공략 지점으로 뻗어 나감":suit>=.75?"섬 하류 쪽 조경지대":suit>=.5?"갯바위 따라 흐름":suit>0?"홈통 안으로 도는 물":"갯바위로 받혀 채비가 밀려옴";
+      R.push([`${phase} – ${how} (${prof.type})`,r0(suit*14*power)]);
+      if(sp==="감성돔"&&ts.incoming&&ts.progress>=.4)R.push(["중들물~끝들물",5]);
+      if(sp==="벵에돔"&&ts.progress>=.25&&ts.progress<=.75)R.push(["조류 활발한 중간 물때",4]);
+      if(st>.65&&p.terrain==="곶부리"&&suit<.85)R.push(["센 조류 – 곶부리 정면은 너무 빠름",-4]);
+      if(st>.65&&p.terrain==="홈통")R.push(["센 조류 – 홈통 반탄류",4]);
+      if(st<.3&&p.terrain==="곶부리")R.push(["약한 조류 – 물이 가는 곶부리 유리",4]);
+    }
+  }
+  const f=cond.rf;
+  R.push(f<.2?[`${cond.mul} – 조류 거의 없음`,-6]:f>=.35&&f<=.8?[`${cond.mul} – 적당한 조류`,5]:f>.9?[`${cond.mul} – 사리, 조류 강함`,p.depthMax>=10?1:-3]:[cond.mul,1]);
+  // 빛
+  const sr=h*60+30-cond.sunrise;
+  if(sp==="감성돔")R.push(sr>=-60&&sr<=60?["해 뜰 무렵 피딩타임",10]:sr>60&&sr<=150?["아침 – 입질 이어짐",5]:h>=11?["한낮 – 경계심 커짐",-3]:sr<-60?["해 뜨기 전",2]:["오전",0]);
+  else if(sp==="벵에돔")R.push(sr<0?["해 뜨기 전 – 벵에 활성 낮음",-5]:h>=7&&h<=11?["오전 – 벵에 활성 시간",5]:["주간",2]);
+  else if(sp==="볼락")R.push(sr<30?["새벽 – 볼락 활성",8]:["낮 – 볼락 활성 낮음",-10]);
+  else R.push(sr>=-60&&sr<=90?["아침 피딩",8]:["주간",-2]);
+  // 바람
+  const dt=compass(wdir);
+  if(wind>=12){danger=`강풍 ${wind.toFixed(0)}m/s`;R.push([`강풍 ${wind.toFixed(1)}m/s – 출조 위험`,-30])}
+  else if(wind>=9)R.push([`${dt} ${wind.toFixed(1)}m/s – 낚시 어려움`,on?-18:-10]);
+  else if(wind>=6&&on){R.push([`${dt} 맞바람 ${wind.toFixed(1)}m/s – 채비 운용 어려움`,-12]);if(wind>=8)danger="맞바람·파도 주의"}
+  else if(wind>=6)R.push([`${dt} ${wind.toFixed(1)}m/s – 등지는 자리`,0]);
+  else if(wind>=2.5)R.push([`${dt} ${wind.toFixed(1)}m/s – 적당한 물결`,3]);
+  else R.push(["바람 거의 없음 – 잔잔하면 경계심↑",sp==="감성돔"?-4:0]);
+  if(wind>=4&&wdir>=200&&wdir<=250)R.push(["남서풍 – 수온 하강·조황 저하 경향 (밴드 조황)",-3]);
+  // 체감 파고
+  if(wave!=null){
+    const tag=`체감 파고 ${wave.toFixed(1)}m (외해 ${sea.toFixed(1)}m, ${prof.exposureText})`;
+    if(wave>=2){danger=`파고 ${wave.toFixed(1)}m – 갯바위 위험`;R.push([tag+" – 위험",-30])}
+    else if(wave>S.waveLimit)R.push([tag+" – 높음",-12]);
+    else if(sp==="감성돔"&&wave>=.4&&wave<=1.2)R.push([tag+" – 적당한 포말",7]);
+    else if(sp==="벵에돔"&&wave>=.3&&wave<=1)R.push([tag+" – 적당한 물결",4]);
+    else if(wave<.3&&S.likesWave)R.push([tag+" – 너무 잔잔함",-4]);
+    else R.push([tag,0]);
+    if(on&&wave>=1.5&&!danger)danger="정면 너울 – 갯바위 진입 주의";
+  }
+  if(w.rain)R.push(["강수 예보",-3]);
+  R.push(...historyReasons(p,sp,cond,h));
+  const dr=dayReason(sp,cond,h); if(dr)R.push(dr);
+  let score=toScore(R.reduce((s,x)=>s+x[1],0)); if(danger)score=Math.min(score,15);
+  return {h,score,reasons:R,danger,phase,wind,wdir,wave};
+}
+const HOURS=[5,6,7,8,9,10,11,12];
+function evaluate(p,sp,cond){
+  const hours=HOURS.map(h=>scoreHour(p,sp,cond,h));
+  const day=r0(hours.reduce((s,x)=>s+x.score,0)/hours.length);
+  let bi=0;for(let i=0;i<hours.length-1;i++)if(hours[i].score+hours[i+1].score>hours[bi].score+hours[bi+1].score)bi=i;
+  return {p,sp,hours,day,win:[hours[bi].h,hours[bi+1].h+1]};
+}
+function bestFor(p,cond,sp){
+  if(sp)return evaluate(p,sp,cond);
+  const c=p.species.filter(s=>SPECIES[s]); return c.map(s=>evaluate(p,s,cond)).reduce((a,b)=>b.day>a.day?b:a);
+}
+
+// ───────── 실시간 예보 (Open-Meteo, 키 불필요) ─────────
+const LIVE={};
+async function fetchJson(url){
+  const ac=new AbortController(); const tm=setTimeout(()=>ac.abort(),9000);
+  try{const r=await fetch(url,{signal:ac.signal});if(!r.ok)throw new Error(r.status);return await r.json()}finally{clearTimeout(tm)}
+}
+async function loadLive(){
+  const tz="&timezone=Asia%2FSeoul";
+  const [wx,mar]=await Promise.all([
+    fetchJson(`https://api.open-meteo.com/v1/forecast?latitude=${C_LAT}&longitude=${C_LNG}&hourly=wind_speed_10m,wind_direction_10m,precipitation_probability&wind_speed_unit=ms&forecast_days=4${tz}`),
+    fetchJson(`https://marine-api.open-meteo.com/v1/marine?latitude=35.035&longitude=129.03&hourly=wave_height,sea_surface_temperature,sea_level_height_msl&past_days=1&forecast_days=4${tz}`)
+  ]);
+  const tms=s=>{const [d,t]=s.split("T");return kstMs(d,+t.slice(0,2),+t.slice(3,5))};
+  LIVE.weather={};
+  wx.hourly.time.forEach((s,i)=>{LIVE.weather[tms(s)]={wind:wx.hourly.wind_speed_10m[i]??0,dir:wx.hourly.wind_direction_10m[i]??0,rain:(wx.hourly.precipitation_probability[i]??0)>=60}});
+  const mt=mar.hourly.time.map(tms);
+  LIVE.wave={}; LIVE.sst={};
+  mt.forEach((t,i)=>{LIVE.wave[t]=mar.hourly.wave_height[i];LIVE.sst[t]=mar.hourly.sea_surface_temperature[i]});
+  const lv=mar.hourly.sea_level_height_msl;
+  LIVE.tides=lv&&lv.some(x=>x!=null)?tidesFromLevel(mt,lv):null;
+  LIVE.ok=true;
+}
+function sstMean(ds){const v=[];for(let h=0;h<24;h++){const x=LIVE.sst[kstMs(ds,h)];if(x!=null)v.push(x)}return v.length?v.reduce((a,b)=>a+b)/v.length:null}
+
+// ───────── 상태 ─────────
+const today=dateStr(Date.now());
+const state={day:0,sp:null,sel:null,selHour:null,mode:"manual",
+  manual:{wind:3,dir:0,wave:.6,temp:MONTH_TEMP[kstParts(Date.now()).m-1]}};
+try{const s=JSON.parse(localStorage.getItem("dudo-manual")||"null");if(s)Object.assign(state.manual,s)}catch(e){}
+
+function buildCond(){
+  const ds=addDays(today,state.day), age=moonAge(kstMs(ds,12));
+  const cond={date:ds,month:+ds.slice(5,7),mul:mulName(ds),mulIdx:mulIndex(ds),rf:rangeFactor(age),sunrise:sunrise(ds),weather:{},tempChange:null,src:{}};
+  if(state.mode==="live"&&LIVE.ok){
+    for(let h=0;h<24;h++){const t=kstMs(ds,h);const w=LIVE.weather[t];if(w)cond.weather[h]={...w,wave:LIVE.wave[t]??null}}
+    cond.weather.def={wind:3,dir:0,wave:null,rain:false};
+    const m=sstMean(ds), y=sstMean(addDays(ds,-1));
+    cond.temp=m??MONTH_TEMP[cond.month-1]; cond.tempChange=m!=null&&y!=null&&state.day===0?Math.round((m-y)*10)/10:null;
+    cond.tides=LIVE.tides&&LIVE.tides.length>4?LIVE.tides:tidesEstimate(ds);
+    cond.src.tide=LIVE.tides&&LIVE.tides.length>4?"해수면 예보":"천문 추정";
+  }else{
+    const M=state.manual;
+    cond.weather.def={wind:M.wind,dir:M.dir,wave:M.wave,rain:false};
+    cond.temp=M.temp; cond.tides=tidesEstimate(ds); cond.src.tide="천문 추정";
+  }
+  RECORDS.forEach(r=>{if(r._mul==null)r._mul=mulIndex(r.date)});
+  return cond;
+}
+
+// ───────── 그리기 ─────────
+const $=id=>document.getElementById(id);
+function gaugeSvg(score,size=50,stroke=5,label=false){
+  const r=(size-stroke)/2, c=size/2, L=2*Math.PI*r*.75, v=L*score/100;
+  return `<svg class="${size>60?"big":"gauge"}" viewBox="0 0 ${size} ${size}" aria-label="${score}점">
+  <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--surface2)" stroke-width="${stroke}" stroke-dasharray="${L} 999" stroke-linecap="round" transform="rotate(135 ${c} ${c})"/>
+  <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${scoreColor(score)}" stroke-width="${stroke}" stroke-dasharray="${v} 999" stroke-linecap="round" transform="rotate(135 ${c} ${c})"/>
+  <text x="${c}" y="${c+(label?1:5)}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-weight="600" font-size="${size/3}" fill="var(--fg)">${score}</text>
+  ${label?`<text x="${c}" y="${c+size*.24}" text-anchor="middle" font-size="${size/8}" font-weight="700" fill="${scoreColor(score)}">${scoreLabel(score)}</text>`:""}</svg>`;
+}
+function tagCls(type){return type.startsWith("들물")?"flood":type.startsWith("날물")?"ebb":"both"}
+
+function renderHeader(cond){
+  const day=cond.tides.filter(e=>dateStr(e.t)===cond.date);
+  const w12=cond.weather[12]||cond.weather.def;
+  const stats=[
+    ["물때",`${cond.mul}`,`음력 ${lunarDay(cond.date)}일`],
+    ["만조",day.filter(e=>e.high).map(e=>hm(e.t)).join(" ")||"-",""],
+    ["간조",day.filter(e=>!e.high).map(e=>hm(e.t)).join(" ")||"-",""],
+    ["수온",`${cond.temp.toFixed(1)}°`,cond.tempChange!=null?`${cond.tempChange>=0?"+":""}${cond.tempChange} 어제 대비`:(state.mode==="live"?"예보":"입력값")],
+    ["바람 (정오)",`${w12.wind.toFixed(1)}`,`m/s ${compass(w12.dir)}풍`],
+    ["외해 파고",w12.wave!=null?`${w12.wave.toFixed(1)}`:"-","m"],
+    ["일출",`${String(Math.floor(cond.sunrise/60)).padStart(2,"0")}:${String(cond.sunrise%60).padStart(2,"0")}`,""],
+  ];
+  $("cond").innerHTML=stats.map(([k,v,s])=>`<div class="stat"><div class="k">${k}</div><div class="v">${v} <small>${s}</small></div></div>`).join("");
+  // 물때 곡선
+  const T=cond.tides, start=kstMs(cond.date), lvl=t=>{let p=null,n=null;for(const e of T){if(e.t<=t)p=e;else{n=e;break}}if(!p||!n)return 0;const pv=p.high?1:-1,nv=n.high?1:-1,f=(t-p.t)/(n.t-p.t);return(pv+nv)/2+(pv-nv)/2*Math.cos(Math.PI*f)};
+  let d="",fill="";
+  for(let m=0;m<=1440;m+=10){const x=480*m/1440,y=35-lvl(start+m*6e4)*26;d+=(m?"L":"M")+x.toFixed(1)+" "+y.toFixed(1);}
+  fill=d+" L480 70 L0 70 Z";
+  const win=`<rect x="${480*5/24}" y="0" width="${480*8/24}" height="70" fill="rgba(255,255,255,.07)"/>`;
+  const dots=day.map(e=>{const x=480*(e.t-start)/864e5;return `<circle cx="${x}" cy="${e.high?9:61}" r="3.5" fill="${e.high?"#5fc6c9":"#f2fbfc"}"/>`}).join("");
+  let now="";
+  if(state.day===0){const m=(Date.now()-start)/6e4;if(m>=0&&m<=1440){const x=480*m/1440,y=35-lvl(Date.now())*26;now=`<circle cx="${x}" cy="${y}" r="5.5" fill="#fff"/><circle cx="${x}" cy="${y}" r="3.5" fill="#ff6f45"/>`}}
+  $("tideSvg").innerHTML=`${win}<path d="${fill}" fill="rgba(95,198,201,.22)"/><path d="${d}" fill="none" stroke="#f2fbfc" stroke-width="2.2" vector-effect="non-scaling-stroke"/>${dots}${now}`;
+}
+
+function renderStatus(cond){
+  const live=state.mode==="live";
+  $("status").innerHTML=`<span><i class="dot" style="background:${live?"var(--good)":"var(--mid)"}"></i>${live?"실시간 예보 연결됨 (Open-Meteo 바람·파고·수온)":"직접 입력 모드 – 아래 값으로 계산해요"}</span>
+  <span>만조·간조: ${cond.src.tide}</span>
+  ${LIVE.ok?`<button class="btn" type="button" id="toggleMode">${live?"직접 입력으로 바꾸기":"실시간 예보로 돌아가기"}</button>`:""}`;
+  $("manual").hidden=live;
+  const tb=$("toggleMode"); if(tb)tb.onclick=()=>{state.mode=live?"manual":"live";render()};
+}
+
+const MAP={w:400,h:520};
+let PROJ=null;
+function project(lat,lng){
+  if(!PROJ){
+    const all=[...SHAPE.islands.flat(),...POINTS.map(p=>[p.lat,p.lng]),SHAPE.buoy];
+    const la=all.map(x=>x[0]), ln=all.map(x=>x[1]);
+    const k=Math.cos(C_LAT*Math.PI/180);
+    const minX=Math.min(...ln)*k, maxX=Math.max(...ln)*k, minY=Math.min(...la), maxY=Math.max(...la);
+    const pad=26, s=Math.min((MAP.w-2*pad)/(maxX-minX),(MAP.h-2*pad)/(maxY-minY));
+    PROJ={k,s,ox:(MAP.w-(maxX-minX)*s)/2-minX*s,oy:(MAP.h-(maxY-minY)*s)/2+maxY*s};
+  }
+  return [lng*PROJ.k*PROJ.s+PROJ.ox, PROJ.oy-lat*PROJ.s];
+}
+function renderMap(results){
+  const isl=SHAPE.islands.map(poly=>`<path d="${poly.map(([la,ln],i)=>{const [x,y]=project(la,ln);return(i?"L":"M")+x.toFixed(1)+" "+y.toFixed(1)}).join("")}Z" fill="var(--rockfill)" stroke="var(--rock)" stroke-width="1.5"/>`).join("");
+  const [bx1,by1]=project(...SHAPE.breakwater[0]),[bx2,by2]=project(...SHAPE.breakwater[1]);
+  const [ux,uy]=project(...SHAPE.buoy);
+  const sel=results.find(r=>r.p.id===state.sel);
+  let aim="";
+  if(sel){const p=sel.p,[x,y]=project(p.lat,p.lng),a=p.facingDeg*Math.PI/180,L=p.targetDistance*2.2;
+    aim=`<line x1="${x}" y1="${y}" x2="${x+L*Math.sin(a)}" y2="${y-L*Math.cos(a)}" stroke="var(--fg)" stroke-width="2" stroke-dasharray="4 3"/><circle cx="${x+L*Math.sin(a)}" cy="${y-L*Math.cos(a)}" r="7" fill="none" stroke="var(--coral)" stroke-width="2.5"/>`}
+  const pins=[...results].sort((a,b)=>(a.p.id===state.sel)-(b.p.id===state.sel)).map(r=>{
+    const [x,y]=project(r.p.lat,r.p.lng), s=r.p.id===state.sel, rad=s?14:10.5;
+    const lab=r.p.name.replace("두도 ","").replace("번","").replace("직벽","벽");
+    return `<g class="pin" data-id="${r.p.id}" tabindex="0" role="button" aria-label="${r.p.name} ${r.day}점" style="cursor:pointer">
+      <circle cx="${x}" cy="${y}" r="${rad}" fill="${scoreColor(r.day)}" stroke="#fff" stroke-width="${s?2.5:1.5}"/>
+      <text x="${x}" y="${y+3.3}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="${lab.length>3?7:s?10:8.5}" font-weight="600" fill="#fff">${lab}</text></g>`}).join("");
+  const n=[MAP.w-24,24];
+  $("map").innerHTML=`<line x1="${bx1}" y1="${by1}" x2="${bx2}" y2="${by2}" stroke="var(--rock)" stroke-width="7" stroke-linecap="round" opacity=".7"/>${isl}
+   <circle cx="${ux}" cy="${uy}" r="4" fill="var(--bad)"/><text x="${ux+7}" y="${uy+4}" font-size="10" fill="var(--muted)">부표</text>
+   <text x="${n[0]}" y="${n[1]}" text-anchor="middle" font-size="12" font-weight="700" fill="var(--muted)">N ↑</text>
+   <text x="${bx2+8}" y="${by2+12}" font-size="10" fill="var(--muted)">방파제 → 송도</text>
+   <text x="20" y="${MAP.h-14}" font-size="11" fill="var(--muted)">↓ 외해</text>
+   ${aim}${pins}`;
+  $("map").querySelectorAll(".pin").forEach(g=>{g.onclick=()=>select(g.dataset.id);g.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();select(g.dataset.id)}}});
+}
+
+function renderList(results){
+  $("list").innerHTML=results.map((r,i)=>{
+    const prof=profile(r.p);
+    return `<button class="prow" type="button" data-id="${r.p.id}" aria-current="${r.p.id===state.sel}">
+      <span class="rank">${i+1}</span>${gaugeSvg(r.day)}
+      <span style="min-width:0"><span class="pname">${r.p.name}<span class="tag ${tagCls(prof.type)}">${prof.type}</span></span>
+      <span class="pmeta" style="display:block">${r.sp} · 최고 ${String(r.win[0]).padStart(2,"0")}~${String(r.win[1]).padStart(2,"0")}시 · ${r.p.terrain} · 수심 ${r.p.depth}</span></span>
+      <span class="bars" aria-hidden="true">${r.hours.map(x=>`<i style="height:${4+x.score*.22}px;background:${x.danger?"var(--bad)":scoreColor(x.score)}"></i>`).join("")}</span>
+    </button>`}).join("");
+  $("list").querySelectorAll(".prow").forEach(b=>b.onclick=()=>select(b.dataset.id));
+}
+
+function renderDetail(results){
+  const r=results.find(x=>x.p.id===state.sel)||results[0]; if(!r){$("detail").innerHTML="";return}
+  const prof=profile(r.p), bestH=r.hours.reduce((a,b)=>b.score>a.score?b:a);
+  const hs=r.hours.find(x=>x.h===state.selHour)||bestH;
+  const sum=hs.reasons.reduce((s,x)=>s+x[1],0);
+  $("detail").innerHTML=`<div class="dhead">${gaugeSvg(r.day,86,8,true)}
+    <div style="min-width:0"><div class="dname">${r.p.name}</div>
+    <div class="pmeta" style="white-space:normal">${r.sp} · 05~13시 평균 ${r.day}점 · 최고 ${String(r.win[0]).padStart(2,"0")}~${String(r.win[1]).padStart(2,"0")}시</div>
+    <div class="pmeta" style="white-space:normal">${r.p.target||""}</div></div></div>
+    <div class="pills">
+      <span class="pill">성격 <b>${prof.type}</b></span>
+      <span class="pill">들물 적합 <b>${r0(prof.flood*100)}</b> · 날물 적합 <b>${r0(prof.ebb*100)}</b></span>
+      <span class="pill">너울 <b>${prof.exposureText}</b></span>
+      <span class="pill">공략 <b>${compass(r.p.facingDeg)}쪽 ${r.p.targetDistance}m</b></span>
+      <span class="pill">수심 <b>${r.p.depth}</b></span><span class="pill">지형 <b>${r.p.terrain}</b></span>
+    </div>
+    <div class="hours" role="group" aria-label="시간별 확률">${r.hours.map(x=>`<button class="hcol" type="button" data-h="${x.h}" aria-pressed="${x.h===hs.h}">
+      <div class="h">${String(x.h).padStart(2,"0")}시</div><div class="tank"><i style="height:${x.score}%;background:${x.danger?"var(--bad)":scoreColor(x.score)}"></i></div>
+      <div class="s">${x.score}</div><div class="ph">${x.phase}</div></button>`).join("")}</div>
+    <h2 style="margin-top:16px">${String(hs.h).padStart(2,"0")}~${String(hs.h+1).padStart(2,"0")}시 ${hs.score}점 근거</h2>
+    ${hs.danger?`<div class="danger">⚠ ${hs.danger}</div>`:""}
+    <div class="reasons">${[...hs.reasons].sort((a,b)=>b[1]-a[1]).map(([t,d])=>{const c=d>0?"var(--good)":d<0?"var(--bad)":"var(--muted)";return `<div class="reason"><span class="d" style="background:${c}"></span><span>${t}</span><span class="n" style="color:${c}">${d>0?"+":""}${d}</span></div>`}).join("")}</div>
+    <div class="sum">가감 합계 ${sum>0?"+":""}${sum} → ${hs.score}점${hs.danger?" (위험 조건으로 15점 제한)":""}</div>`;
+  $("detail").querySelectorAll(".hcol").forEach(b=>b.onclick=()=>{state.selHour=+b.dataset.h;renderDetail(LAST)});
+}
+
+let LAST=[];
+function select(id){state.sel=id;state.selHour=null;renderMap(LAST);renderList(LAST);renderDetail(LAST);
+  if(window.innerWidth<860)$("detail").scrollIntoView({behavior:"smooth",block:"start"})}
+
+function renderSpecies(){
+  const opts=[[null,"최적 어종"],...Object.keys(SPECIES).map(s=>[s,s])];
+  $("spchips").innerHTML=opts.map(([v,l])=>`<button type="button" data-sp="${v??""}" aria-pressed="${state.sp===v}">${l}</button>`).join("");
+  $("spchips").querySelectorAll("button").forEach(b=>b.onclick=()=>{state.sp=b.dataset.sp||null;render()});
+}
+
+function syncManual(){
+  const M=state.manual;
+  $("inWind").value=M.wind;$("oWind").textContent=`${M.wind} m/s`;
+  $("inDir").value=String(M.dir);
+  $("inWave").value=M.wave;$("oWave").textContent=`${(+M.wave).toFixed(1)} m`;
+  $("inTemp").value=M.temp;$("oTemp").textContent=`${(+M.temp).toFixed(1)} °C`;
+}
+[["inWind","wind"],["inDir","dir"],["inWave","wave"],["inTemp","temp"]].forEach(([id,k])=>{
+  $(id).addEventListener("input",e=>{state.manual[k]=+e.target.value;try{localStorage.setItem("dudo-manual",JSON.stringify(state.manual))}catch(_){}syncManual();render()});
+});
+document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{state.day=+b.dataset.day;document.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed",x===b));render()});
+
+function render(){
+  const cond=buildCond();
+  renderHeader(cond);renderStatus(cond);renderSpecies();syncManual();
+  LAST=POINTS.map(p=>bestFor(p,cond,state.sp)).sort((a,b)=>b.day-a.day);
+  if(!state.sel||!LAST.some(r=>r.p.id===state.sel))state.sel=LAST[0].p.id;
+  renderMap(LAST);renderList(LAST);renderDetail(LAST);
+}
+render();
+loadLive().then(()=>{state.mode="live";render()}).catch(()=>{render()});
+</script>
+
+</body></html>

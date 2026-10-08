@@ -1,4 +1,16 @@
-# 두도 포인트 – 부산 두도·인근 갯바위 낚시 확률 앱 (안드로이드)
+# 두도 포인트 – 부산 두도·인근 갯바위 낚시 확률 앱 (안드로이드 + 웹)
+
+## 웹 버전 (GitHub Pages)
+
+`docs/index.html` 한 파일이 웹 버전입니다. 안드로이드 앱과 같은 점수 모델을 자바스크립트로 옮겼고, 실시간 예보는 Open-Meteo(키 불필요)에서 받습니다.
+
+1. GitHub 저장소 → **Settings → Pages**
+2. Source: **Deploy from a branch**, Branch: **main**, 폴더: **/docs** → Save
+3. 1~2분 뒤 `https://boogie23-creator.github.io/dudo-fishing/` 에서 열림
+
+- 바람·파고·수온·해수면(만조·간조)을 Open-Meteo에서 자동으로 받고, 못 받으면 직접 입력 모드로 동작합니다.
+- 화면을 수정하려면 `web/src.html`을 고친 뒤 `python3 web/build.py` 로 `docs/index.html`을 다시 만듭니다. 포인트·조과 데이터는 앱의 `points.json`, `catches.json`을 그대로 씁니다.
+
 
 그날의 날씨·물때·수온·시간대를 점수(0~100)로 계산해서 **어느 포인트에서, 몇 시에, 어떤 어종을 노리면 좋은지** 순위로 보여주는 앱입니다.
 
