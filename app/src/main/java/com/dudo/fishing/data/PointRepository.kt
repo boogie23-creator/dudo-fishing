@@ -11,6 +11,20 @@ object PointRepository {
         prefs(context).edit().putString(id, "%.6f,%.6f".format(java.util.Locale.US, lat, lng)).apply()
     }
 
+    /** 지도에서 고친 위치 목록(JSON) – 카톡 등으로 보내 기본 위치 데이터에 반영할 수 있게 */
+    fun exportLocations(context: Context): String {
+        val o = JSONObject()
+        prefs(context).all.toSortedMap().forEach { (id, v) ->
+            val parts = (v as? String)?.split(",") ?: return@forEach
+            val lat = parts.getOrNull(0)?.toDoubleOrNull() ?: return@forEach
+            val lng = parts.getOrNull(1)?.toDoubleOrNull() ?: return@forEach
+            o.put(id, org.json.JSONArray().put(lat).put(lng))
+        }
+        return o.toString()
+    }
+
+    fun movedCount(context: Context): Int = prefs(context).all.size
+
     fun resetLocation(context: Context, id: String) {
         prefs(context).edit().remove(id).apply()
     }
