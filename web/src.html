@@ -178,6 +178,7 @@ const SPECIES = {
 const MONTH_TEMP = [13,12,12.5,14,16.5,19,21.5,24,23.5,21,18,15];
 let FLOOD = 250, EBB = 60;           // 들물 남서류(250°), 날물 북동류(60°) – 감천항 입구 실측(창 1.9kn, 낙 1.6kn)
 const C_LAT = 35.0488, C_LNG = 129.0150;
+const TIDE_LAG = 24*6e4;   // 해수면 예보 → 부산 조석표 시각 보정(ms)
 const ang = (a,b)=>{let d=Math.abs(a-b)%360;return d>180?360-d:d};
 const COMPASS = ["북","북동","동","남동","남","남서","서","북서"];
 const compass = d=>COMPASS[Math.floor((((d%360)+360+22)%360)/45)];
@@ -287,6 +288,18 @@ function profile(p){
   return PROFILE[p.id]={flood:fl,ebb:eb,exposure:ex,bearing:b,type,suitAt:suit,
     exposureText:ex>=.9?"외해 정면":ex>=.65?"반쯤 열림":"막힌 쪽"};
 }
+// 입질 지점: 기본 공략 지점(바라보는 방향 × 거리)에서 그 시간 흐름을 따라 밑밥·채비가 흘러가 모이는 곳
+function bitePoint(p,flowDeg,s){
+  const base={dist:p.targetDistance,shiftDeg:null,shift:0};
+  if(flowDeg==null||s<.15)return base;
+  const k={"홈통":.4,"직벽":.6,"여밭":.8,"곶부리":1.2}[p.terrain]??1;
+  const out=Math.cos((flowDeg-p.facingDeg)*Math.PI/180);      // + 바다 쪽으로, - 갯바위 쪽으로
+  if(out>=0&&p.terrain!=="직벽")return {dist:p.targetDistance,shiftDeg:flowDeg,shift:Math.round((4+10*s)*k)};
+  // 갯바위로 받히거나 직벽: 갯바위와 나란한 방향으로만 흐르고, 밑밥이 발 앞으로 밀려와 입질 지점이 가까워짐
+  const l=(p.facingDeg+270)%360,r=(p.facingDeg+90)%360, along=ang(flowDeg,l)<ang(flowDeg,r)?l:r;
+  return {dist:Math.max(4,Math.round(p.targetDistance*(out<0?.7:1))),shiftDeg:along,shift:Math.round((3+6*s)*k)};
+}
+const biteText=(p,b)=>b.shift?`${compass(p.facingDeg)}쪽 ${b.dist}m에서 ${compass(b.shiftDeg)}쪽으로 ${b.shift}m 흘러간 곳`:`${compass(p.facingDeg)}쪽 ${b.dist}m (흐름 약함 – 발 앞~공략 지점에 밑밥을 모으기)`;
 function preferredDepth(sp,t){
   if(sp==="감성돔")return t>=20?[3,8]:t>=15?[4,8]:t>=13.5?[6,12]:[8,15];
   if(sp==="벵에돔")return t>=18?[3,10]:[6,12];
@@ -407,7 +420,7 @@ function scoreHour(p,sp,cond,h){
   // 물때·조류
   const at=kstMs(cond.date,h,30), ts=tideState(at,cond.tides);
   const st=ts?strengthOf(ts,(ts.range!=null&&cond.rangeStats)?rfFromRange(ts.range,cond.rangeStats):cond.rf):.3;
-  let phase="정보 없음";
+  let phase="정보 없음", bite=bitePoint(p,null,0);
   if(ts){
     phase=`${ts.incoming?"들물":"날물"} ${r0(ts.progress*100)}%`;
     if(ts.nearSlack){
@@ -418,6 +431,7 @@ function scoreHour(p,sp,cond,h){
       const suit=cur?prof.suitAt(cur.d):(ts.incoming?prof.flood:prof.ebb);
       const power=cur?Math.max(.3,Math.min(1,cur.v/cond.flow.vRef)):Math.max(.3,Math.min(1,st/.5));
       if(cur)phase+=` · ${compass(cur.d)}류 ${(cur.v/1.852).toFixed(1)}kn`;
+      bite=bitePoint(p,cur?cur.d:(ts.incoming?FLOOD:EBB),cur?Math.min(1,cur.v/cond.flow.vRef):Math.min(1,st/.6));
       const how=suit>=.9?"조류가 공략 지점으로 뻗어 나감":suit>=.75?"섬 하류 쪽 조경지대":suit>=.5?"갯바위 따라 흐름":suit>0?"홈통 안으로 도는 물":"갯바위로 받혀 채비가 밀려옴";
       R.push([`${phase} – ${how} (${prof.type})`,r0(suit*14*power)]);
       if(sp==="감성돔"&&ts.incoming&&ts.progress>=.4)R.push(["중들물~끝들물",5]);
@@ -483,7 +497,7 @@ function scoreHour(p,sp,cond,h){
   R.push(...historyReasons(p,sp,cond,h));
   const dr=dayReason(sp,cond,h); if(dr)R.push(dr);
   let score=toScore(R.reduce((s,x)=>s+x[1],0)); if(danger)score=Math.min(score,15);
-  return {h,score,reasons:R,danger,phase,wind,wdir,wave};
+  return {h,score,reasons:R,danger,phase,wind,wdir,wave,bite};
 }
 const HOURS=[5,6,7,8,9,10,11,12,13,14,15,16,17];   // 보여주는 시간 05~18시
 const RANK_END=13;                                     // 순위는 05~13시 평균
@@ -527,23 +541,32 @@ async function loadLive(){
   mt.forEach((t,i)=>{const v=mar.hourly.ocean_current_velocity?.[i], d=mar.hourly.ocean_current_direction?.[i];
     if(v!=null&&d!=null)LIVE.cur[t]={v,d}});
   const lv=mar.hourly.sea_level_height_msl;
-  LIVE.tides=lv&&lv.some(x=>x!=null)?tidesFromLevel(mt,lv):null;
+  // 해수면 예보 격자는 부산항 조위관측소보다 만조·간조가 약 24분 빠르게 나와서 보정 (바다타임·국립해양조사원과 대조)
+  LIVE.tides=lv&&lv.some(x=>x!=null)?tidesFromLevel(mt,lv).map(e=>({...e,t:e.t+TIDE_LAG})):null;
   LIVE.flow=flowFromCurrents();
   if(LIVE.flow){FLOOD=LIVE.flow.flood;EBB=LIVE.flow.ebb;for(const k in PROFILE)delete PROFILE[k]}
   LIVE.ok=true;
 }
-// 예보 기간 동안 들물·날물(정조 근처 제외) 시간의 해류를 벡터 평균 → 그 기간의 실제 들물/날물 흐름 방향
+// 해류 예보 = 조류(들물·날물로 방향이 바뀜) + 해류(대마난류, 늘 북동쪽). 두도 앞은 해류가 세서
+// 예보 화살표가 하루 종일 북동쪽으로 보일 때가 많다. 들물/날물 '포인트 성격'은 조석 성분만 떼어서 정하고,
+// 시간별 점수와 입질 지점은 그 시간의 실제 흐름(해류 포함)으로 계산한다.
 function flowFromCurrents(){
   if(!LIVE.cur||!LIVE.tides||LIVE.tides.length<5)return null;
-  const acc={true:[0,0,0],false:[0,0,0]}, vs=[];
-  for(const k in LIVE.cur){const t=+k,c=LIVE.cur[k];vs.push(c.v);
+  const all=[0,0,0], acc={true:[0,0,0],false:[0,0,0]}, vs=[];
+  for(const k in LIVE.cur){const t=+k,c=LIVE.cur[k],r=c.d*Math.PI/180,vx=c.v*Math.sin(r),vy=c.v*Math.cos(r);vs.push(c.v);
+    all[0]+=vx;all[1]+=vy;all[2]++;
     const ts=tideState(t,LIVE.tides);if(!ts||ts.progress<.2||ts.progress>.8)continue;
-    const a=acc[ts.incoming],r=c.d*Math.PI/180;a[0]+=c.v*Math.sin(r);a[1]+=c.v*Math.cos(r);a[2]++}
-  const dir=a=>a[2]?((Math.atan2(a[0],a[1])*180/Math.PI)+360)%360:null;
-  const f=dir(acc[true]),e=dir(acc[false]); if(f==null||e==null)return null;
+    const a=acc[ts.incoming];a[0]+=vx;a[1]+=vy;a[2]++}
+  if(!all[2]||!acc[true][2]||!acc[false][2])return null;
+  const R=[all[0]/all[2],all[1]/all[2]];
+  const tid=a=>[a[0]/a[2]-R[0],a[1]/a[2]-R[1]];
+  const dir=v=>Math.round(((Math.atan2(v[0],v[1])*180/Math.PI)+360)%360), mag=v=>Math.hypot(v[0],v[1]);
+  const F=tid(acc[true]),E=tid(acc[false]);
+  let flood=dir(F),ebb=dir(E);
+  const ok=ang(flood,ebb)>=120&&mag(F)>=.15&&mag(E)>=.15;   // 들물·날물이 대략 반대 방향이어야 조석 성분으로 인정
+  if(!ok){flood=250;ebb=60}                                   // 감천항 입구 실측 기본값
   vs.sort((a,b)=>a-b);
-  return {flood:Math.round(f),ebb:Math.round(e),vRef:Math.max(.2,vs[Math.floor(vs.length*.8)]||.5),
-    vFlood:Math.hypot(acc[true][0],acc[true][1])/acc[true][2],vEbb:Math.hypot(acc[false][0],acc[false][1])/acc[false][2]};
+  return {flood,ebb,fromForecast:ok,resid:{d:dir(R),v:mag(R)},vRef:Math.max(.2,vs[Math.floor(vs.length*.8)]||.5)};
 }
 function sstMean(ds){const v=[];for(let h=0;h<24;h++){const x=LIVE.sst[kstMs(ds,h)];if(x!=null)v.push(x)}return v.length?v.reduce((a,b)=>a+b)/v.length:null}
 
@@ -605,7 +628,7 @@ function renderHeader(cond){
   const w12=cond.weather[12]||cond.weather.def;
   const stats=[
     ["물때",`${cond.mul}`,`음력 ${lunarDay(cond.date)}일`],
-    ...(cond.flow?[["조류 방향 (예보)",`들 ${compass(cond.flow.flood)} · 날 ${compass(cond.flow.ebb)}`,`들물 ${cond.flow.flood}° · 날물 ${cond.flow.ebb}° (해류 예보)`]]:[]),
+    ...(cond.flow?[["조류 방향",`들 ${compass(cond.flow.flood)} · 날 ${compass(cond.flow.ebb)}`,cond.flow.fromForecast?`조석 성분 · 해류가 ${compass(cond.flow.resid.d)}쪽 ${(cond.flow.resid.v/1.852).toFixed(1)}kn 더해짐`:"기본값 (감천항 실측)"]]:[]),
     ...(cond.rangeCm!=null?[["조차 (05~13시)",`${cond.rangeCm}cm`,`조류 세기 ${Math.round(cond.rf*100)}% · 물때 계산 ${Math.round(cond.rfAstro*100)}%`]]:[]),
     ["만조",day.filter(e=>e.high).map(e=>hm(e.t)).join(" ")||"-",""],
     ["간조",day.filter(e=>!e.high).map(e=>hm(e.t)).join(" ")||"-",""],
@@ -657,8 +680,12 @@ function renderMap(results){
   const [ux,uy]=project(...SHAPE.buoy);
   const sel=results.find(r=>r.p.id===state.sel);
   let aim="";
-  if(sel){const p=sel.p,[x,y]=project(p.lat,p.lng),a=p.facingDeg*Math.PI/180,L=p.targetDistance*2.2;
-    aim=`<line x1="${x}" y1="${y}" x2="${x+L*Math.sin(a)}" y2="${y-L*Math.cos(a)}" stroke="var(--fg)" stroke-width="2" stroke-dasharray="4 3"/><circle cx="${x+L*Math.sin(a)}" cy="${y-L*Math.cos(a)}" r="7" fill="none" stroke="var(--coral)" stroke-width="2.5"/>`}
+  if(sel){const p=sel.p,[x,y]=project(p.lat,p.lng),hs=sel.hours.find(x=>x.h===state.selHour)||sel.hours.filter(x=>x.h<RANK_END).reduce((a,b)=>b.score>a.score?b:a),b=hs.bite||{dist:p.targetDistance,shift:0};
+    const a=p.facingDeg*Math.PI/180,L=b.dist*2.2,tx=x+L*Math.sin(a),ty=y-L*Math.cos(a);
+    const sa=(b.shiftDeg??0)*Math.PI/180,S=b.shift*2.2,bx=tx+S*Math.sin(sa),by=ty-S*Math.cos(sa);
+    aim=`<line x1="${x}" y1="${y}" x2="${tx}" y2="${ty}" stroke="var(--fg)" stroke-width="2" stroke-dasharray="4 3"/>`+
+      (b.shift?`<line x1="${tx}" y1="${ty}" x2="${bx}" y2="${by}" stroke="var(--tide)" stroke-width="2.5" marker-end="url(#arr)"/>`:"")+
+      `<circle cx="${bx}" cy="${by}" r="7" fill="none" stroke="var(--coral)" stroke-width="2.5"/>`}
   const pins=[...results].sort((a,b)=>(a.p.id===state.sel)-(b.p.id===state.sel)).map(r=>{
     const [x,y]=project(r.p.lat,r.p.lng), s=r.p.id===state.sel, rad=s?14:10.5;
     const lab=r.p.name.replace("두도 ","").replace("번","").replace("직벽","벽");
@@ -666,7 +693,7 @@ function renderMap(results){
       <circle cx="${x}" cy="${y}" r="${rad}" fill="${scoreColor(r.day)}" stroke="#fff" stroke-width="${s?2.5:1.5}"/>
       <text x="${x}" y="${y+3.3}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="${lab.length>3?7:s?10:8.5}" font-weight="600" fill="#fff">${lab}</text></g>`}).join("");
   const n=[MAP.w-24,24];
-  $("map").innerHTML=`${coast}<line x1="${bx1}" y1="${by1}" x2="${bx2}" y2="${by2}" stroke="var(--rock)" stroke-width="7" stroke-linecap="round" opacity=".7"/>${isl}
+  $("map").innerHTML=`<defs><marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--tide)"/></marker></defs>${coast}<line x1="${bx1}" y1="${by1}" x2="${bx2}" y2="${by2}" stroke="var(--rock)" stroke-width="7" stroke-linecap="round" opacity=".7"/>${isl}
    <circle cx="${ux}" cy="${uy}" r="4" fill="var(--bad)"/><text x="${ux+7}" y="${uy+4}" font-size="10" fill="var(--muted)">부표</text>
    <text x="${n[0]}" y="${n[1]}" text-anchor="middle" font-size="12" font-weight="700" fill="var(--muted)">N ↑</text>
    <text x="${bx2+8}" y="${by2+12}" font-size="10" fill="var(--muted)">방파제 → 송도</text>
@@ -700,7 +727,7 @@ function renderDetail(results){
       <span class="pill">성격 <b>${prof.type}</b></span>
       <span class="pill">들물 적합 <b>${r0(prof.flood*100)}</b> · 날물 적합 <b>${r0(prof.ebb*100)}</b></span>
       <span class="pill">너울 <b>${prof.exposureText}</b></span>
-      <span class="pill">공략 <b>${compass(r.p.facingDeg)}쪽 ${r.p.targetDistance}m</b></span>
+      <span class="pill">입질 지점(${String(hs.h).padStart(2,"0")}시) <b>${biteText(r.p,hs.bite||bitePoint(r.p,null,0))}</b></span>
       <span class="pill">수심 <b>${r.p.depth}</b></span><span class="pill">지형 <b>${r.p.terrain}</b></span>
     </div>
     <div class="hourscroll"><div class="hours" role="group" aria-label="시간별 확률">${r.hours.map(x=>`<button class="hcol${x.h>=RANK_END?" after":""}" type="button" data-h="${x.h}" aria-pressed="${x.h===hs.h}">
