@@ -325,14 +325,17 @@ function habitatFit(p,sp,prof){
   return null;
 }
 const depthFit=(p,[a,b])=>Math.max(0,Math.min(1,(Math.min(p.depthMax,b)-Math.max(p.depthMin,a))/Math.max(1,p.depthMax-p.depthMin)));
-function terrainFit(p,sp,t){
+// 감성돔 계절 이동: 봄 오름(3~4월, 조류 잘 가는 여밭·곶부리) → 산란(5~6월, 해조류 붙은 얕은 홈통·여밭)
+// → 고수온기(7~8월, 조류 소통 좋은 곶부리) → 가을 연안 회유(9~11월, 여밭) → 겨울(12~2월, 깊은 직벽·수로)
+function terrainFit(p,sp,t,m){
   const tr=p.terrain;
   if(sp==="감성돔"){
-    if(t>=13.5&&tr==="여밭")return ["여밭 – 가을 감성돔이 붙는 지형",6];
     if(t<13.5&&(tr==="직벽"||p.depthMax>=11))return ["깊은 직벽·수로 – 저수온기 은신처",6];
-    if(tr==="홈통")return ["홈통 – 밑밥이 모이는 지형",3];
-    if(tr==="곶부리")return ["곶부리 – 조류 경계",2];
-    return null;
+    if(m>=9&&m<=11)return tr==="여밭"?["가을 연안 회유 – 여밭에 붙는 시기",6]:tr==="홈통"?["홈통 – 밑밥이 모이는 지형",3]:tr==="곶부리"?["곶부리 – 조류 경계",2]:null;
+    if(m===12||m<=2)return (tr==="직벽"||p.depthMax>=11)?["겨울 – 깊은 직벽·수로로 빠지는 시기",5]:p.depthMax<=6?["겨울 – 얕은 자리에선 빠짐",-3]:null;
+    if(m===3||m===4)return (tr==="여밭"||tr==="곶부리")?["봄 오름 – 조류 잘 가는 여밭·곶부리",4]:null;
+    if(m===5||m===6)return (tr==="홈통"||tr==="여밭")?["산란기 – 해조류 붙은 얕은 홈통·여밭",3]:null;
+    return tr==="곶부리"?["고수온기 – 조류 소통 좋은 곶부리",3]:tr==="홈통"?["고수온기 – 물이 고이는 홈통",-2]:null;
   }
   if(sp==="벵에돔")return tr==="곶부리"?["곶부리 – 조류 받는 벵에 자리",5]:tr==="직벽"?["직벽 – 벵에 은신처",4]:tr==="여밭"?["여밭 – 수중여 주변",3]:null;
   if(sp==="볼락")return (tr==="여밭"||tr==="홈통")?["여밭·홈통 – 볼락 은신처",4]:null;
@@ -416,7 +419,8 @@ function scoreHour(p,sp,cond,h){
     else if(d<=-1.5)R.push([`수온 급락 ${d.toFixed(1)}°C`,-8]); else if(d<=-.5)R.push([`수온 하락 ${d.toFixed(1)}°C`,-4]);}
   const pref=preferredDepth(sp,t), fit=depthFit(p,pref);
   R.push([`수심 ${p.depth} · 지금 수온 선호 ${pref[0]}~${pref[1]}m ${fit>=.6?"(맞음)":fit>.2?"(일부)":"(벗어남)"}`,r0(fit*14-5)]);
-  const tf=terrainFit(p,sp,t); if(tf)R.push(tf);
+  const tf=terrainFit(p,sp,t,cond.month); if(tf)R.push(tf);
+  if(sp==="감성돔"&&cond.month===5)R.push(["5월 감성돔 금어기(5/1~5/31) – 잡으면 바로 방생",-15]);
   if(S.habitat){const hf=habitatFit(p,sp,prof);if(hf)R.push(hf)}
   else if(!p.species.includes(sp))R.push(["이 자리 대표 어종 아님",-8]);
   if(p.localBias)R.push([p.localNote||"현지 경험 보정",p.localBias]);
