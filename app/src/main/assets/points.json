@@ -137,6 +137,29 @@
       "target": "작은 돌출부 끝 – 발 앞 수중여 끝자락에서 조류가 꺾이는 지점"
     },
     {
+      "id": "dudo_4_3",
+      "name": "두도 4.3번",
+      "area": "두도",
+      "lat": 35.048719,
+      "lng": 129.014104,
+      "facingDeg": 279,
+      "depthMin": 5,
+      "depthMax": 8,
+      "depth": "5~8m",
+      "bottom": "암반",
+      "species": [
+        "감성돔",
+        "벵에돔",
+        "볼락",
+        "무늬오징어"
+      ],
+      "note": "서쪽 공략 · 전방 약 10m · 수심 5~8m",
+      "coordVerified": true,
+      "terrain": "곶부리",
+      "targetDistance": 10,
+      "target": "4번과 4.5번 사이 서편 곶부리 끝 – 조류가 곶부리에서 꺾이며 생기는 조경지대(수심 5~8m)"
+    },
+    {
       "id": "dudo_4_5",
       "name": "두도 4.5번",
       "area": "두도",
@@ -316,28 +339,6 @@
       "target": "동남 부속섬 서쪽 직벽(수심 11~15m) – 두 부속섬 사이 수로로 흐르는 본류 옆. 직벽을 따라 바닥층"
     },
     {
-      "id": "dudo_10",
-      "name": "두도 10번",
-      "area": "두도",
-      "lat": 35.047421,
-      "lng": 129.015621,
-      "facingDeg": 295,
-      "depthMin": 8,
-      "depthMax": 12,
-      "depth": "8~12m",
-      "bottom": "암반",
-      "species": [
-        "감성돔",
-        "벵에돔",
-        "볼락"
-      ],
-      "note": "북서쪽 공략 · 전방 약 10m · 수심 8~12m",
-      "coordVerified": true,
-      "terrain": "곶부리",
-      "targetDistance": 10,
-      "target": "동남 부속섬 서쪽 위(북쪽) – 직벽 위쪽, 가운데 부속섬과의 수로 북쪽 입구(수심 8~12m)"
-    },
-    {
       "id": "dudo_11",
       "localBias": -10,
       "localNote": "현지 경험(사용자): 조과가 잘 안 나오는 자리",
@@ -450,29 +451,6 @@
       "terrain": "홈통",
       "targetDistance": 8,
       "target": "본섬과 동남 부속섬 사이 수로 입구(수심 8~10m) – 물돌이 전후 수로 안 완류"
-    },
-    {
-      "id": "dudo_14",
-      "name": "두도 14번",
-      "area": "두도",
-      "lat": 35.048022,
-      "lng": 129.015741,
-      "facingDeg": 140,
-      "depthMin": 4,
-      "depthMax": 8,
-      "depth": "4~8m",
-      "bottom": "암반",
-      "species": [
-        "감성돔",
-        "벵에돔",
-        "볼락",
-        "무늬오징어"
-      ],
-      "note": "남동쪽 공략 · 전방 약 10m · 수심 4~8m",
-      "coordVerified": true,
-      "terrain": "평면",
-      "targetDistance": 10,
-      "target": "동편 직선 갯바위 앞 – 날물 북동류가 갯바위를 따라 흐르는 띠(수심 4~8m)"
     },
     {
       "id": "dudo_14_5",
