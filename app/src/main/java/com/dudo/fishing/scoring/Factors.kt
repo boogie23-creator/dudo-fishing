@@ -283,6 +283,26 @@ object Factors {
         return min(d, n - d)
     }
 
+    /** 입질 지점: 기본 공략 지점(바라보는 방향 × 거리)에서 그 시간 흐름을 따라 밑밥·채비가 흘러가 모이는 곳 */
+    data class Bite(val dist: Int, val shiftDeg: Int?, val shift: Int)
+
+    fun bitePoint(p: FishingPoint, flowDeg: Int?, strength: Double): Bite {
+        if (flowDeg == null || strength < 0.15) return Bite(p.targetDistance, null, 0)
+        val k = when (p.terrain) { "홈통" -> 0.4; "직벽" -> 0.6; "여밭" -> 0.8; "곶부리" -> 1.2; else -> 1.0 }
+        val out = kotlin.math.cos(Math.toRadians((flowDeg - p.facingDeg).toDouble()))   // + 바다 쪽, - 갯바위 쪽
+        if (out >= 0 && p.terrain != "직벽")
+            return Bite(p.targetDistance, flowDeg, ((4 + 10 * strength) * k).roundToInt())
+        // 갯바위로 받히거나 직벽: 갯바위와 나란한 방향으로만 흐르고, 밑밥이 발 앞으로 밀려와 입질 지점이 가까워짐
+        val l = (p.facingDeg + 270) % 360; val r = (p.facingDeg + 90) % 360
+        val along = if (angleDiff(flowDeg, l) < angleDiff(flowDeg, r)) l else r
+        val dist = if (out < 0) maxOf(4, (p.targetDistance * 0.7).roundToInt()) else p.targetDistance
+        return Bite(dist, along, ((3 + 6 * strength) * k).roundToInt())
+    }
+
+    fun biteText(p: FishingPoint, b: Bite): String = if (b.shift > 0 && b.shiftDeg != null)
+        "${ScoreEngine.compass(p.facingDeg)}쪽 ${b.dist}m에서 ${ScoreEngine.compass(b.shiftDeg)}쪽으로 ${b.shift}m 흘러간 곳"
+    else "${ScoreEngine.compass(p.facingDeg)}쪽 ${b.dist}m (흐름 약함 – 발 앞~공략 지점에 밑밥을 모으기)"
+
     fun angleDiff(a: Int, b: Int): Int {
         val d = abs(a - b) % 360
         return if (d > 180) 360 - d else d
