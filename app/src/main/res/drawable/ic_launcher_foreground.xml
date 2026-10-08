@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 찌(구멍찌)가 파도 위에 떠 있는 모양 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <path android:fillColor="#FFF7EC" android:pathData="M24,51 L54,26 L84,51 L84,80 L24,80 Z"/>
-    <path android:fillColor="#D9859A" android:pathData="M17,53 L54,22 L91,53 L85,59 L54,34 L23,59 Z"/>
-    <path android:fillColor="#F8B5B7" android:pathData="M42,80 L42,58 Q54,46 66,58 L66,80 Z"/>
-    <path android:fillColor="#FFF1BF" android:pathData="M31,51 A8,8 0,1 1,47 51 A8,8 0,1 1,31 51"/>
-    <path android:fillColor="#FFE9AC" android:pathData="M61,51 A8,8 0,1 1,77 51 A8,8 0,1 1,61 51"/>
-    <path android:fillColor="#513B41" android:pathData="M35,51 A1.2,1.2 0,1 0,38 51 A1.2,1.2 0,1 0,35 51 M42,51 A1.2,1.2 0,1 0,45 51 A1.2,1.2 0,1 0,42 51 M65,51 A1.2,1.2 0,1 0,68 51 A1.2,1.2 0,1 0,65 51 M71,51 A1.2,1.2 0,1 0,74 51 A1.2,1.2 0,1 0,71 51"/>
-    <path android:fillColor="#FFFFFF" android:pathData="M48,19 C48,15 54,14 54,19 C54,14 60,15 60,19 C60,23 54,27 54,27 C54,27 48,23 48,19 Z"/>
-    <path android:fillColor="#81BD92" android:pathData="M29,81 L80,81 L80,85 L29,85 Z"/>
+    <!-- 찌 몸통 아래(흰색) -->
+    <path android:fillColor="#F2FBFC"
+        android:pathData="M54,30 C66,30 72,42 72,52 C72,62 64,70 54,70 C44,70 36,62 36,52 C36,42 42,30 54,30 Z"/>
+    <!-- 찌 몸통 위(주황) -->
+    <path android:fillColor="#FF7A4F"
+        android:pathData="M54,30 C66,30 72,42 72,50 L36,50 C36,42 42,30 54,30 Z"/>
+    <!-- 찌톱 -->
+    <path android:fillColor="#FF7A4F" android:pathData="M52.5,18 L55.5,18 L55.5,31 L52.5,31 Z"/>
+    <!-- 원줄 -->
+    <path android:strokeColor="#5FC6C9" android:strokeWidth="1.2" android:pathData="M54,70 L54,84"/>
+    <!-- 파도 -->
+    <path android:fillColor="#0E7C8C"
+        android:pathData="M18,64 C26,58 34,58 42,64 C50,70 58,70 66,64 C74,58 82,58 90,64 L90,92 L18,92 Z"/>
+    <path android:fillColor="#5FC6C9" android:fillAlpha="0.55"
+        android:pathData="M18,70 C26,65 34,65 42,70 C50,75 58,75 66,70 C74,65 82,65 90,70 L90,74 C82,69 74,69 66,74 C58,79 50,79 42,74 C34,69 26,69 18,74 Z"/>
 </vector>
