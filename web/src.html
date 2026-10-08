@@ -271,7 +271,8 @@ const strengthOf=(ts,rf)=>Math.max(0,Math.sin(Math.PI*ts.progress))*(0.4+0.6*rf)
 // ───────── 포인트 고정 성격 ─────────
 const PROFILE={};
 function profile(p){
-  if(PROFILE[p.id])return PROFILE[p.id];
+  const key=p.id+(p.spotKey||"");
+  if(PROFILE[key])return PROFILE[key];
   const dy=(p.lat-C_LAT)*111320, dx=(p.lng-C_LNG)*111320*Math.cos(C_LAT*Math.PI/180);
   const b=((Math.atan2(dx,dy)*180/Math.PI)+360)%360;
   const suit=F=>{
@@ -285,7 +286,7 @@ function profile(p){
   const sec=x=>x>=110&&x<=250?1:x>250&&x<=300?.75:x>=60&&x<110?.7:.35;
   const fl=suit(FLOOD), eb=suit(EBB), ex=Math.max(sec(b)*.6+sec(p.facingDeg)*.4,.3);
   const type=fl-eb>=.35?"들물 포인트":eb-fl>=.35?"날물 포인트":fl>.3&&eb>.3?"양물 포인트":"물돌이 포인트";
-  return PROFILE[p.id]={flood:fl,ebb:eb,exposure:ex,bearing:b,type,suitAt:suit,
+  return PROFILE[key]={flood:fl,ebb:eb,exposure:ex,bearing:b,type,suitAt:suit,
     exposureText:ex>=.9?"그대로 받음 (먼바다 쪽)":ex>=.65?"절반쯤 받음 (비스듬한 자리)":"약함 (섬·방파제가 막아줌)"};
 }
 // 입질 지점: 기본 공략 지점(바라보는 방향 × 거리)에서 그 시간 흐름을 따라 밑밥·채비가 흘러가 모이는 곳
@@ -394,7 +395,25 @@ function dayReason(sp,cond,h){
 
 // ───────── 시간별 점수 ─────────
 const toScore=sum=>Math.max(1,Math.min(99,Math.round(100/(1+Math.exp(-(sum-44)/13)))));
+// 물때별 자리 이동: 포인트에 altSpots(들물/날물 때 옮겨 설 자리)가 있으면 그 시간 물때에 맞는 자리도 계산해 더 나은 쪽을 쓴다
+const spotPoint=(p,s)=>({...p,lat:s.lat,lng:s.lng,facingDeg:s.facingDeg,terrain:s.terrain??p.terrain,targetDistance:s.targetDistance??p.targetDistance,
+  target:s.target??p.target,depthMin:s.depthMin??p.depthMin,depthMax:s.depthMax??p.depthMax,depth:s.depth??p.depth,spotKey:"@"+s.tide,spotLabel:s.label,altSpots:null});
 function scoreHour(p,sp,cond,h){
+  const base=scoreHourAt(p,sp,cond,h);
+  if(!p.altSpots||!p.altSpots.length)return base;
+  const ts=tideState(kstMs(cond.date,h,30),cond.tides);
+  if(!ts||ts.nearSlack)return base;
+  let best=base;
+  for(const s of p.altSpots){
+    if((s.tide==="flood")!==ts.incoming)continue;
+    const v=scoreHourAt(spotPoint(p,s),sp,cond,h);
+    v.reasons.unshift([`${ts.incoming?"들물":"날물"} – ${s.label}(으)로 옮겨 서기`,0]);
+    v.spot=spotPoint(p,s);
+    if(v.score>best.score)best=v;
+  }
+  return best;
+}
+function scoreHourAt(p,sp,cond,h){
   const S=SPECIES[sp], prof=profile(p), R=[]; let danger=null;
   const w=cond.weather[h]||cond.weather.def;
   const wind=w.wind, wdir=w.dir, sea=w.wave, t=cond.temp;
@@ -687,14 +706,16 @@ function renderMap(results){
   const [ux,uy]=project(...SHAPE.buoy);
   const sel=results.find(r=>r.p.id===state.sel);
   let aim="";
-  if(sel){const p=sel.p,[x,y]=project(p.lat,p.lng),hs=sel.hours.find(x=>x.h===state.selHour)||sel.hours.filter(x=>x.h<RANK_END).reduce((a,b)=>b.score>a.score?b:a),b=hs.bite||{dist:p.targetDistance,shift:0};
+  let selSpot=null;
+  if(sel){const hs=sel.hours.find(x=>x.h===state.selHour)||sel.hours.filter(x=>x.h<RANK_END).reduce((a,b)=>b.score>a.score?b:a),p=hs.spot||sel.p,[x,y]=project(p.lat,p.lng),b=hs.bite||{dist:p.targetDistance,shift:0};
+    selSpot=hs.spot;
     const a=p.facingDeg*Math.PI/180,L=b.dist*2.2,tx=x+L*Math.sin(a),ty=y-L*Math.cos(a);
     const sa=(b.shiftDeg??0)*Math.PI/180,S=b.shift*2.2,bx=tx+S*Math.sin(sa),by=ty-S*Math.cos(sa);
     aim=`<line x1="${x}" y1="${y}" x2="${tx}" y2="${ty}" stroke="var(--fg)" stroke-width="2" stroke-dasharray="4 3"/>`+
       (b.shift?`<line x1="${tx}" y1="${ty}" x2="${bx}" y2="${by}" stroke="var(--tide)" stroke-width="2.5" marker-end="url(#arr)"/>`:"")+
       `<circle cx="${bx}" cy="${by}" r="7" fill="none" stroke="var(--coral)" stroke-width="2.5"/>`}
   const pins=[...results].sort((a,b)=>(a.p.id===state.sel)-(b.p.id===state.sel)).map(r=>{
-    const [x,y]=project(r.p.lat,r.p.lng), s=r.p.id===state.sel, rad=s?14:10.5;
+    const s=r.p.id===state.sel, pp=s&&selSpot?selSpot:r.p, [x,y]=project(pp.lat,pp.lng), rad=s?14:10.5;
     const lab=r.p.name.replace("두도 ","").replace("번","").replace("직벽","벽");
     return `<g class="pin" data-id="${r.p.id}" tabindex="0" role="button" aria-label="${r.p.name} ${r.day}점" style="cursor:pointer">
       <circle cx="${x}" cy="${y}" r="${rad}" fill="${scoreColor(r.day)}" stroke="#fff" stroke-width="${s?2.5:1.5}"/>
@@ -734,12 +755,14 @@ function renderDetail(results){
       <span class="pill">성격 <b>${prof.type}</b></span>
       <span class="pill">들물 적합 <b>${r0(prof.flood*100)}</b> · 날물 적합 <b>${r0(prof.ebb*100)}</b></span>
       <span class="pill">너울 영향 <b>${prof.exposureText}</b></span>
-      <span class="pill">입질 지점(${String(hs.h).padStart(2,"0")}시) <b>${biteText(r.p,hs.bite||bitePoint(r.p,null,0))}</b></span>
+      ${hs.spot?`<span class="pill">${String(hs.h).padStart(2,"0")}시 자리 <b>${hs.spot.spotLabel}</b></span>`:""}
+      ${(r.p.altSpots||[]).map(s=>`<span class="pill">${s.tide==="flood"?"들물":"날물"} 때 <b>${s.label}</b>도 가능</span>`).join("")}
+      <span class="pill">입질 지점(${String(hs.h).padStart(2,"0")}시) <b>${biteText(hs.spot||r.p,hs.bite||bitePoint(r.p,null,0))}</b></span>
       <span class="pill">수심 <b>${r.p.depth}</b></span><span class="pill">지형 <b>${r.p.terrain}</b></span>
     </div>
     <div class="hourscroll"><div class="hours" role="group" aria-label="시간별 확률">${r.hours.map(x=>`<button class="hcol${x.h>=RANK_END?" after":""}" type="button" data-h="${x.h}" aria-pressed="${x.h===hs.h}">
       <div class="h">${String(x.h).padStart(2,"0")}시</div><div class="tank"><i style="height:${x.score}%;background:${x.danger?"var(--warn)":scoreColor(x.score)}"></i></div>
-      <div class="s">${x.score}</div><div class="ph">${x.phase}</div></button>`).join("")}</div></div>
+      <div class="s">${x.score}</div><div class="ph">${x.spot?"↪"+x.spot.spotLabel:x.phase}</div></button>`).join("")}</div></div>
     <div class="sum">점선 칸(13시 이후)은 참고용이고 순위에는 들어가지 않아요.</div>
     <h2 style="margin-top:16px">${String(hs.h).padStart(2,"0")}~${String(hs.h+1).padStart(2,"0")}시 ${hs.score}점 근거</h2>
     ${hs.danger?`<div class="danger">⚠ ${hs.danger}</div>`:""}
