@@ -189,7 +189,17 @@ object ScoreEngine {
         val f = c.tideRangeFactor
         if (s == Species.CHAMDOM && f > 0.75) r += Reason("사리 – 참돔은 센 물때 선호", 3)
         val ml = c.tideRangeCm?.let { "${c.mulName}(실제 조차 ${it}cm)" } ?: c.mulName
-        r += when {
+        if (s == Species.GAMSEONG) {
+            // 은파 밴드 조황 57일 역검증: 조차가 큰 날·오전에 만조가 드는 날 조황이 좋았음 (0.19.0)
+            r += when {
+                f < 0.2 -> Reason("$ml – 조류 거의 없음, 감성돔 조황 약한 물때", -12)
+                f < 0.35 -> Reason("$ml – 물이 약함", -5)
+                f < 0.6 -> Reason("$ml – 적당한 조류", 5)
+                else -> Reason("$ml – 센 물때, 감성돔 조황 좋은 경향 (밴드 조황 검증)", 9)
+            }
+            val am = c.tides.any { e -> e.isHigh && !e.time.isBefore(c.date.atTime(6, 30)) && !e.time.isAfter(c.date.atTime(11, 30)) }
+            if (am) r += Reason("오전에 만조 – 만조 앞뒤로 감성돔 입질 (밴드 조황 검증)", 6)
+        } else r += when {
             f < 0.2 -> Reason("$ml – 조류 거의 없음", -6)
             f in 0.35..0.8 -> Reason("$ml – 적당한 조류", 5)
             f > 0.9 -> Reason("$ml – 사리, 조류 강함", if (p.depthMax >= 10) 1 else -3)
