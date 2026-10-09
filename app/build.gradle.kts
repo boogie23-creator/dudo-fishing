@@ -12,8 +12,8 @@ android {
         applicationId = "com.dudo.fishing"
         minSdk = 26
         targetSdk = 34
-        versionCode = 28
-        versionName = "0.18.8"
+        versionCode = 29
+        versionName = "0.18.9"
 
         // 기상청 API 키: GitHub Secret(KMA_API_KEY) → 환경변수로 들어오거나,
         // 내 PC에서는 local.properties / gradle.properties 의 KMA_API_KEY 값을 쓴다. 코드에는 키를 적지 않는다.
