@@ -105,12 +105,12 @@ object ScoreEngine {
         val wind = hw.map { it.windSpeed }.average().takeIf { !it.isNaN() } ?: 0.0
         val windDir = hw.firstOrNull()?.windDir ?: 0
         val seaWave = hw.mapNotNull { it.wave }.maxOrNull()
-        var wave = PointModel.effectiveWave(prof, p, seaWave, wind, windDir)
-        // 실제 너울이 오는 방향: 정면이면 더 크게, 등지면 작게
+        // 실제 너울이 오는 방향이 있으면 그것만 쓰고(정면 ×1.2, 등짐 ×0.7), 없을 때만 바람 방향으로 추정 – 웹과 같은 규칙
         val swellDir = c.waveDir[slot.startHour]
         val swellAngle = swellDir?.let { Factors.angleDiff(it, p.facingDeg) }
-        if (wave != null && swellAngle != null)
-            wave = ((wave * if (swellAngle <= 70) 1.2 else if (swellAngle >= 110) 0.7 else 1.0) * 10).toInt() / 10.0
+        val wave = if (seaWave != null && swellAngle != null)
+            ((seaWave * (0.35 + 0.65 * prof.exposure) * if (swellAngle <= 70) 1.2 else if (swellAngle >= 110) 0.7 else 1.0) * 10).toInt() / 10.0
+        else PointModel.effectiveWave(prof, p, seaWave, wind, windDir)
         val rainy = hw.any { it.precipType != 0 }
         var danger: String? = null
         val t = c.waterTemp

@@ -96,7 +96,7 @@ object PointModel {
     fun effectiveWave(prof: PointProfile, p: FishingPoint, wave: Double?, wind: Double, windDir: Int): Double? {
         if (wave == null) return null
         var w = wave * (0.35 + 0.65 * prof.exposure)
-        if (wind >= 4) w *= if (Factors.angleDiff(windDir, p.facingDeg) <= 70) 1.15 else 0.85
+        if (wind >= 4) w *= if (Factors.angleDiff(windDir, p.facingDeg) <= 60) 1.15 else 0.85
         return (w * 10).toInt() / 10.0
     }
 
