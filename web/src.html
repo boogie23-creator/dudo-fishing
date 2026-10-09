@@ -284,7 +284,10 @@ function profile(p){
     return Math.max(-1,Math.min(1,v));
   };
   const sec=x=>x>=110&&x<=250?1:x>250&&x<=300?.75:x>=60&&x<110?.7:.35;
-  const fl=suit(FLOOD), eb=suit(EBB), ex=Math.max(sec(b)*.6+sec(p.facingDeg)*.4,.3);
+  let fl=suit(FLOOD), eb=suit(EBB);
+  // 현지 경험으로 정한 물때 성격(tideType)이 있으면 계산보다 우선
+  if(p.tideType==="ebb"){eb=Math.max(eb,fl,.85);fl=Math.min(fl,.3)} else if(p.tideType==="flood"){fl=Math.max(fl,eb,.85);eb=Math.min(eb,.3)}
+  const ex=Math.max(sec(b)*.6+sec(p.facingDeg)*.4,.3);
   const type=fl-eb>=.35?"들물 포인트":eb-fl>=.35?"날물 포인트":fl>.3&&eb>.3?"양물 포인트":"물돌이 포인트";
   return PROFILE[key]={flood:fl,ebb:eb,exposure:ex,bearing:b,type,suitAt:suit,
     exposureText:ex>=.9?"그대로 받음 (먼바다 쪽)":ex>=.65?"절반쯤 받음 (비스듬한 자리)":"약함 (섬·방파제가 막아줌)"};
@@ -454,12 +457,13 @@ function scoreHourAt(p,sp,cond,h){
       R.push(sp==="감성돔"?[`${which} 물돌이 – 대물 입질 시간 (밴드 조황)`,9]:sp==="벵에돔"?[`${which} 정조 – 벵에는 조류가 있어야`,-4]:sp==="참돔"?[`${which} 정조 – 참돔은 조류가 멈추면 입질 끊김`,-4]:[`${which} 물돌이`,2]);
     }else{
       const cur=cond.cur?.[h];
-      const suit=cur?prof.suitAt(cur.d):(ts.incoming?prof.flood:prof.ebb);
+      let suit=cur?prof.suitAt(cur.d):(ts.incoming?prof.flood:prof.ebb);
+      if(p.tideType){const good=(p.tideType==="flood")===ts.incoming; suit=good?Math.max(suit,.85):Math.min(suit,.3);}
       const power=cur?Math.max(.3,Math.min(1,cur.v/cond.flow.vRef)):Math.max(.3,Math.min(1,st/.5));
       if(cur)phase+=` · ${compass(cur.d)}류 ${(cur.v/1.852).toFixed(1)}kn`;
       bite=bitePoint(p,cur?cur.d:(ts.incoming?FLOOD:EBB),cur?Math.min(1,cur.v/cond.flow.vRef):Math.min(1,st/.6));
       const how=suit>=.9?"조류가 공략 지점으로 뻗어 나감":suit>=.75?"섬 하류 쪽 조경지대":suit>=.5?"갯바위 따라 흐름":suit>0?"홈통 안으로 도는 물":"갯바위로 받혀 채비가 밀려옴";
-      R.push([`${phase} – ${how} (${prof.type})`,r0(suit*14*power)]);
+      R.push([`${phase} – ${how} (${prof.type}${p.tideType?" · 현지 경험":""})`,r0(suit*14*power)]);
       if(sp==="감성돔"&&ts.incoming&&ts.progress>=.4)R.push(["중들물~끝들물",5]);
       if(sp==="벵에돔"&&ts.progress>=.25&&ts.progress<=.75)R.push(["조류 활발한 중간 물때",4]);
       if(sp==="참돔"&&st>.55&&suit>=.75)R.push(["센 본류가 앞으로 뻗음 – 참돔 회유",5]);
