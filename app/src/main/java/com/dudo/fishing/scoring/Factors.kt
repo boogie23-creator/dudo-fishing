@@ -19,7 +19,17 @@ import kotlin.math.sin
 data class ScoreContext(
     val history: List<CatchRecord> = emptyList(),
     val pointsById: Map<String, FishingPoint> = emptyMap(),
+    val bandDays: BandDays? = null,
 )
+
+/**
+ * 밴드 선장 조황 사진 수(마릿수 대용) 일별 요약 – assets/band_days.json.
+ * days 원소 = [yyyymmdd, 바람 m/s×10, 풍향 10°단위, 파고 m×10(없으면 -1), y×100] (y = ln((사진+1)/(같은 달 평균+1)))
+ */
+class BandDays(val center: Double, val k: Double, val days: List<IntArray>) {
+    /** 각 날짜의 연중 일수 (계절 유사도용) */
+    val doy: IntArray = IntArray(days.size) { i -> val d = days[i][0]; java.time.LocalDate.of(d / 10000, d / 100 % 100, d % 100).dayOfYear }
+}
 
 /** 특정 시각의 물 흐름 상태 */
 data class TideState(
@@ -33,6 +43,47 @@ data class TideState(
 }
 
 object Factors {
+    @Volatile private var bandCache: Pair<String, Reason?>? = null
+
+    /**
+     * 오늘과 계절·바람·파도가 비슷했던 날들의 밴드 조황(사진 수, 같은 달 평균 대비)으로 감성돔 확률 가감.
+     * 2020~2026 밴드 1,747일 역검증: 바람+파도 유사도가 가장 잘 맞음(순위상관 0.28), 물때 유사도는 효과 없어 제외.
+     */
+    fun bandAnalog(c: DayConditions, ctx: ScoreContext): Reason? {
+        val bd = ctx.bandDays ?: return null
+        val hw = c.weather.filter { it.time.toLocalDate() == c.date && it.time.hour in 5..12 }
+        if (hw.isEmpty()) return null
+        val key = "${c.date}:${hw.sumOf { it.windSpeed }}:${hw.sumOf { it.wave ?: 0.0 }}"
+        bandCache?.let { (k, v) -> if (k == key) return v }
+        val w = hw.map { it.windSpeed }.average()
+        val ux = hw.sumOf { it.windSpeed * sin(Math.toRadians(it.windDir.toDouble())) }
+        val uy = hw.sumOf { it.windSpeed * kotlin.math.cos(Math.toRadians(it.windDir.toDouble())) }
+        val dir = (Math.toDegrees(kotlin.math.atan2(ux, uy)) + 360) % 360
+        val waves = hw.mapNotNull { it.wave }
+        val wave = if (waves.isEmpty()) null else waves.average()
+        val doy = c.date.dayOfYear
+        var num = 0.0; var den = 0.0
+        for (i in bd.days.indices) {
+            val r = bd.days[i]
+            var dd = abs(doy - bd.doy[i]); dd = minOf(dd, 365 - dd)
+            var s = kotlin.math.exp(-(dd / 30.0).let { it * it }) * kotlin.math.exp(-((r[1] / 10.0 - w) / 2.0).let { it * it })
+            if (w > 2.5 && r[1] > 25) {
+                var a = abs(dir - r[2] * 10.0) % 360; a = minOf(a, 360 - a)
+                s *= 0.4 + 0.6 * (1 + kotlin.math.cos(Math.toRadians(a))) / 2
+            }
+            if (wave != null && r[3] >= 0) s *= kotlin.math.exp(-((r[3] / 10.0 - wave) / 0.4).let { it * it })
+            if (s < 1e-4) continue
+            num += s * r[4] / 100.0; den += s
+        }
+        val out = if (den < 2) null else {
+            val p = num / den - bd.center
+            val pts = (p * bd.k).roundToInt().coerceIn(-8, 5)
+            Reason("바람·파도 비슷한 날 밴드 조황 (평소의 ${(kotlin.math.exp(p) * 100).roundToInt()}%, ${den.roundToInt()}일 기준)", pts)
+        }
+        bandCache = key to out
+        return out
+    }
+
     private val ZONE = ZoneId.of("Asia/Seoul")
 
     /**

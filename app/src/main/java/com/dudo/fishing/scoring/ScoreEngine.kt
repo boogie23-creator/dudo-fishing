@@ -294,6 +294,7 @@ object ScoreEngine {
         // ── 과거 조과 ─────────────────────────
         r += Factors.historyReasons(p, s, c, slot, wind, windDir, seaWave, ctx)
         r += Factors.dayReasons(s, c, slot, wind, windDir, seaWave, ctx)
+        if (s == Species.GAMSEONG) Factors.bandAnalog(c, ctx)?.let { r += it }
 
         var score = toScore(r.sumOf { it.delta })
         if (danger != null) score = score.coerceAtMost(15)
