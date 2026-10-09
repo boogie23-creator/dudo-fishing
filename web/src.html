@@ -28,8 +28,8 @@ header.top::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height
 .toprow{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end;justify-content:space-between}
 h1{font-family:var(--f-display);font-weight:400;font-size:clamp(28px,5vw,40px);letter-spacing:.5px;margin:0;line-height:1.05;text-wrap:balance}
 .sub{color:var(--shallow);font-size:13px;margin-top:4px}
-.seg{display:flex;background:rgba(255,255,255,.1);border-radius:999px;padding:4px;gap:2px}
-.seg button{border:0;background:transparent;color:var(--foam);font:700 14px var(--f-body);padding:8px 16px;border-radius:999px;cursor:pointer}
+.seg{display:flex;background:rgba(255,255,255,.1);border-radius:999px;padding:4px;gap:2px;overflow-x:auto;max-width:100%;scrollbar-width:none}.seg::-webkit-scrollbar{display:none}
+.seg button{border:0;background:transparent;color:var(--foam);font:700 14px var(--f-body);padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;flex:none}.seg button.far{opacity:.75}
 .seg button[aria-pressed="true"]{background:var(--foam);color:var(--abyss)}
 .seg button:focus-visible,.btn:focus-visible,.prow:focus-visible{outline:2px solid var(--coral);outline-offset:2px}
 .cond{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:18px}
@@ -109,11 +109,7 @@ h1{font-family:var(--f-display);font-weight:400;font-size:clamp(28px,5vw,40px);l
         <h1>두도 포인트</h1>
         <div class="sub">부산 송도 두도 갯바위 찌낚시 · 05~13시 평균 확률 순위</div>
       </div>
-      <div class="seg" role="group" aria-label="날짜">
-        <button type="button" data-day="0" aria-pressed="true">오늘</button>
-        <button type="button" data-day="1" aria-pressed="false">내일</button>
-        <button type="button" data-day="2" aria-pressed="false">모레</button>
-      </div>
+      <div class="seg" role="group" aria-label="날짜" id="days"></div>
     </div>
     <div class="cond" id="cond"></div>
     <div class="tidebar">
@@ -579,8 +575,8 @@ async function fetchJson(url){
 async function loadLive(){
   const tz="&timezone=Asia%2FSeoul";
   const [wx,mar]=await Promise.all([
-    fetchJson(`https://api.open-meteo.com/v1/forecast?latitude=${C_LAT}&longitude=${C_LNG}&hourly=wind_speed_10m,wind_direction_10m,precipitation_probability,precipitation,pressure_msl&wind_speed_unit=ms&past_days=3&forecast_days=4${tz}`),
-    fetchJson(`https://marine-api.open-meteo.com/v1/marine?latitude=35.035&longitude=129.03&hourly=wave_height,wave_direction,swell_wave_height,swell_wave_direction,sea_surface_temperature,sea_level_height_msl,ocean_current_velocity,ocean_current_direction&cell_selection=sea&past_days=3&forecast_days=4${tz}`)
+    fetchJson(`https://api.open-meteo.com/v1/forecast?latitude=${C_LAT}&longitude=${C_LNG}&hourly=wind_speed_10m,wind_direction_10m,precipitation_probability,precipitation,pressure_msl&wind_speed_unit=ms&past_days=3&forecast_days=8${tz}`),
+    fetchJson(`https://marine-api.open-meteo.com/v1/marine?latitude=35.035&longitude=129.03&hourly=wave_height,wave_direction,swell_wave_height,swell_wave_direction,sea_surface_temperature,sea_level_height_msl,ocean_current_velocity,ocean_current_direction&cell_selection=sea&past_days=3&forecast_days=8${tz}`)
   ]);
   const tms=s=>{const [d,t]=s.split("T");return kstMs(d,+t.slice(0,2),+t.slice(3,5))};
   LIVE.weather={};
@@ -684,6 +680,7 @@ function renderHeader(cond){
   const day=cond.tides.filter(e=>dateStr(e.t)===cond.date);
   const w12=cond.weather[12]||cond.weather.def;
   const stats=[
+    ...(state.day>=3?[["예보 신뢰","낮음","4일째부터는 바람·파도 예보가 자주 바뀜 – 물때는 정확"]]:[]),
     ["물때",`${cond.mul}`,`음력 ${lunarDay(cond.date)}일`],
     ...(cond.flow?[["조류 방향",`들 ${compass(cond.flow.flood)} · 날 ${compass(cond.flow.ebb)}`,cond.flow.fromForecast?`조석 성분 · 해류가 ${compass(cond.flow.resid.d)}쪽 ${(cond.flow.resid.v/1.852).toFixed(1)}kn 더해짐`:"기본값 (감천항 실측)"]]:[]),
     ...(cond.rangeCm!=null?[["조차 (05~13시)",`${cond.rangeCm}cm`,`조류 세기 ${Math.round(cond.rf*100)}% · 물때 계산 ${Math.round(cond.rfAstro*100)}%`]]:[]),
@@ -822,6 +819,10 @@ function syncManual(){
 [["inWind","wind"],["inDir","dir"],["inWave","wave"],["inTemp","temp"]].forEach(([id,k])=>{
   $(id).addEventListener("input",e=>{state.manual[k]=+e.target.value;try{localStorage.setItem("dudo-manual",JSON.stringify(state.manual))}catch(_){}syncManual();render()});
 });
+// 날짜 버튼: 오늘~6일 뒤 (7일). 4일째부터는 바람·파도 예보가 자주 바뀌어 신뢰 낮음
+const DAYS_AHEAD=7;
+$("days").innerHTML=Array.from({length:DAYS_AHEAD},(_,i)=>{const ds=addDays(today,i),[y,m,d]=ds.split("-").map(Number),wd="일월화수목금토"[new Date(Date.UTC(y,m-1,d)).getUTCDay()];
+  return `<button type="button" data-day="${i}" aria-pressed="${i===0}"${i>=3?' class="far" title="4일째부터는 예보 신뢰 낮음"':""}>${["오늘","내일","모레"][i]||`${m}/${d}(${wd})`}</button>`}).join("");
 document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{state.day=+b.dataset.day;document.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed",x===b));render()});
 
 function render(){
