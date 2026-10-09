@@ -204,7 +204,7 @@ fun FishImg(label: String, height: Dp, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun Photo(res: Int, modifier: Modifier, desc: String? = null) {
+internal fun Photo(res: Int, modifier: Modifier, desc: String? = null) {
     Image(painterResource(res), desc, modifier, contentScale = ContentScale.Crop)
 }
 

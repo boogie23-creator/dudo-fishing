@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -77,6 +78,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dudo.fishing.R
 import com.dudo.fishing.data.CatchRecord
 import com.dudo.fishing.data.DayConditions
 import com.dudo.fishing.data.Settings
@@ -98,9 +100,180 @@ private fun nowSeoul() = LocalDateTime.now(ZoneId.of("Asia/Seoul"))
 
 // ───────────────────────── 홈 ─────────────────────────
 
+@Composable
+fun HomeScreen(vm: MainViewModel, onOpen: (String) -> Unit, onSettings: () -> Unit) {
+    val st by vm.state.collectAsState()
+    var mapMode by remember { mutableStateOf(false) }
+    var showNotices by remember { mutableStateOf(false) }
+
+    Scaffold(containerColor = Night) { pad ->
+        LazyColumn(
+            Modifier.fillMaxSize().background(Night).padding(bottom = pad.calculateBottomPadding()),
+            contentPadding = PaddingValues(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            item { HomeHeader(st.conditions, st.dayOffset, vm::setDay, vm::refresh, onSettings) }
+
+            item {
+                Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("대상어", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.width(10.dp))
+                    Row(Modifier.weight(1f).horizontalScrollSafe(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        FishChip("최적", st.species == null) { vm.setSpecies(null) }
+                        Species.entries.forEach { s -> FishChip(s.label, st.species == s, s.label) { vm.setSpecies(s) } }
+                    }
+                }
+            }
+
+            if (st.loading) item {
+                Box(Modifier.fillMaxWidth().padding(40.dp), Alignment.Center) { CircularProgressIndicator(color = Aqua) }
+            }
+            st.error?.let { e -> item { Text("오류: $e", color = Bad, modifier = Modifier.padding(horizontal = 16.dp)) } }
+
+            val c = st.conditions
+            if (c != null && !st.loading) {
+                item {
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text("추천 포인트", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                        FishChip("목록", !mapMode) { mapMode = false }
+                        Spacer(Modifier.width(6.dp))
+                        FishChip("지도", mapMode) { mapMode = true }
+                    }
+                }
+                if (mapMode) {
+                    item {
+                        Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(440.dp), shape = RoundedCornerShape(20.dp)) {
+                            PointsMap(
+                                pins = st.results.map { MapPin(it.point, it.dayScore) },
+                                selectedId = null, zoom = 17.2,
+                                modifier = Modifier.fillMaxSize(),
+                                onPinClick = onOpen,
+                            )
+                        }
+                        Text("숫자는 포인트 번호, 색은 점수 (파랑 강력추천 · 초록 좋음 · 노랑 보통 · 주황 낮음 · 빨강 비추천)",
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp))
+                    }
+                } else {
+                    itemsIndexed(st.results, key = { _, r -> r.point.id }) { i, r ->
+                        if (i == 0) TopPickCard(r) { onOpen(r.point.id) } else PointRow(i + 1, r) { onOpen(r.point.id) }
+                    }
+                }
+
+                // 윈디 바람·파도 흐름 (보기 전용)
+                item { WindyCard(lat = 35.0488, lng = 129.0150, modifier = Modifier.padding(horizontal = 16.dp)) }
+
+                if (c.messages.isNotEmpty()) item {
+                    Column(Modifier.padding(horizontal = 16.dp)) {
+                        Row(Modifier.clickable { showNotices = !showNotices }.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text("데이터 연결 상태 (${c.messages.size})", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Icon(if (showNotices) Icons.Default.ExpandLess else Icons.Default.ExpandMore, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+                        }
+                        if (showNotices) c.messages.forEach { Notice(it) }
+                    }
+                }
+                item {
+                    val (pt, day, mine) = vm.dataSummary()
+                    val ctx = androidx.compose.ui.platform.LocalContext.current
+                    Card(
+                        Modifier.fillMaxWidth().padding(horizontal = 16.dp).border(1.dp, Line, RoundedCornerShape(18.dp)), shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(containerColor = Panel)
+                    ) {
+                        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("조과 데이터", style = MaterialTheme.typography.titleMedium)
+                            Text("포인트 기록 ${pt}건 · 두도 전체 조황 ${day}일 · 내 기록 ${mine}건", fontWeight = FontWeight.Bold)
+                            Text("포인트 기록만 포인트 순위를 바꾸고, 두도 전체 조황은 모든 포인트에 똑같이 적용돼요. 낚시 후 포인트 화면에서 조과를 남길수록 정확해져요.",
+                                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            if (mine > 0) Text("내 기록 보내기", color = Aqua, fontWeight = FontWeight.Bold,
+                                modifier = Modifier.clickable { vm.shareMyRecords(ctx) }.padding(top = 4.dp))
+                            val movedN = vm.movedPointCount()
+                            if (movedN > 0) Text("내가 고친 포인트 위치 보내기 (${movedN}곳)", color = Tide, fontWeight = FontWeight.Bold,
+                                modifier = Modifier.clickable { vm.sharePointLocations(ctx) }.padding(top = 4.dp))
+                        }
+                    }
+                }
+                item {
+                    Text(
+                        "※ 점수는 공공 데이터·조행기·밴드 조황으로 계산한 참고값입니다. 갯바위 출조 전 기상특보와 현장 상황을 꼭 확인하세요.",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
 /** 가로로 넘칠 때 스크롤되도록 */
 @Composable
 private fun Modifier.horizontalScrollSafe(): Modifier = this.then(Modifier.horizontalScroll(rememberScrollState()))
+
+@Composable
+private fun HomeHeader(c: DayConditions?, dayOffset: Int, onDay: (Int) -> Unit, onRefresh: () -> Unit, onSettings: () -> Unit) {
+    Box(Modifier.fillMaxWidth()) {
+        Photo(R.drawable.dudo_hero, Modifier.matchParentSize())
+        Box(Modifier.matchParentSize().background(Brush.verticalGradient(
+            0f to Night.copy(alpha = 0.55f), 0.45f to Night.copy(alpha = 0.55f), 0.8f to Night.copy(alpha = 0.85f), 1f to Night)))
+        Column(Modifier.statusBarsPadding().padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 22.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    BrandTitle(44.dp)
+                    Text("부산 송도 두도 · 갯바위 찌낚시", color = Foam.copy(alpha = 0.85f), fontSize = 13.sp)
+                }
+                IconButton(onClick = onRefresh) { Icon(Icons.Default.Refresh, "새로고침", tint = Foam) }
+                IconButton(onClick = onSettings) { Icon(Icons.Default.Settings, "설정", tint = Foam) }
+            }
+            Spacer(Modifier.height(14.dp))
+            // 날짜 선택
+            // 오늘~6일 뒤 (7일). 4일째부터는 Open-Meteo 예보 – 신뢰 낮음
+            val today = java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul"))
+            Row(
+                Modifier.padding(end = 12.dp).clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.10f))
+                    .horizontalScroll(androidx.compose.foundation.rememberScrollState()).padding(4.dp)
+            ) {
+                (0 until 7).forEach { i ->
+                    val sel = dayOffset == i
+                    val d = today.plusDays(i.toLong())
+                    val label = listOf("오늘", "내일", "모레").getOrNull(i)
+                        ?: "${d.monthValue}/${d.dayOfMonth}(${"월화수목금토일"[d.dayOfWeek.value - 1]})"
+                    Box(
+                        Modifier.clip(RoundedCornerShape(50))
+                            .background(if (sel) Color(0xFF9FF3F0) else Color.Transparent)
+                            .clickable { onDay(i) }.padding(vertical = 8.dp, horizontal = 14.dp),
+                        contentAlignment = Alignment.Center
+                    ) { Text(label, color = if (sel) Night else if (i >= 3) Foam.copy(alpha = 0.75f) else Foam, fontWeight = FontWeight.Bold, fontSize = 14.sp) }
+                }
+            }
+            if (dayOffset >= 3) Text("4일째부터는 바람·파도 예보가 자주 바뀌어 신뢰 낮음 (물때는 정확)", color = Shallow, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
+            if (c != null) {
+                Spacer(Modifier.height(14.dp))
+                Text(c.date.format(MD) + " · " + c.mulName + if (c.tideIsEstimated) " (추정)" else "", color = Foam, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Spacer(Modifier.height(10.dp))
+                val noon = c.weather.firstOrNull { it.time.toLocalDate() == c.date && it.time.hour == 12 } ?: c.weather.firstOrNull()
+                Row(Modifier.padding(end = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    GlassStat("수온", "%.1f°".format(c.waterTemp) + if (c.waterTempIsEstimated) "*" else "", Modifier.weight(1f)) {
+                        Icon(Icons.Default.Thermostat, null, tint = Shallow, modifier = Modifier.size(16.dp))
+                    }
+                    noon?.let { w ->
+                        GlassStat("바람(정오)", "%.1f".format(w.windSpeed) + "m/s", Modifier.weight(1.2f)) { WindArrow(w.windDir, Shallow) }
+                        GlassStat("파고", w.wave?.let { "%.1fm".format(it) } ?: "-", Modifier.weight(1f)) {
+                            Icon(Icons.Default.Waves, null, tint = Shallow, modifier = Modifier.size(16.dp))
+                        }
+                    }
+                }
+                Spacer(Modifier.height(14.dp))
+                TideChart(c.tides, c.date, nowSeoul(), Modifier.padding(end = 12.dp))
+                val dayTides = c.tides.filter { it.time.toLocalDate() == c.date }
+                Text(
+                    "만조 " + dayTides.filter { it.isHigh }.joinToString(" · ") { it.time.format(HM) } +
+                            "   간조 " + dayTides.filter { !it.isHigh }.joinToString(" · ") { it.time.format(HM) } +
+                            "   일출 ${c.sunrise.format(HM)} 일몰 ${c.sunset.format(HM)}",
+                    color = Foam.copy(alpha = 0.8f), fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp)
+                )
+            }
+        }
+    }
+}
 
 @Composable
 private fun SeaChip(label: String, selected: Boolean, icon: ImageVector? = null, onClick: () -> Unit) {
@@ -126,6 +299,77 @@ private fun Notice(text: String) {
     ) {
         Text("ⓘ ", color = Tide)
         Text(text, style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+/** 오늘의 1순위: 크게 강조 */
+@Composable
+private fun TopPickCard(r: PointResult, onClick: () -> Unit) {
+    val b = r.best
+    Card(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp).clickable(onClick = onClick),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+    ) {
+        Box(Modifier.border(1.5.dp, Aqua.copy(alpha = 0.7f), RoundedCornerShape(22.dp))) {
+          Row(Modifier.matchParentSize()) {
+              Spacer(Modifier.weight(0.4f))
+              Photo(R.drawable.dudo_school, Modifier.weight(0.6f).fillMaxHeight())
+          }
+          Box(Modifier.matchParentSize().background(Brush.horizontalGradient(0f to Color(0xFF0A2C44), 0.4f to Color(0xFF0A2C44).copy(alpha = 0.92f), 1f to Color(0xFF0A2C44).copy(alpha = 0.45f))))
+          Box(Modifier.padding(18.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("오늘의 1순위", color = Gold, fontWeight = FontWeight.ExtraBold, fontSize = 12.sp)
+                    Text(r.point.name, color = Foam, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
+                    Spacer(Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        FishImg(r.species.label, 14.dp)
+                        Text(" ${r.species.label} · 최고 %02d~%02d시 · ${r.profile.tideType}".format(r.bestWindow.first, r.bestWindow.second), color = Foam.copy(alpha = 0.9f), fontSize = 13.sp)
+                    }
+                    HourStrip(r, light = true)
+                    topReason(b)?.let { Text("👍 ${it.text}", color = Foam.copy(alpha = 0.85f), fontSize = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp)) }
+                    b.danger?.let { DangerLine(it, Coral) }
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(Modifier.clip(CircleShape).background(MaterialTheme.colorScheme.surface).padding(4.dp)) { ScoreGauge(r.dayScore, 70.dp, 7.dp, showLabel = true) }
+                    Text("05~13시 평균", color = Foam.copy(alpha = 0.8f), fontSize = 10.sp, modifier = Modifier.padding(top = 4.dp))
+                }
+            }
+          }
+        }
+    }
+}
+
+@Composable
+private fun PointRow(rank: Int, r: PointResult, onClick: () -> Unit) {
+    val b = r.best
+    Card(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp).border(1.dp, Line, RoundedCornerShape(18.dp)).clickable(onClick = onClick),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Panel)
+    ) {
+        Row(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("$rank", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold, modifier = Modifier.width(24.dp))
+            ScoreGauge(r.dayScore, 50.dp, 5.dp)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(r.point.name, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.width(6.dp))
+                    TerrainTag(r.point.terrain)
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    FishImg(r.species.label, 12.dp)
+                    Text(" ${r.species.label} · 최고 %02d~%02d시 · ${r.profile.tideType}".format(r.bestWindow.first, r.bestWindow.second),
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                HourStrip(r, light = false)
+                topReason(b)?.let { Text(it.text, style = MaterialTheme.typography.bodySmall, color = Good, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                b.danger?.let { DangerLine(it, Bad) }
+            }
+            WindArrow(b.windDir, MaterialTheme.colorScheme.onSurfaceVariant, 18.dp)
+        }
     }
 }
 
