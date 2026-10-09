@@ -21,7 +21,8 @@
       "coordVerified": true,
       "terrain": "곶부리",
       "targetDistance": 10,
-      "target": "방파제(테트라포드)와 섬이 만나는 모서리 앞. 방파제를 따라 흐르는 조류와 섬을 돌아 나오는 조류가 만나는 조경지대"
+      "target": "방파제(테트라포드)와 섬이 만나는 모서리 앞. 방파제를 따라 흐르는 조류와 섬을 돌아 나오는 조류가 만나는 조경지대",
+      "tideType": "ebb"
     },
     {
       "id": "dudo_1_5",
@@ -44,7 +45,8 @@
       "coordVerified": true,
       "terrain": "여밭",
       "targetDistance": 12,
-      "target": "방파제 안쪽 홈. 날물 때 방파제에 막힌 물이 돌아 나가는 와류 지대"
+      "target": "방파제 안쪽 홈. 날물 때 방파제에 막힌 물이 돌아 나가는 와류 지대",
+      "tideType": "ebb"
     },
     {
       "id": "dudo_2",
@@ -66,7 +68,8 @@
       "coordVerified": true,
       "terrain": "여밭",
       "targetDistance": 12,
-      "target": "전방 10~15m 여밭 끝자락(수심 3~6m). 들물에 감성돔이 여밭 위로 올라붙는 자리"
+      "target": "전방 10~15m 여밭 끝자락(수심 3~6m). 들물에 감성돔이 여밭 위로 올라붙는 자리",
+      "tideType": "ebb"
     },
     {
       "id": "dudo_2_5",
@@ -89,7 +92,8 @@
       "coordVerified": true,
       "terrain": "여밭",
       "targetDistance": 12,
-      "target": "전방 10~15m 수심 4~6m 여밭 – 조행기상 가을 감성돔 마릿수 자리. 여 사이 골창을 흘림"
+      "target": "전방 10~15m 수심 4~6m 여밭 – 조행기상 가을 감성돔 마릿수 자리. 여 사이 골창을 흘림",
+      "tideType": "ebb"
     },
     {
       "id": "dudo_3",
@@ -112,7 +116,8 @@
       "coordVerified": true,
       "terrain": "여밭",
       "targetDistance": 13,
-      "target": "전방 10~15m 여밭과 모래 경계(수심 4~8m). 경계선을 따라 채비가 지나가게"
+      "target": "전방 10~15m 여밭과 모래 경계(수심 4~8m). 경계선을 따라 채비가 지나가게",
+      "tideType": "ebb"
     },
     {
       "id": "dudo_4",
@@ -134,7 +139,8 @@
       "coordVerified": true,
       "terrain": "평면",
       "targetDistance": 10,
-      "target": "작은 돌출부 끝 – 발 앞 수중여 끝자락에서 조류가 꺾이는 지점"
+      "target": "작은 돌출부 끝 – 발 앞 수중여 끝자락에서 조류가 꺾이는 지점",
+      "tideType": "ebb"
     },
     {
       "id": "dudo_4_3",
@@ -157,7 +163,8 @@
       "coordVerified": true,
       "terrain": "곶부리",
       "targetDistance": 10,
-      "target": "4번과 4.5번 사이 서편 곶부리 끝 – 조류가 곶부리에서 꺾이며 생기는 조경지대(수심 5~8m)"
+      "target": "4번과 4.5번 사이 서편 곶부리 끝 – 조류가 곶부리에서 꺾이며 생기는 조경지대(수심 5~8m)",
+      "tideType": "ebb"
     },
     {
       "id": "dudo_4_5",
@@ -179,7 +186,8 @@
       "coordVerified": true,
       "terrain": "홈통",
       "targetDistance": 8,
-      "target": "서편 홈통 입구(수심 4.5~6m). 센 물때에 홈통 안으로 도는 반탄류"
+      "target": "서편 홈통 입구(수심 4.5~6m). 센 물때에 홈통 안으로 도는 반탄류",
+      "tideType": "ebb"
     },
     {
       "id": "dudo_5",
