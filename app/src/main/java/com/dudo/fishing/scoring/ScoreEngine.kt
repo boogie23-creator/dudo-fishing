@@ -147,7 +147,7 @@ object ScoreEngine {
 
         // ── 물때·조류 (이 시각) ────────────────
         val ts = Factors.tideState(at, c.tides)
-        val strength = ts?.let { Factors.currentStrength(it, c.tideRangeFactor) } ?: 0.3
+        val strength = ts?.let { Factors.currentStrength(it, c.hourRangeFactor[slot.startHour] ?: c.tideRangeFactor) } ?: 0.3
         val phaseText = ts?.text ?: "정보 없음"
         if (ts != null) {
             val nearTurn = ts.nearSlack
