@@ -344,12 +344,21 @@ function terrainFit(p,sp,t,m){
 const cyc=(a,b,n)=>{const d=Math.abs(a-b)%n;return Math.min(d,n-d)};
 const BYID=Object.fromEntries(POINTS.map(p=>[p.id,p]));
 const isPointRec=r=>r.pointId!=null||r.sideFacingDeg!=null;
+// 과거 기록의 그날 바람·파도: 밴드 일별 요약(BAND_DAYS, 2020~)에 있으면 사용 – 앱의 과거 날씨 유사도와 같은 규칙
+const BAND_BY_DATE={};BAND_DAYS.days.forEach(r=>BAND_BY_DATE[r[0]]=r);
 function similarity(rec,cond,h){
   const m=[1,.85,.6,.35][cyc(cond.mulIdx,rec._mul,15)]??0;
   const s=[1,.7,.3][cyc(cond.month,+rec.date.slice(5,7),12)]??0;
   if(!m||!s)return 0;
   const ov=Math.min(h+1,rec.endHour)-Math.max(h,rec.startHour);
-  return m*s*(ov>0?1:.5);
+  const parts=[ov>0?1:.5];
+  const b=BAND_BY_DATE[+rec.date.replace(/-/g,"")], w=cond.weather[h]||cond.weather.def;
+  if(b&&w){
+    const dw=Math.abs(b[1]/10-w.wind); let v=dw<=2?1:dw<=4?.6:.2;
+    if(w.wind>4&&ang(b[2]*10,w.dir)>90)v*=.7; parts.push(v);
+    if(b[3]>=0&&w.wave!=null){const d=Math.abs(b[3]/10-w.wave);parts.push(d<=.3?1:d<=.6?.6:.2)}
+  }
+  return m*s*parts.reduce((a,x)=>a+x,0)/parts.length;
 }
 function distM(a,b){return Math.hypot((a.lat-b.lat)*111320,(a.lng-b.lng)*111320*Math.cos(a.lat*Math.PI/180))}
 function pointWeight(p,r){
@@ -489,6 +498,8 @@ function scoreHourAt(p,sp,cond,h){
       if(st>.65&&p.terrain==="곶부리"&&suit<.85)R.push(["센 조류 – 곶부리 정면은 너무 빠름",-4]);
       if(st>.65&&p.terrain==="홈통")R.push(["센 조류 – 홈통 반탄류",4]);
       if(st<.3&&p.terrain==="곶부리")R.push(["약한 조류 – 물이 가는 곶부리 유리",4]);
+      // 현지 경험: 느린 물살에 잘 되는 자리 (1번·5번)
+      if(p.currentPref==="slow")R.push(st<.45?["느린 물살 – 이 자리가 잘 되는 물 (현지 경험)",6]:st>.7?["물살 빠름 – 이 자리는 느린 물이 좋음 (현지 경험)",-5]:["물살 보통 (이 자리는 느린 물 선호)",0]);
     }
   }
   const f=cond.rf, ml=cond.rangeCm!=null?`${cond.mul}(실제 조차 ${cond.rangeCm}cm)`:cond.mul;

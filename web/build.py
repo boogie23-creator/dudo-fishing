@@ -9,7 +9,7 @@ recs = json.load(open(os.path.join(root, 'app/src/main/assets/catches.json'), en
 kp = ['id','name','lat','lng','facingDeg','depthMin','depthMax','depth','terrain','species','target','targetDistance']
 kr = ['date','startHour','endHour','pointId','sideFacingDeg','catches','rating','source']
 data = ("const SHAPE=" + json.dumps(shape, ensure_ascii=False) + ";\n"
-        "const POINTS=" + json.dumps([{**{k: p[k] for k in kp}, **{k: p[k] for k in ('localBias','localNote','altSpots','tideType') if k in p}} for p in pts], ensure_ascii=False) + ";\n"
+        "const POINTS=" + json.dumps([{**{k: p[k] for k in kp}, **{k: p[k] for k in ('localBias','localNote','altSpots','tideType','currentPref') if k in p}} for p in pts], ensure_ascii=False) + ";\n"
         "const RECORDS=" + json.dumps([{k: r[k] for k in kr if k in r} for r in recs], ensure_ascii=False) + ";\n"
         "const BAND_DAYS=" + json.dumps({k: band[k] for k in ('center','k','days')}, separators=(',',':')) + ";")
 page = src.replace('/*DATA*/', data)
