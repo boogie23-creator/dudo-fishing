@@ -184,6 +184,12 @@ object ScoreEngine {
                 if (strength > 0.65 && p.terrain == "곶부리" && suit < 0.85) r += Reason("센 조류 – 곶부리 정면은 물살이 너무 빠름", -4)
                 if (strength > 0.65 && p.terrain == "홈통") r += Reason("센 조류 – 홈통 반탄류에 고기가 모임", 4)
                 if (strength < 0.3 && p.terrain == "곶부리") r += Reason("약한 조류 – 물이 가는 곶부리 유리", 4)
+                // 현지 경험: 느린 물살에 잘 되는 자리 (1번·5번) – 웹과 같은 규칙
+                if (p.currentPref == "slow") r += when {
+                    strength < 0.45 -> Reason("느린 물살 – 이 자리가 잘 되는 물 (현지 경험)", 6)
+                    strength > 0.7 -> Reason("물살 빠름 – 이 자리는 느린 물이 좋음 (현지 경험)", -5)
+                    else -> Reason("물살 보통 (이 자리는 느린 물 선호)", 0)
+                }
             }
         }
         val f = c.tideRangeFactor
