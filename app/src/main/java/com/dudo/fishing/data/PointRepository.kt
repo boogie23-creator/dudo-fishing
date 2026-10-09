@@ -62,6 +62,7 @@ object PointRepository {
                 localBias = o.optInt("localBias", 0),
                 localNote = o.optString("localNote"),
                 tideType = o.optString("tideType").ifBlank { null },
+                currentPref = o.optString("currentPref").ifBlank { null },
                 altSpots = o.optJSONArray("altSpots")?.let { a ->
                     (0 until a.length()).map { j ->
                         val s = a.getJSONObject(j)
