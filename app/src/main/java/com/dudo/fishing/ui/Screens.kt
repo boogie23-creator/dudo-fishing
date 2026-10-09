@@ -220,19 +220,26 @@ private fun HomeHeader(c: DayConditions?, dayOffset: Int, onDay: (Int) -> Unit, 
             }
             Spacer(Modifier.height(14.dp))
             // 날짜 선택
+            // 오늘~6일 뒤 (7일). 4일째부터는 Open-Meteo 예보 – 신뢰 낮음
+            val today = java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul"))
             Row(
-                Modifier.padding(end = 12.dp).clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.10f)).padding(4.dp)
+                Modifier.padding(end = 12.dp).clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.10f))
+                    .horizontalScroll(androidx.compose.foundation.rememberScrollState()).padding(4.dp)
             ) {
-                listOf("오늘", "내일", "모레").forEachIndexed { i, label ->
+                (0 until 7).forEach { i ->
                     val sel = dayOffset == i
+                    val d = today.plusDays(i.toLong())
+                    val label = listOf("오늘", "내일", "모레").getOrNull(i)
+                        ?: "${d.monthValue}/${d.dayOfMonth}(${"월화수목금토일"[d.dayOfWeek.value - 1]})"
                     Box(
-                        Modifier.weight(1f).clip(RoundedCornerShape(50))
+                        Modifier.clip(RoundedCornerShape(50))
                             .background(if (sel) Foam else Color.Transparent)
-                            .clickable { onDay(i) }.padding(vertical = 8.dp),
+                            .clickable { onDay(i) }.padding(vertical = 8.dp, horizontal = 14.dp),
                         contentAlignment = Alignment.Center
-                    ) { Text(label, color = if (sel) Abyss else Foam, fontWeight = FontWeight.Bold, fontSize = 14.sp) }
+                    ) { Text(label, color = if (sel) Abyss else if (i >= 3) Foam.copy(alpha = 0.75f) else Foam, fontWeight = FontWeight.Bold, fontSize = 14.sp) }
                 }
             }
+            if (dayOffset >= 3) Text("4일째부터는 바람·파도 예보가 자주 바뀌어 신뢰 낮음 (물때는 정확)", color = Shallow, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
             if (c != null) {
                 Spacer(Modifier.height(14.dp))
                 Text(c.date.format(MD) + " · " + c.mulName + if (c.tideIsEstimated) " (추정)" else "", color = Foam, fontWeight = FontWeight.Bold, fontSize = 16.sp)
