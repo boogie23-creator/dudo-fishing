@@ -90,8 +90,8 @@ object TideApi {
      * 천문 추정치: 달이 남중한 뒤 일정 시간(고조간격) 후 만조가 온다고 가정.
      * BUSAN_HWI_MIN 은 근사값이며 실제 조석표와 30분~1시간 이상 차이 날 수 있다.
      */
-    private const val BUSAN_HWI_MIN = 480
-    private const val LUNAR_DAY_MIN = 1490.0   // 24시간 50분
+    private const val BUSAN_HWI_MIN = 515   // 웹과 같은 값 (바다타임 조석표와 대조해 보정)
+    private const val LUNAR_DAY_MIN = 1490.47   // 24시간 50.47분
 
     fun estimate(date: LocalDate, zone: ZoneId): List<TideEvent> {
         val events = mutableListOf<TideEvent>()

@@ -115,7 +115,7 @@ class ConditionsRepository(
         // 부산 조차: 조금 ≈ 40cm, 사리 ≈ 120cm (조석표 기준)
         val tableRange = rangeIn(tides)
         val levelRange = if (tableRange == null) rangeIn(levelTides) else null
-        val levelMean = levelTides.zipWithNext { a, b -> kotlin.math.abs(a.levelCm!! - b.levelCm!!) }.takeIf { it.size >= 6 }?.average()
+        val levelMean = levelTides.zipWithNext().filter { (a, b) -> a.isHigh != b.isHigh && a.levelCm != null && b.levelCm != null }.map { (a, b) -> kotlin.math.abs(a.levelCm!! - b.levelCm!!) }.takeIf { it.size >= 6 }?.average()
         val realRf = when {
             tableRange != null -> ((tableRange - 40) / 80.0).coerceIn(0.0, 1.0)
             levelRange != null && levelMean != null -> (0.5 + (levelRange / levelMean - 1)).coerceIn(0.0, 1.0)
