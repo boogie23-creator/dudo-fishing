@@ -37,6 +37,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val repo = ConditionsRepository(settings, BeachApi.loadBeaches(app))
     private var points: List<FishingPoint> = PointRepository.load(app)
     private val historyRepo = HistoryRepository(app)
+    private val bandDays by lazy { historyRepo.bandDays() }
     private var history: List<CatchRecord> = emptyList()
 
     private val _state = MutableStateFlow(UiState())
@@ -138,7 +139,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun rank(c: DayConditions) {
         val sp = _state.value.species
-        val ctx = ScoreContext(history, points.associateBy { it.id })
+        val ctx = ScoreContext(history, points.associateBy { it.id }, bandDays)
         val results = points.map { p ->
             if (sp == null) ScoreEngine.bestForPoint(p, c, ctx) else ScoreEngine.evaluate(p, sp, c, ctx)
         }.sortedByDescending { it.dayScore }
