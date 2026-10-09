@@ -5,6 +5,7 @@ import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
+import kotlin.math.roundToInt
 import com.dudo.fishing.scoring.Factors
 
 /** 날짜별 낚시 조건(날씨·물때·수온·해 뜨고 지는 시각)을 모은다 */
@@ -100,6 +101,18 @@ class ConditionsRepository(
         }
         val currents = marine?.currents.orEmpty().filterKeys { it.toLocalDate() == date }.mapKeys { it.key.hour }
         val waveDir = marine?.waveDir.orEmpty().filterKeys { it.toLocalDate() == date }.mapKeys { it.key.hour }
+        // 기압 6시간 변화 (웹과 같은 규칙)
+        val pressureChange = marine?.pressure.orEmpty().let { pm ->
+            (0..23).mapNotNull { h -> val t = date.atTime(h, 0); val a = pm[t]; val b = pm[t.minusHours(6)]; if (a != null && b != null) h to a - b else null }.toMap()
+        }
+        // 물색 추정: 낚시 시작(05시) 전 48시간 강수량, 전날(24시간) 최대 파고
+        val clarity = marine?.let { m ->
+            val t0 = date.atTime(5, 0)
+            var rain = 0.0; var maxWave = 0.0; var have = false
+            for (k in 1..48) { val t = t0.minusHours(k.toLong()); m.rainMm[t]?.let { rain += it; have = true }; if (k <= 24) m.waveHeight[t]?.let { maxWave = maxOf(maxWave, it) } }
+            if (!have) null else Clarity(rain.roundToInt(), Math.round(maxWave * 10) / 10.0,
+                when { rain >= 40 -> "뻘물"; rain >= 5 || maxWave >= 1.2 -> "적당히 탁함"; rain < 1 && maxWave < 0.5 -> "맑음(청물)"; else -> "보통" })
+        }
 
         // 6) 실제 조차: 조석표 높이 > 해수면 예보. 05~13시에 걸친 구간들의 평균 조차
         val astroRf = Astro.tideRangeFactor(age)
@@ -141,6 +154,8 @@ class ConditionsRepository(
             currents = currents,
             flow = flow,
             waveDir = waveDir,
+            pressureChange = pressureChange,
+            clarity = clarity,
             sunrise = rise,
             sunset = set,
             messages = msgs,

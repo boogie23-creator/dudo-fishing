@@ -92,6 +92,8 @@ data class TideEvent(
     val levelCm: Int?,
 )
 
+data class Clarity(val rainMm: Int, val maxWave: Double, val type: String)
+
 data class DayConditions(
     val date: LocalDate,
     val weather: List<HourWeather>,
@@ -116,6 +118,10 @@ data class DayConditions(
     val flow: MarineApi.Flow? = null,
     /** 시간(0~23)별 너울이 오는 방향 */
     val waveDir: Map<Int, Int> = emptyMap(),
+    /** 시간(0~23)별 6시간 기압 변화(hPa) */
+    val pressureChange: Map<Int, Double> = emptyMap(),
+    /** 물색 추정 (05시 전 48시간 비, 전날 최대 파고) */
+    val clarity: Clarity? = null,
     val sunrise: LocalTime,
     val sunset: LocalTime,
     val messages: List<String>,

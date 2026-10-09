@@ -20,6 +20,11 @@ object MarineApi {
         val currents: Map<LocalDateTime, Current>,
         val waveDir: Map<LocalDateTime, Int>,
         val seaLevel: List<Pair<LocalDateTime, Double>>,
+        /** 외해 파고(m) – 물색 추정용 */
+        val waveHeight: Map<LocalDateTime, Double> = emptyMap(),
+        /** 해면기압(hPa)·강수량(mm) – 기압 변화·물색 추정용 (실패하면 비어 있음) */
+        val pressure: Map<LocalDateTime, Double> = emptyMap(),
+        val rainMm: Map<LocalDateTime, Double> = emptyMap(),
     )
 
     private const val TIDE_LAG_MIN = 24L
@@ -34,7 +39,7 @@ object MarineApi {
         cache?.let { (t, r) -> if (t.isAfter(now.minusMinutes(30))) return r }
         val h = JSONObject(Http.get(
             "https://marine-api.open-meteo.com/v1/marine?latitude=$LAT&longitude=$LNG" +
-                    "&hourly=wave_direction,swell_wave_height,swell_wave_direction,sea_level_height_msl," +
+                    "&hourly=wave_height,wave_direction,swell_wave_height,swell_wave_direction,sea_level_height_msl," +
                     "ocean_current_velocity,ocean_current_direction&cell_selection=sea" +
                     "&past_days=2&forecast_days=4&timezone=Asia%2FSeoul"
         )).getJSONObject("hourly")
@@ -45,6 +50,7 @@ object MarineApi {
         val cur = HashMap<LocalDateTime, Current>()
         val wd = HashMap<LocalDateTime, Int>()
         val lv = ArrayList<Pair<LocalDateTime, Double>>()
+        val wh = HashMap<LocalDateTime, Double>()
         for (i in 0 until times.length()) {
             val t = LocalDateTime.parse(times.getString(i))
             val v = num("ocean_current_velocity", i)
@@ -55,8 +61,25 @@ object MarineApi {
             val w = if (sw != null && sw >= 0.3 && swd != null) swd else num("wave_direction", i)
             if (w != null) wd[t] = w.toInt()
             num("sea_level_height_msl", i)?.let { lv += t to it }
+            num("wave_height", i)?.let { wh[t] = it }
         }
-        return Result(cur, wd, lv).also { cache = now to it }
+        // 기압·강수 (웹과 같은 Open-Meteo 예보, 지난 3일 포함)
+        val press = HashMap<LocalDateTime, Double>()
+        val rain = HashMap<LocalDateTime, Double>()
+        runCatching {
+            val a = JSONObject(Http.get(
+                "https://api.open-meteo.com/v1/forecast?latitude=35.0488&longitude=129.0150" +
+                        "&hourly=pressure_msl,precipitation&past_days=3&forecast_days=4&timezone=Asia%2FSeoul"
+            )).getJSONObject("hourly")
+            val at = a.getJSONArray("time")
+            val pa = a.optJSONArray("pressure_msl"); val ra = a.optJSONArray("precipitation")
+            for (i in 0 until at.length()) {
+                val t = LocalDateTime.parse(at.getString(i))
+                if (pa != null && !pa.isNull(i)) press[t] = pa.getDouble(i)
+                if (ra != null && !ra.isNull(i)) rain[t] = ra.getDouble(i)
+            }
+        }
+        return Result(cur, wd, lv, wh, press, rain).also { cache = now to it }
     }
 
     /** 해수면 시계열 → 만조·간조 (포물선 보정, 높이는 cm) */
