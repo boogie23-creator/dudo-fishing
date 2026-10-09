@@ -34,6 +34,14 @@ class HistoryRepository(private val context: Context) {
         return (0 until arr.length()).map { fromJson(arr.getJSONObject(it), byUser = false) }
     }
 
+    /** 밴드 조황 사진 수 일별 요약 (없거나 깨지면 null) */
+    fun bandDays(): com.dudo.fishing.scoring.BandDays? = runCatching {
+        val o = JSONObject(context.assets.open("band_days.json").bufferedReader().use { it.readText() })
+        val arr = o.getJSONArray("days")
+        com.dudo.fishing.scoring.BandDays(o.getDouble("center"), o.getDouble("k"),
+            (0 until arr.length()).map { i -> val a = arr.getJSONArray(i); IntArray(5) { a.getInt(it) } })
+    }.getOrNull()
+
     fun userRecords(): List<CatchRecord> {
         val arr = JSONArray(prefs.getString("user_records", "[]"))
         return (0 until arr.length()).map { fromJson(arr.getJSONObject(it), byUser = true) }
