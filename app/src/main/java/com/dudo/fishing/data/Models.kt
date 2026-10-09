@@ -30,6 +30,8 @@ data class FishingPoint(
     val localNote: String = "",
     /** 물때에 따라 옮겨 설 수 있는 자리 (예: 14.5번 들물 때 남쪽 홈통) */
     val altSpots: List<AltSpot> = emptyList(),
+    /** 현지 경험으로 정한 물때 성격: "flood"(들물 포인트) / "ebb"(날물 포인트). 있으면 계산보다 우선 */
+    val tideType: String? = null,
 )
 
 /** 들물(flood)·날물(ebb) 때 옮겨 서는 자리 */
