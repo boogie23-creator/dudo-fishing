@@ -25,6 +25,9 @@ object MarineApi {
         /** 해면기압(hPa)·강수량(mm) – 기압 변화·물색 추정용 (실패하면 비어 있음) */
         val pressure: Map<LocalDateTime, Double> = emptyMap(),
         val rainMm: Map<LocalDateTime, Double> = emptyMap(),
+        /** 바람(m/s)·풍향·강수확률 – 기상청 단기예보가 없는 4일째부터 쓰는 Open-Meteo 예보 */
+        val wind: Map<LocalDateTime, Pair<Double, Int>> = emptyMap(),
+        val rainProb: Map<LocalDateTime, Int> = emptyMap(),
     )
 
     private const val TIDE_LAG_MIN = 24L
@@ -41,7 +44,7 @@ object MarineApi {
             "https://marine-api.open-meteo.com/v1/marine?latitude=$LAT&longitude=$LNG" +
                     "&hourly=wave_height,wave_direction,swell_wave_height,swell_wave_direction,sea_level_height_msl," +
                     "ocean_current_velocity,ocean_current_direction&cell_selection=sea" +
-                    "&past_days=2&forecast_days=4&timezone=Asia%2FSeoul"
+                    "&past_days=2&forecast_days=8&timezone=Asia%2FSeoul"
         )).getJSONObject("hourly")
         val times = h.getJSONArray("time")
         fun num(key: String, i: Int): Double? = h.optJSONArray(key)?.let { a ->
@@ -66,20 +69,26 @@ object MarineApi {
         // 기압·강수 (웹과 같은 Open-Meteo 예보, 지난 3일 포함)
         val press = HashMap<LocalDateTime, Double>()
         val rain = HashMap<LocalDateTime, Double>()
+        val windM = HashMap<LocalDateTime, Pair<Double, Int>>()
+        val rp = HashMap<LocalDateTime, Int>()
         runCatching {
             val a = JSONObject(Http.get(
                 "https://api.open-meteo.com/v1/forecast?latitude=35.0488&longitude=129.0150" +
-                        "&hourly=pressure_msl,precipitation&past_days=3&forecast_days=4&timezone=Asia%2FSeoul"
+                        "&hourly=pressure_msl,precipitation,wind_speed_10m,wind_direction_10m,precipitation_probability" +
+                        "&wind_speed_unit=ms&past_days=3&forecast_days=8&timezone=Asia%2FSeoul"
             )).getJSONObject("hourly")
             val at = a.getJSONArray("time")
             val pa = a.optJSONArray("pressure_msl"); val ra = a.optJSONArray("precipitation")
+            val ws = a.optJSONArray("wind_speed_10m"); val wdA = a.optJSONArray("wind_direction_10m"); val pp = a.optJSONArray("precipitation_probability")
             for (i in 0 until at.length()) {
                 val t = LocalDateTime.parse(at.getString(i))
                 if (pa != null && !pa.isNull(i)) press[t] = pa.getDouble(i)
                 if (ra != null && !ra.isNull(i)) rain[t] = ra.getDouble(i)
+                if (ws != null && wdA != null && !ws.isNull(i) && !wdA.isNull(i)) windM[t] = ws.getDouble(i) to wdA.getDouble(i).toInt()
+                if (pp != null && !pp.isNull(i)) rp[t] = pp.getInt(i)
             }
         }
-        return Result(cur, wd, lv, wh, press, rain).also { cache = now to it }
+        return Result(cur, wd, lv, wh, press, rain, windM, rp).also { cache = now to it }
     }
 
     /** 해수면 시계열 → 만조·간조 (포물선 보정, 높이는 cm) */

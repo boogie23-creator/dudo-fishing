@@ -32,10 +32,21 @@ class ConditionsRepository(
 
         // 1) 날씨
         var weatherDemo = false
+        // 기상청 단기예보가 없을 때(키 없음·실패·4일째 이후) 쓰는 Open-Meteo 시간별 예보
+        fun openMeteo(): List<HourWeather>? = runCatching {
+            val m = MarineApi.fetch(now)
+            (0 until 48).mapNotNull { h ->
+                val t = date.atStartOfDay().plusHours(h.toLong())
+                val (ws, wd) = m.wind[t] ?: return@mapNotNull null
+                HourWeather(t, ws, wd, m.waveHeight[t], m.rainProb[t] ?: 0, if ((m.rainMm[t] ?: 0.0) >= 0.5) 1 else 0, null)
+            }.takeIf { it.size >= 12 }
+        }.getOrNull()
         val weather: List<HourWeather> = if (settings.dataGoKrKey.isBlank()) {
-            weatherDemo = true
-            msgs += "기상청 API 키가 없어 데모 날씨로 계산했어요. 설정에서 키를 넣어주세요."
-            KmaApi.demo(date)
+            openMeteo()?.also { msgs += "기상청 API 키가 없어 Open-Meteo 예보로 계산했어요." } ?: run {
+                weatherDemo = true
+                msgs += "기상청 API 키가 없어 데모 날씨로 계산했어요. 설정에서 키를 넣어주세요."
+                KmaApi.demo(date)
+            }
         } else try {
             // 같은 예보를 30분 안에 다시 부르지 않는다 (날짜 탭 전환 시 호출 절약)
             val cached = weatherCache
@@ -46,17 +57,22 @@ class ConditionsRepository(
             if (!res.hasWave) msgs += "이 지역 예보에 파고 정보가 없어 파고 점수는 빠졌어요."
             res.hours
         } catch (e: Exception) {
-            weatherDemo = true
-            msgs += "기상청 예보를 못 불러와 데모 날씨로 계산했어요 (${e.message})"
-            KmaApi.demo(date)
+            openMeteo()?.also { msgs += "기상청 예보를 못 불러와 Open-Meteo 예보로 계산했어요 (${e.message})" } ?: run {
+                weatherDemo = true
+                msgs += "기상청 예보를 못 불러와 데모 날씨로 계산했어요 (${e.message})"
+                KmaApi.demo(date)
+            }
         }
         val dayWeather = weather.filter {
             !it.time.toLocalDate().isBefore(date) && it.time.toLocalDate().isBefore(date.plusDays(2))
         }.ifEmpty {
-            weatherDemo = true
-            msgs += "이 날짜의 예보가 아직 없어요(단기예보는 약 3일까지). 데모 날씨로 계산했어요."
-            KmaApi.demo(date)
+            openMeteo()?.also { msgs += "기상청 단기예보는 모레까지라 이 날은 Open-Meteo 예보로 계산했어요." } ?: run {
+                weatherDemo = true
+                msgs += "이 날짜의 예보가 아직 없어요. 데모 날씨로 계산했어요."
+                KmaApi.demo(date)
+            }
         }
+        if (date.isAfter(now.toLocalDate().plusDays(2))) msgs += "4일째부터는 바람·파도 예보가 자주 바뀌어 점수 신뢰가 낮아요 (물때는 정확)."
 
         // 2) 조석: 국립해양조사원 조석예보(부산, 같은 키) > 바다누리 구 API 키 > 기상청 해수욕장 조석정보 > 달 위치 추정
         var tideEstimated = false
