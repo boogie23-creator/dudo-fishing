@@ -270,6 +270,26 @@ object ScoreEngine {
             if ((onshore || (swellAngle != null && swellAngle <= 70)) && wave >= 1.5 && danger == null) danger = "정면 너울 – 갯바위 진입 주의"
         }
         if (rainy) r += Reason("강수 예보", -3)
+        // 기압 변화 (6시간) – 웹과 같은 규칙
+        c.pressureChange[slot.startHour]?.let { dp ->
+            when {
+                dp <= -3 -> r += Reason("기압 급하강 %.1fhPa/6h – 날씨 급변 전".format(dp), -3)
+                dp <= -1 -> r += Reason("기압 완만한 하강 %.1fhPa/6h – 입질 활발해지는 경향".format(dp), 3)
+                dp >= 3 -> r += Reason("기압 급상승 +%.1fhPa/6h – 고기압 직후 경계심↑".format(dp), -3)
+                else -> {}
+            }
+        }
+        // 물색 (최근 48시간 비·전날 파고로 추정) – 웹과 같은 규칙
+        c.clarity?.let { cl ->
+            when (s) {
+                Species.NONGEO -> { val txt = "물색 추정: ${cl.type}"
+                    r += when (cl.type) { "적당히 탁함" -> Reason("$txt – 농어가 붙는 물색", 5); "뻘물" -> Reason(txt, -2); "맑음(청물)" -> Reason("$txt – 맑으면 농어 경계", -4); else -> Reason(txt, 0) } }
+                Species.GAMSEONG, Species.BENGAE -> { val txt = "물색 추정: ${cl.type} (48시간 비 ${cl.rainMm}mm, 전날 파고 ${cl.maxWave}m)"
+                    r += if (s == Species.GAMSEONG) when (cl.type) { "뻘물" -> Reason("$txt – 흙탕물은 입을 닫음", -5); "적당히 탁함" -> Reason("$txt – 감성돔이 경계를 푸는 물색 (밴드: 물색 흐려지니 다시 보임)", 4); "맑음(청물)" -> Reason("$txt – 맑으면 경계심↑, 원투·가는 목줄", -3); else -> Reason(txt, 0) }
+                    else when (cl.type) { "뻘물" -> Reason(txt, -4); "맑음(청물)" -> Reason("$txt – 벵에는 맑은 물 선호", 2); else -> Reason(txt, 0) } }
+                else -> {}
+            }
+        }
 
         // ── 과거 조과 ─────────────────────────
         r += Factors.historyReasons(p, s, c, slot, wind, windDir, seaWave, ctx)
