@@ -794,6 +794,7 @@ function renderDetail(results){
       <span class="pill">성격 <b>${prof.type}</b></span>
       <span class="pill">들물 적합 <b>${r0(prof.flood*100)}</b> · 날물 적합 <b>${r0(prof.ebb*100)}</b></span>
       <span class="pill">너울 영향 <b>${prof.exposureText}</b></span>
+      ${r.p.currentPref==="slow"?`<span class="pill">물살 <b>느린 물 선호</b> (현지 제보)</span>`:""}
       ${hs.spot?`<span class="pill">${String(hs.h).padStart(2,"0")}시 자리 <b>${hs.spot.spotLabel}</b></span>`:""}
       ${(r.p.altSpots||[]).map(s=>`<span class="pill">${s.tide==="flood"?"들물":"날물"} 때 <b>${s.label}</b>도 가능</span>`).join("")}
       <span class="pill">입질 지점(${String(hs.h).padStart(2,"0")}시) <b>${biteText(hs.spot||r.p,hs.bite||bitePoint(r.p,null,0))}</b></span>
