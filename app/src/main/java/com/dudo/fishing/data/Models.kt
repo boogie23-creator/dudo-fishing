@@ -118,6 +118,8 @@ data class DayConditions(
     val flow: MarineApi.Flow? = null,
     /** 시간(0~23)별 너울이 오는 방향 */
     val waveDir: Map<Int, Int> = emptyMap(),
+    /** 시간(0~23)별 조류 세기용 조차 비율(그 시간 물때 구간의 실제 조차). 없으면 tideRangeFactor */
+    val hourRangeFactor: Map<Int, Double> = emptyMap(),
     /** 시간(0~23)별 6시간 기압 변화(hPa) */
     val pressureChange: Map<Int, Double> = emptyMap(),
     /** 물색 추정 (05시 전 48시간 비, 전날 최대 파고) */

@@ -135,6 +135,19 @@ class ConditionsRepository(
             else -> null
         }
         val rangeCm = tableRange ?: levelRange
+        // 시간별 조류 세기용 조차 비율: 그 시간이 속한 물때 구간(직전·다음 만간조)의 실제 조차 – 웹과 같은 방식
+        fun intervalRange(ev: List<TideEvent>, at: LocalDateTime): Int? {
+            val prev = ev.lastOrNull { !it.time.isAfter(at) } ?: return null
+            val next = ev.firstOrNull { it.time.isAfter(at) } ?: return null
+            return if (prev.levelCm == null || next.levelCm == null) null else kotlin.math.abs(next.levelCm - prev.levelCm)
+        }
+        val hourRf = (0..23).mapNotNull { h ->
+            val at = date.atTime(h, 30)
+            val rf = if (tableRange != null) intervalRange(tides, at)?.let { ((it - 40) / 80.0).coerceIn(0.0, 1.0) }
+            else if (levelMean != null) intervalRange(levelTides, at)?.let { (0.5 + (it / levelMean - 1)).coerceIn(0.0, 1.0) }
+            else null
+            rf?.let { h to it }
+        }.toMap()
         rangeCm?.let { msgs += "05~13시 실제 조차 ${it}cm – 조류 세기 ${((realRf ?: astroRf) * 100).toInt()}% (물때 계산 ${(astroRf * 100).toInt()}%)" }
 
         DayConditions(
@@ -155,6 +168,7 @@ class ConditionsRepository(
             flow = flow,
             waveDir = waveDir,
             pressureChange = pressureChange,
+            hourRangeFactor = hourRf,
             clarity = clarity,
             sunrise = rise,
             sunset = set,
