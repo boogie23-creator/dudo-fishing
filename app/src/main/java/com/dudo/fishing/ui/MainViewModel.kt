@@ -43,6 +43,22 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state
 
+    // 즐겨찾기 포인트 (포인트 지도 아래 카드의 하트)
+    private val favPrefs = app.getSharedPreferences("favorites", android.content.Context.MODE_PRIVATE)
+    private val _favorites = MutableStateFlow(favPrefs.getStringSet("ids", emptySet())?.toSet() ?: emptySet())
+    val favorites: StateFlow<Set<String>> = _favorites
+
+    fun toggleFavorite(id: String) {
+        val next = _favorites.value.let { if (id in it) it - id else it + id }
+        favPrefs.edit().putStringSet("ids", next).apply()
+        _favorites.value = next
+    }
+
+    /** 조황 기록 화면용: 모든 기록 (최신순) */
+    fun allRecords(): List<CatchRecord> = history.sortedWith(compareByDescending<CatchRecord> { it.date }.thenByDescending { it.startHour })
+
+    fun pointName(id: String?): String? = id?.let { i -> points.firstOrNull { it.id == i }?.name }
+
     init { refresh() }
 
     fun setDay(offset: Int) { _state.update { it.copy(dayOffset = offset) }; refresh() }
