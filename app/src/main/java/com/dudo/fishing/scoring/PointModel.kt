@@ -42,13 +42,20 @@ object PointModel {
 
     private val cache = HashMap<String, PointProfile>()
 
-    fun profile(p: FishingPoint): PointProfile = cache.getOrPut("${p.id}:${p.lat}:${p.lng}:${p.facingDeg}:${Factors.FLOOD_FLOW_DEG}:${Factors.EBB_FLOW_DEG}") {
+    fun profile(p: FishingPoint): PointProfile = cache.getOrPut("${p.id}:${p.lat}:${p.lng}:${p.facingDeg}:${p.tideType}:${Factors.FLOOD_FLOW_DEG}:${Factors.EBB_FLOW_DEG}") {
         val dy = (p.lat - C_LAT) * 111_320.0
         val dx = (p.lng - C_LNG) * 111_320.0 * cos(Math.toRadians(C_LAT))
         val bearing = ((Math.toDegrees(atan2(dx, dy)) + 360) % 360).toInt()
+        var fl = suit(p, bearing, Factors.FLOOD_FLOW_DEG)
+        var eb = suit(p, bearing, Factors.EBB_FLOW_DEG)
+        // 현지 경험으로 정한 물때 성격이 있으면 계산보다 우선
+        when (p.tideType) {
+            "ebb" -> { eb = maxOf(eb, fl, 0.85); fl = minOf(fl, 0.3) }
+            "flood" -> { fl = maxOf(fl, eb, 0.85); eb = minOf(eb, 0.3) }
+        }
         PointProfile(
-            floodSuit = suit(p, bearing, Factors.FLOOD_FLOW_DEG),
-            ebbSuit = suit(p, bearing, Factors.EBB_FLOW_DEG),
+            floodSuit = fl,
+            ebbSuit = eb,
             exposure = exposure(bearing, p.facingDeg),
             bearing = bearing,
         )

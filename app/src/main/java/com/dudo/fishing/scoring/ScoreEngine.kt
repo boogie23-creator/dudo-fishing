@@ -161,7 +161,8 @@ object ScoreEngine {
                 }
             } else {
                 val cur = c.currents[slot.startHour]
-                val suit = cur?.let { PointModel.suitAt(p, it.dirDeg) } ?: if (ts.incoming) prof.floodSuit else prof.ebbSuit
+                var suit = cur?.let { PointModel.suitAt(p, it.dirDeg) } ?: if (ts.incoming) prof.floodSuit else prof.ebbSuit
+                p.tideType?.let { tt -> suit = if ((tt == "flood") == ts.incoming) maxOf(suit, 0.85) else minOf(suit, 0.3) }
                 val tideName = if (ts.incoming) "들물" else "날물"
                 val curText = cur?.let { " · ${compass(it.dirDeg)}류 %.1fkn".format(it.speedKmh / 1.852) } ?: ""
                 val power = if (cur != null && c.flow != null) (cur.speedKmh / c.flow.vRef).coerceIn(0.3, 1.0)
@@ -174,7 +175,7 @@ object ScoreEngine {
                     suit > 0 -> "홈통 안으로 도는 물"
                     else -> "조류가 갯바위로 받혀 채비가 밀려옴"
                 }
-                r += Reason("$tideName ${(ts.progress * 100).roundToInt()}%$curText – $how (${prof.tideType})", pts)
+                r += Reason("$tideName ${(ts.progress * 100).roundToInt()}%$curText – $how (${prof.tideType}${if (p.tideType != null) " · 현지 경험" else ""})", pts)
                 // 감성돔은 중들물~끝들물, 벵에돔은 조류가 살아 있는 중간 시간
                 if (s == Species.GAMSEONG && ts.incoming && ts.progress >= 0.4) r += Reason("중들물~끝들물", 5)
                 if (s == Species.BENGAE && ts.progress in 0.25..0.75) r += Reason("조류 활발한 중간 물때", 4)
