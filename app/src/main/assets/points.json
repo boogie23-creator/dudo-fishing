@@ -22,7 +22,8 @@
       "terrain": "곶부리",
       "targetDistance": 10,
       "target": "방파제(테트라포드)와 섬이 만나는 모서리 앞. 방파제를 따라 흐르는 조류와 섬을 돌아 나오는 조류가 만나는 조경지대",
-      "tideType": "ebb"
+      "tideType": "ebb",
+      "currentPref": "slow"
     },
     {
       "id": "dudo_1_5",
@@ -195,7 +196,7 @@
       "area": "두도",
       "lat": 35.048061,
       "lng": 129.014028,
-      "facingDeg": 213,
+      "facingDeg": 180,
       "depthMin": 5,
       "depthMax": 8,
       "depth": "5~8m",
@@ -206,11 +207,13 @@
         "볼락",
         "무늬오징어"
       ],
-      "note": "남서쪽 공략 · 전방 약 12m · 수심 5~8m",
+      "note": "남쪽 정면 공략 · 전방 약 12m · 수심 5~8m",
       "coordVerified": true,
       "terrain": "평면",
       "targetDistance": 12,
-      "target": "남서쪽 곶부리 끝 – 들물·날물이 갈라지는 본류대 가장자리, 곶부리 뒤 지류와의 경계"
+      "target": "남쪽 정면으로 던져 흘리는 자리(곶부리 아님) – 들물, 물살이 느린 물때에 잘 됨",
+      "tideType": "flood",
+      "currentPref": "slow"
     },
     {
       "id": "dudo_6",
@@ -344,7 +347,8 @@
       "coordVerified": true,
       "terrain": "직벽",
       "targetDistance": 6,
-      "target": "동남 부속섬 서쪽 직벽(수심 11~15m) – 두 부속섬 사이 수로로 흐르는 본류 옆. 직벽을 따라 바닥층"
+      "target": "동남 부속섬 서쪽 직벽(수심 11~15m) – 날물에 물이 안쪽(수로 쪽)으로 들어올 때 입질. 직벽을 따라 바닥층",
+      "tideType": "ebb"
     },
     {
       "id": "dudo_11",
