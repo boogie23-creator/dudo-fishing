@@ -92,6 +92,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.Image
+import androidx.compose.material.icons.filled.Navigation
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.dudo.fishing.R
 import com.dudo.fishing.BuildConfig
 import com.dudo.fishing.data.CatchRecord
 import com.dudo.fishing.data.DayConditions
@@ -171,6 +179,35 @@ private fun RowScope.NavItem(label: String, icon: ImageVector, selected: Boolean
 
 // ───────────────────────── 공통 조각 ─────────────────────────
 
+/** 시안에서 잘라 온 물고기 사진(배경 투명). 없으면 그린 아이콘 */
+private fun fishRes(label: String): Int? = when (label) {
+    "감성돔" -> R.drawable.dudo_fish_gamseong
+    "벵에돔" -> R.drawable.dudo_fish_bengae
+    "참돔" -> R.drawable.dudo_fish_chamdom
+    else -> null
+}
+
+/** 조황 기록 카드용 물고기 사진 */
+private fun photoRes(label: String): Int? = when (label) {
+    "감성돔" -> R.drawable.dudo_photo_gamseong
+    "벵에돔" -> R.drawable.dudo_photo_bengae
+    "참돔" -> R.drawable.dudo_photo_chamdom
+    else -> null
+}
+
+/** 어종 그림: 사진이 있으면 사진, 없으면 그린 아이콘 (height 기준, 가로 약 1.8배) */
+@Composable
+fun FishImg(label: String, height: Dp, modifier: Modifier = Modifier) {
+    val res = fishRes(label)
+    if (res != null) Image(painterResource(res), label, modifier.height(height).width(height * 1.8f), contentScale = ContentScale.Fit)
+    else Box(modifier.height(height).width(height * 1.8f), contentAlignment = Alignment.Center) { FishIcon(label, height * 0.8f) }
+}
+
+@Composable
+private fun Photo(res: Int, modifier: Modifier, desc: String? = null) {
+    Image(painterResource(res), desc, modifier, contentScale = ContentScale.Crop)
+}
+
 /** 짙은 남색 카드 (얇은 테두리) */
 @Composable
 fun NavyCard(modifier: Modifier = Modifier, padding: Dp = 14.dp, content: @Composable () -> Unit) {
@@ -185,20 +222,20 @@ fun NavyCard(modifier: Modifier = Modifier, padding: Dp = 14.dp, content: @Compo
 @Composable
 fun FishChip(label: String, selected: Boolean, fish: String? = null, onClick: () -> Unit) {
     Row(
-        Modifier.clip(RoundedCornerShape(50))
-            .background(if (selected) Aqua else Panel)
-            .border(1.dp, if (selected) Aqua else Line, RoundedCornerShape(50))
-            .clickable(onClick = onClick).padding(horizontal = 13.dp, vertical = 8.dp),
+        Modifier.height(38.dp).clip(RoundedCornerShape(50))
+            .background(if (selected) Color(0xFF9FF3F0) else Panel)
+            .border(1.dp, if (selected) Color(0xFF9FF3F0) else Line, RoundedCornerShape(50))
+            .clickable(onClick = onClick).padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (fish != null) { FishIcon(fish, 13.dp); Spacer(Modifier.width(5.dp)) }
-        Text(label, color = if (selected) Night else Foam, fontSize = 13.sp, fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Medium)
+        if (fish != null) { FishImg(fish, 15.dp); Spacer(Modifier.width(6.dp)) }
+        Text(label, color = if (selected) Night else Foam, fontSize = 14.sp, fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Medium)
     }
 }
 
 @Composable
 fun SpeciesChips(selected: Species?, onSelect: (Species?) -> Unit, firstLabel: String = "전체", modifier: Modifier = Modifier) {
-    Row(modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+    Row(modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         FishChip(firstLabel, selected == null) { onSelect(null) }
         Species.entries.forEach { s -> FishChip(s.label, selected == s, s.label) { onSelect(s) } }
     }
@@ -207,10 +244,10 @@ fun SpeciesChips(selected: Species?, onSelect: (Species?) -> Unit, firstLabel: S
 @Composable
 private fun SectionTitle(title: String, action: String? = null, onAction: (() -> Unit)? = null) {
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(title, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Foam, modifier = Modifier.weight(1f))
+        Text(title, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold, color = Foam, modifier = Modifier.weight(1f))
         if (action != null) Row(Modifier.clickable { onAction?.invoke() }, verticalAlignment = Alignment.CenterVertically) {
-            Text(action, color = Mist, fontSize = 12.sp)
-            Icon(Icons.Default.ChevronRight, null, tint = Mist, modifier = Modifier.size(16.dp))
+            Text(action, color = Mist, fontSize = 13.sp)
+            Icon(Icons.Default.ChevronRight, null, tint = Mist, modifier = Modifier.size(18.dp))
         }
     }
 }
@@ -218,40 +255,63 @@ private fun SectionTitle(title: String, action: String? = null, onAction: (() ->
 /** 제목 가운데 + 왼쪽 뒤로 + 오른쪽 버튼 */
 @Composable
 private fun CenterBar(title: String, onBack: () -> Unit, action: @Composable (() -> Unit)? = null) {
-    Box(Modifier.fillMaxWidth().statusBarsPadding().height(54.dp)) {
+    Box(Modifier.fillMaxWidth().statusBarsPadding().height(56.dp)) {
         IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, "뒤로", tint = Foam)
         }
-        Text(title, color = Foam, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.align(Alignment.Center))
+        Text(title, color = Foam, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.align(Alignment.Center))
         if (action != null) Box(Modifier.align(Alignment.CenterEnd)) { action() }
     }
 }
 
+/** 오늘의 바다 칸: 위 아이콘+이름, 아래 값 */
 @Composable
-private fun StatTile(icon: ImageVector, label: String, value: String, modifier: Modifier = Modifier) {
+private fun SeaTile(icon: ImageVector, label: String, value: String, valueColor: Color, modifier: Modifier = Modifier) {
     Column(
-        modifier.clip(RoundedCornerShape(12.dp)).background(Panel2).padding(horizontal = 8.dp, vertical = 10.dp),
+        modifier.clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = 0.06f))
+            .border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(12.dp)).padding(horizontal = 6.dp, vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, null, tint = Aqua, modifier = Modifier.size(17.dp))
+            Icon(icon, null, tint = Aqua, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(4.dp))
             Text(label, color = Foam, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
-        Spacer(Modifier.height(4.dp))
-        Text(value, color = Foam, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Spacer(Modifier.height(5.dp))
+        Text(value, color = valueColor, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
-/** 날짜 칩: 오늘 ~ 6일 뒤 */
+/** 지도 카드 칸: 왼쪽 아이콘, 오른쪽 이름·값 */
+@Composable
+private fun SideTile(icon: ImageVector, label: String, value: String, modifier: Modifier = Modifier, lines: Int = 1) {
+    Row(
+        modifier.clip(RoundedCornerShape(12.dp)).background(Panel2).border(1.dp, Line, RoundedCornerShape(12.dp))
+            .padding(horizontal = 10.dp, vertical = 9.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, null, tint = Mist, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.width(8.dp))
+        Column {
+            Text(label, color = Mist, fontSize = 11.sp)
+            Text(value, color = Foam, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = lines, overflow = TextOverflow.Ellipsis)
+        }
+    }
+}
+
+/** 날짜 칩: 오늘 ~ 6일 뒤 (작게) */
 @Composable
 private fun DayChips(dayOffset: Int, onDay: (Int) -> Unit) {
     val today = LocalDate.now(ZoneId.of("Asia/Seoul"))
-    Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         (0 until 7).forEach { i ->
             val d = today.plusDays(i.toLong())
             val label = listOf("오늘", "내일", "모레").getOrNull(i) ?: "${d.monthValue}/${d.dayOfMonth}(${"월화수목금토일"[d.dayOfWeek.value - 1]})"
-            FishChip(label, dayOffset == i) { onDay(i) }
+            val sel = dayOffset == i
+            Text(label, color = if (sel) Night else Foam.copy(alpha = if (i >= 3) 0.7f else 0.95f), fontSize = 12.sp,
+                fontWeight = if (sel) FontWeight.ExtraBold else FontWeight.Medium,
+                modifier = Modifier.clip(RoundedCornerShape(50)).background(if (sel) Color(0xFF9FF3F0) else Color.White.copy(alpha = 0.07f))
+                    .clickable { onDay(i) }.padding(horizontal = 11.dp, vertical = 5.dp))
         }
     }
 }
@@ -263,6 +323,15 @@ private fun mulText(c: DayConditions) = c.mulName + when {
     else -> ""
 }
 
+/** 입질 지수 배지 문구 */
+private fun biteLabel(score: Int) = when {
+    score >= 75 -> "매우 좋음"
+    score >= 62 -> "좋음"
+    score >= 50 -> "보통"
+    score >= 38 -> "낮음"
+    else -> "나쁨"
+}
+
 // ───────────────────────── 홈 ─────────────────────────
 
 @Composable
@@ -270,28 +339,40 @@ fun HomeTab(vm: MainViewModel, onOpen: (String) -> Unit, onMenu: () -> Unit, onM
     val st by vm.state.collectAsState()
     var showNotices by remember { mutableStateOf(false) }
     val c = st.conditions
-    LazyColumn(Modifier.fillMaxSize().background(Night), contentPadding = PaddingValues(bottom = 20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { HomeHero(onMenu, onBell = { showNotices = !showNotices }, onRefresh = vm::refresh) }
-        if (showNotices && c != null) item {
-            NavyCard(Modifier.padding(horizontal = 16.dp)) {
-                Text("데이터 연결 상태", fontWeight = FontWeight.Bold, color = Foam)
-                if (c.messages.isEmpty()) Text("모든 자료를 정상으로 받았어요.", color = Mist, fontSize = 13.sp)
-                c.messages.forEach { Text("· $it", color = Mist, fontSize = 12.sp) }
+    LazyColumn(Modifier.fillMaxSize().background(Night), contentPadding = PaddingValues(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        item {
+            // 사진 헤더 위에 '오늘의 바다' 카드가 겹쳐 올라감 (시안과 같은 배치)
+            Box(Modifier.fillMaxWidth()) {
+                HomeHero(onMenu, onBell = { showNotices = !showNotices })
+                Column(Modifier.padding(top = 238.dp)) {
+                    if (c != null && !st.loading) SeaTodayCard(c, st.dayOffset, vm::setDay)
+                    else Box(Modifier.fillMaxWidth().height(160.dp), Alignment.Center) {
+                        if (st.loading) CircularProgressIndicator(color = Aqua)
+                        st.error?.let { Text("오류: $it", color = Bad, modifier = Modifier.padding(16.dp)) }
+                    }
+                }
             }
         }
-        item { DayChips(st.dayOffset, vm::setDay) }
-        if (st.dayOffset >= 3) item {
-            Text("4일째부터는 바람·파도 예보가 자주 바뀌어 신뢰 낮음 (물때는 정확)", color = Shallow, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 16.dp))
+        if (showNotices) item {
+            NavyCard(Modifier.padding(horizontal = 16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("알림 · 데이터 연결 상태", fontWeight = FontWeight.Bold, color = Foam, modifier = Modifier.weight(1f))
+                    Row(Modifier.clip(RoundedCornerShape(50)).border(1.dp, Line, RoundedCornerShape(50)).clickable { vm.refresh() }
+                        .padding(horizontal = 10.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Refresh, null, tint = Aqua, modifier = Modifier.size(14.dp))
+                        Text(" 새로고침", color = Aqua, fontSize = 12.sp)
+                    }
+                }
+                val msgs = c?.messages.orEmpty()
+                if (msgs.isEmpty()) Text("모든 자료를 정상으로 받았어요.", color = Mist, fontSize = 13.sp)
+                msgs.forEach { Text("· $it", color = Mist, fontSize = 12.sp) }
+            }
         }
-        if (st.loading) item { Box(Modifier.fillMaxWidth().padding(40.dp), Alignment.Center) { CircularProgressIndicator(color = Aqua) } }
-        st.error?.let { e -> item { Text("오류: $e", color = Bad, modifier = Modifier.padding(horizontal = 16.dp)) } }
         if (c != null && !st.loading) {
-            item { SeaTodayCard(c, st.dayOffset) }
             st.results.firstOrNull()?.let { top -> item { BiteIndexCard(top, st.dayOffset) { onOpen(top.point.id) } } }
-            item { SpeciesChips(st.species, vm::setSpecies, firstLabel = "최적 어종") }
             item { SectionTitle("추천 포인트 TOP 3", "지금 가기 좋은 포인트", onMap) }
             item {
-                NavyCard(Modifier.padding(horizontal = 16.dp), padding = 8.dp) {
+                Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
                     st.results.take(3).forEachIndexed { i, r -> TopRow(i + 1, r) { onOpen(r.point.id) } }
                 }
             }
@@ -313,65 +394,75 @@ fun HomeTab(vm: MainViewModel, onOpen: (String) -> Unit, onMenu: () -> Unit, onM
 }
 
 @Composable
-private fun HomeHero(onMenu: () -> Unit, onBell: () -> Unit, onRefresh: () -> Unit) {
+private fun HomeHero(onMenu: () -> Unit, onBell: () -> Unit) {
     Box(Modifier.fillMaxWidth().height(300.dp)) {
-        SeaScene(Modifier.fillMaxSize(), seed = 3, islandScale = 1.25f)
-        // 위·아래 어둡게 → 글자와 본문이 자연스럽게 이어짐
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Night.copy(alpha = 0.75f), Color.Transparent, Color.Transparent, Night), startY = 0f)))
+        Photo(R.drawable.dudo_hero, Modifier.fillMaxSize())
+        // 위는 살짝, 아래는 화면 배경색으로 이어지게
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
+            0f to Night.copy(alpha = 0.45f), 0.35f to Color.Transparent, 0.7f to Night.copy(alpha = 0.35f), 1f to Night)))
         Row(Modifier.statusBarsPadding().padding(horizontal = 4.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onMenu) { Icon(Icons.Default.Menu, "더보기", tint = Foam) }
+            IconButton(onClick = onMenu) { Icon(Icons.Default.Menu, "더보기", tint = Foam, modifier = Modifier.size(28.dp)) }
             Spacer(Modifier.weight(1f))
-            IconButton(onClick = onRefresh) { Icon(Icons.Default.Refresh, "새로고침", tint = Foam) }
-            IconButton(onClick = onBell) { Icon(Icons.Default.Notifications, "데이터 상태", tint = Foam) }
+            IconButton(onClick = onBell) { Icon(Icons.Outlined.Notifications, "알림", tint = Foam, modifier = Modifier.size(26.dp)) }
         }
-        Column(Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 26.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            BrandBlock(64.dp)
-            Spacer(Modifier.height(26.dp))
+        Column(Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 2.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            BrandBlock(66.dp)
+            Spacer(Modifier.height(18.dp))
             Text("오늘도, 좋은 바다가\n당신을 기다립니다.", color = Foam, fontSize = 15.sp, textAlign = TextAlign.Center, lineHeight = 21.sp,
-                fontWeight = FontWeight.Medium)
+                fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 40.dp))
         }
     }
 }
 
 @Composable
-private fun SeaTodayCard(c: DayConditions, dayOffset: Int) {
+private fun SeaTodayCard(c: DayConditions, dayOffset: Int, onDay: (Int) -> Unit) {
     val dayW = c.weather.filter { it.time.toLocalDate() == c.date }
     val noon = dayW.firstOrNull { it.time.hour == 12 } ?: dayW.firstOrNull() ?: c.weather.firstOrNull()
     val temps = dayW.filter { it.time.hour in 5..18 }.mapNotNull { it.temp }
     val rainy = dayW.filter { it.time.hour in 5..13 }.any { it.precipType in 1..4 && it.rainProb >= 50 }
     val cloudy = (noon?.rainProb ?: 0) >= 30
-    val (skyIcon, skyText, skyColor) = when {
-        rainy -> Triple(Icons.Default.Umbrella, "비 소식", Shallow)
-        cloudy -> Triple(Icons.Default.Cloud, "구름", Color(0xFFCFE1EC))
-        else -> Triple(Icons.Default.WbSunny, "맑음", Gold)
+    val (sky, skyText) = when {
+        rainy -> "🌧️" to "비"
+        cloudy -> "⛅" to "구름 많음"
+        else -> "🌤️" to "맑음"
     }
     var showTide by remember { mutableStateOf(false) }
-    NavyCard(Modifier.padding(horizontal = 16.dp).offset(y = (-2).dp)) {
+    Column(
+        Modifier.padding(horizontal = 16.dp).fillMaxWidth().clip(RoundedCornerShape(20.dp))
+            .background(Color(0xFF0D2A42).copy(alpha = 0.88f)).border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(20.dp))
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(listOf("오늘의 바다", "내일의 바다", "모레의 바다").getOrNull(dayOffset) ?: "그날의 바다", color = Foam, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
-            Spacer(Modifier.width(8.dp))
-            Text(c.date.format(KMD), color = Mist, fontSize = 13.sp, modifier = Modifier.weight(1f))
-            Icon(Icons.Default.LocationOn, null, tint = Mist, modifier = Modifier.size(15.dp))
-            Text("두도 근해", color = Mist, fontSize = 12.sp)
+            Text(listOf("오늘의 바다", "내일의 바다", "모레의 바다").getOrNull(dayOffset) ?: "그날의 바다", color = Foam, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp)
+            Spacer(Modifier.width(10.dp))
+            Text(c.date.format(KMD), color = Mist, fontSize = 14.sp, modifier = Modifier.weight(1f))
+            Row(Modifier.clip(RoundedCornerShape(50)).border(1.dp, Color.White.copy(alpha = 0.18f), RoundedCornerShape(50)).padding(horizontal = 9.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Outlined.LocationOn, null, tint = Foam, modifier = Modifier.size(14.dp))
+                Text(" 두도 근해", color = Foam, fontSize = 12.sp)
+            }
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(skyIcon, skyText, tint = skyColor, modifier = Modifier.size(52.dp))
-            Spacer(Modifier.width(12.dp))
-            Text(noon?.temp?.let { "%.0f°".format(it) } ?: "–", color = Foam, fontSize = 44.sp, fontWeight = FontWeight.Light)
+            Text(sky, fontSize = 50.sp)
             Spacer(Modifier.width(14.dp))
+            Text(noon?.temp?.let { "%.0f°".format(it) } ?: "–", color = Foam, fontSize = 50.sp, fontWeight = FontWeight.Normal)
+            Spacer(Modifier.width(16.dp))
             Column {
                 Text(skyText, color = Foam, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                if (temps.isNotEmpty()) Text("최고 %.0f° / 최저 %.0f°".format(temps.max(), temps.min()), color = Mist, fontSize = 13.sp)
+                if (temps.isNotEmpty()) Text("최고 %.0f° / 최저 %.0f°".format(temps.max(), temps.min()), color = Foam.copy(alpha = 0.85f), fontSize = 14.sp)
                 if (c.weatherIsDemo) Text("예보 없음 · 예시 값", color = Coral, fontSize = 11.sp)
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            StatTile(Icons.Default.Air, "바람", noon?.let { "${ScoreEngine.compass(it.windDir)} %.1f".format(it.windSpeed) + "m/s" } ?: "–", Modifier.weight(1.15f))
-            StatTile(Icons.Default.Waves, "파고", noon?.wave?.let { "%.1f m".format(it) } ?: "–", Modifier.weight(1f))
-            StatTile(Icons.Default.Thermostat, "수온", "%.1f°C".format(c.waterTemp) + if (c.waterTempIsEstimated) "*" else "", Modifier.weight(1f))
-            StatTile(Icons.Default.DarkMode, "물때", mulText(c), Modifier.weight(1.1f))
+            SeaTile(Icons.Default.Air, "바람", noon?.let { "${ScoreEngine.compass(it.windDir)} %.1f".format(it.windSpeed) + "m/s" } ?: "–", Foam, Modifier.weight(1.15f))
+            SeaTile(Icons.Default.Waves, "파고", noon?.wave?.let { "%.1f m".format(it) } ?: "–", Foam, Modifier.weight(1f))
+            SeaTile(Icons.Default.Thermostat, "수온", "%.1f°C".format(c.waterTemp) + if (c.waterTempIsEstimated) "*" else "", Foam, Modifier.weight(1f))
+            SeaTile(Icons.Default.DarkMode, "물때", mulText(c), Aqua, Modifier.weight(1.1f))
         }
-        Text(if (showTide) "물때 그래프 접기 ▲" else "만조·간조 시간 보기 ▼", color = Aqua, fontSize = 13.sp, fontWeight = FontWeight.Bold,
+        DayChips(dayOffset, onDay)
+        if (dayOffset >= 3) Text("4일째부터는 바람·파도 예보가 자주 바뀌어 신뢰 낮음 (물때는 정확)", color = Shallow, fontSize = 11.sp)
+        Text(if (showTide) "물때 그래프 접기 ▲" else "만조·간조 시간 보기 ▼", color = Aqua, fontSize = 12.sp, fontWeight = FontWeight.Bold,
             modifier = Modifier.clickable { showTide = !showTide })
         if (showTide) {
             TideChart(c.tides, c.date, java.time.LocalDateTime.now(ZoneId.of("Asia/Seoul")), light = true)
@@ -389,33 +480,41 @@ private fun BiteIndexCard(top: PointResult, dayOffset: Int, onClick: () -> Unit)
     val score = top.dayScore
     val msg = when {
         score >= 75 -> "지금은 낚시하기 좋은 날!\n활발한 입질이 예상됩니다."
-        score >= 62 -> "입질을 기대해 볼 만한 날이에요."
-        score >= 50 -> "무난한 날 – 물때 좋은 시간을 노려보세요."
-        else -> "입질이 약한 날이에요. 무리하지 마세요."
+        score >= 62 -> "입질을 기대해 볼 만한 날!\n물때 좋은 시간을 노려보세요."
+        score >= 50 -> "무난한 날이에요.\n좋은 시간대를 골라 보세요."
+        else -> "입질이 약한 날이에요.\n무리하지 마세요."
     }
     Box(
-        Modifier.padding(horizontal = 16.dp).fillMaxWidth().clip(RoundedCornerShape(20.dp))
-            .border(1.5.dp, Aqua.copy(alpha = 0.7f), RoundedCornerShape(20.dp)).clickable(onClick = onClick)
+        Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(172.dp).clip(RoundedCornerShape(20.dp))
+            .background(Color(0xFF0A2C44))
+            .border(1.5.dp, Color(0xFF6FE7EC).copy(alpha = 0.8f), RoundedCornerShape(20.dp)).clickable(onClick = onClick)
     ) {
-        Canvas(Modifier.matchParentSize()) { drawFishSchool() }
+        // 오른쪽 물고기 떼 사진 → 왼쪽으로 갈수록 어둡게
+        Row(Modifier.fillMaxSize()) {
+            Spacer(Modifier.weight(0.38f))
+            Photo(R.drawable.dudo_school, Modifier.weight(0.62f).fillMaxHeight())
+        }
+        Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to Color(0xFF0A2C44), 0.38f to Color(0xFF0A2C44), 0.62f to Color(0xFF0A2C44).copy(alpha = 0.35f), 1f to Color.Transparent)))
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(if (dayOffset == 0) "오늘의 입질 지수" else "이날의 입질 지수", color = Foam, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                Text(if (dayOffset == 0) "오늘의 입질 지수" else "이날의 입질 지수", color = Foam, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp)
                 Spacer(Modifier.width(4.dp))
                 Icon(Icons.Default.WorkspacePremium, null, tint = Gold, modifier = Modifier.size(18.dp))
             }
-            Row(verticalAlignment = Alignment.Bottom) {
-                Icon(Icons.Default.WorkspacePremium, null, tint = Gold, modifier = Modifier.size(40.dp).padding(bottom = 10.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("$score", color = Foam, fontSize = 64.sp, fontWeight = FontWeight.ExtraBold)
-                Text(" / 100", color = Foam.copy(alpha = 0.85f), fontSize = 18.sp, modifier = Modifier.padding(bottom = 14.dp))
+            Spacer(Modifier.height(6.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(48.dp).clip(CircleShape).background(Night.copy(alpha = 0.7f)), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.WorkspacePremium, null, tint = Gold, modifier = Modifier.size(30.dp))
+                }
+                Spacer(Modifier.width(12.dp))
+                Text("$score", color = Foam, fontSize = 58.sp, fontWeight = FontWeight.ExtraBold, lineHeight = 58.sp)
+                Text(" / 100", color = Foam, fontSize = 18.sp, modifier = Modifier.padding(top = 18.dp))
                 Spacer(Modifier.width(10.dp))
-                Text(scoreLabel(score), color = Night, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold,
-                    modifier = Modifier.padding(bottom = 18.dp).clip(RoundedCornerShape(50)).background(Aqua).padding(horizontal = 10.dp, vertical = 3.dp))
+                Text(biteLabel(score), color = Night, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier.padding(top = 16.dp).clip(RoundedCornerShape(50)).background(Color(0xFF7EEFF0)).padding(horizontal = 10.dp, vertical = 3.dp))
             }
-            Text(msg, color = Foam, fontSize = 14.sp, lineHeight = 20.sp)
-            Text("1순위 ${top.point.name} · ${top.species.label} · 최고 %02d~%02d시 (05~13시 평균)".format(top.bestWindow.first, top.bestWindow.second),
-                color = Foam.copy(alpha = 0.75f), fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
+            Spacer(Modifier.height(4.dp))
+            Text(msg, color = Foam, fontSize = 14.sp, lineHeight = 19.sp)
         }
     }
 }
@@ -423,43 +522,46 @@ private fun BiteIndexCard(top: PointResult, dayOffset: Int, onClick: () -> Unit)
 /** 순위 배지 (1 금 · 2 은 · 3 동) */
 @Composable
 private fun RankBadge(rank: Int, modifier: Modifier = Modifier) {
-    val bg = when (rank) { 1 -> Gold; 2 -> Color(0xFFD4DCE3); 3 -> Color(0xFFD9A06B); else -> Panel2 }
-    Box(modifier.size(24.dp).clip(CircleShape).background(bg).border(1.5.dp, Color.White.copy(alpha = 0.8f), CircleShape), contentAlignment = Alignment.Center) {
-        Text("$rank", color = if (rank <= 3) Night else Foam, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
+    val bg = when (rank) { 1 -> Brush.verticalGradient(listOf(Color(0xFFFFE08A), Color(0xFFE0A526)))
+        2 -> Brush.verticalGradient(listOf(Color(0xFFF2F6FA), Color(0xFFAFC0CF)))
+        else -> Brush.verticalGradient(listOf(Color(0xFFF5C9A0), Color(0xFFC9814A))) }
+    Box(modifier.size(26.dp).clip(CircleShape).background(bg).border(1.5.dp, Color.White.copy(alpha = 0.9f), CircleShape), contentAlignment = Alignment.Center) {
+        Text("$rank", color = Night, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
     }
 }
 
 @Composable
 private fun ScorePill(score: Int) {
-    Text("$score", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp,
-        modifier = Modifier.clip(RoundedCornerShape(50)).background(scoreColor(score)).padding(horizontal = 10.dp, vertical = 3.dp))
+    Text("$score", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp,
+        modifier = Modifier.clip(RoundedCornerShape(50)).background(scoreColor(score)).padding(horizontal = 9.dp, vertical = 2.dp))
 }
 
 @Composable
 private fun TopRow(rank: Int, r: PointResult, onClick: () -> Unit) {
+    val thumb = when (rank) { 1 -> R.drawable.dudo_thumb1; 2 -> R.drawable.dudo_thumb2; else -> R.drawable.dudo_thumb3 }
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Panel2.copy(alpha = 0.6f)).clickable(onClick = onClick),
+        Modifier.fillMaxWidth().height(70.dp).clip(RoundedCornerShape(14.dp)).background(Panel)
+            .border(1.dp, Line, RoundedCornerShape(14.dp)).clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(Modifier.width(112.dp).height(78.dp)) {
-            SeaScene(Modifier.fillMaxSize(), seed = r.point.id.hashCode() and 0xff)
+        Box(Modifier.width(118.dp).fillMaxHeight()) {
+            Photo(thumb, Modifier.fillMaxSize())
             RankBadge(rank, Modifier.padding(6.dp))
         }
-        Column(Modifier.weight(1f).padding(horizontal = 12.dp, vertical = 8.dp)) {
+        Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(r.point.name, color = Foam, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, modifier = Modifier.weight(1f))
-                ScorePill(r.dayScore)
+                Text(r.point.name, color = Foam, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp)
+                Spacer(Modifier.width(6.dp))
+                Text("${r.dayScore}점", color = scoreColor(r.dayScore), fontWeight = FontWeight.ExtraBold, fontSize = 13.sp)
             }
-            Spacer(Modifier.height(5.dp))
+            Spacer(Modifier.height(6.dp))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 r.point.species.take(3).forEach { s ->
-                    Row(verticalAlignment = Alignment.CenterVertically) { FishIcon(s, 12.dp); Text(" $s", color = Mist, fontSize = 11.sp) }
+                    Row(verticalAlignment = Alignment.CenterVertically) { FishImg(s, 13.dp); Text(" $s", color = Foam.copy(alpha = 0.85f), fontSize = 12.sp) }
                 }
             }
-            Text("${r.species.label} · 최고 %02d~%02d시 · ${r.profile.tideType}".format(r.bestWindow.first, r.bestWindow.second),
-                color = Aqua, fontSize = 11.sp, modifier = Modifier.padding(top = 3.dp), maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        Icon(Icons.Default.ChevronRight, null, tint = Mist, modifier = Modifier.padding(end = 6.dp))
+        Icon(Icons.Default.ChevronRight, null, tint = Foam, modifier = Modifier.padding(end = 8.dp))
     }
 }
 
@@ -491,13 +593,18 @@ fun MapTab(vm: MainViewModel, onOpen: (String) -> Unit, onBack: () -> Unit) {
         SpeciesChips(st.species, vm::setSpecies, firstLabel = "전체")
         Spacer(Modifier.height(10.dp))
         Box(Modifier.weight(1f).fillMaxWidth()) {
-            if (st.results.isNotEmpty()) PointsMap(
-                pins = st.results.map { MapPin(it.point, it.dayScore) },
-                selectedId = sel?.point?.id, zoom = 17.2,
-                modifier = Modifier.fillMaxSize(),
-                onPinClick = { selId = it },
-            ) else Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator(color = Aqua) }
-            MapLegend(Modifier.align(Alignment.TopEnd).padding(10.dp))
+            Column(Modifier.fillMaxSize()) {
+                Box(Modifier.weight(1f).fillMaxWidth()) {
+                    if (st.results.isNotEmpty()) PointsMap(
+                        pins = st.results.map { MapPin(it.point, it.dayScore) },
+                        selectedId = sel?.point?.id, zoom = 17.0,
+                        modifier = Modifier.fillMaxSize(),
+                        onPinClick = { selId = it },
+                    ) else Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator(color = Aqua) }
+                    MapLegend(Modifier.align(Alignment.TopEnd).padding(10.dp))
+                }
+                Spacer(Modifier.height(if (sel != null) 330.dp else 0.dp))
+            }
             if (sel != null) PointSheet(sel, st.conditions, sel.point.id in favs,
                 onFav = { vm.toggleFavorite(sel.point.id) }, onOpen = { onOpen(sel.point.id) },
                 modifier = Modifier.align(Alignment.BottomCenter))
@@ -510,12 +617,12 @@ private fun MapLegend(modifier: Modifier) {
     Column(
         modifier.clip(RoundedCornerShape(12.dp)).background(Night.copy(alpha = 0.82f)).border(1.dp, Line, RoundedCornerShape(12.dp))
             .padding(horizontal = 10.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(3.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        listOf(S1Blue to "강력 추천", S2Green to "좋음", S3Yellow to "보통", S4Orange to "낮음", S5Red to "비추천").forEach { (c, t) ->
+        listOf(S1Blue to "매우 좋음", S2Green to "좋음", S3Yellow to "보통", S4Orange to "낮음", S5Red to "주의").forEach { (c, t) ->
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(9.dp).clip(CircleShape).background(c))
-                Text(" $t", color = Foam, fontSize = 11.sp)
+                Box(Modifier.size(10.dp).clip(CircleShape).background(c))
+                Text("  $t", color = Foam, fontSize = 11.sp)
             }
         }
     }
@@ -524,124 +631,116 @@ private fun MapLegend(modifier: Modifier) {
 @Composable
 private fun PointSheet(r: PointResult, c: DayConditions?, fav: Boolean, onFav: () -> Unit, onOpen: () -> Unit, modifier: Modifier) {
     Column(
-        modifier.fillMaxWidth().heightIn(max = 470.dp)
-            .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)).background(Night)
+        modifier.fillMaxWidth().heightIn(max = 520.dp)
+            .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)).background(Color(0xFF071C2E))
             .border(1.dp, Line, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-            .verticalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 10.dp),
+            .verticalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Box(Modifier.align(Alignment.CenterHorizontally).width(40.dp).height(4.dp).clip(RoundedCornerShape(2.dp)).background(Line))
+        Box(Modifier.align(Alignment.CenterHorizontally).width(42.dp).height(4.dp).clip(RoundedCornerShape(2.dp)).background(Mist.copy(alpha = 0.5f)))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(38.dp).clip(CircleShape).background(scoreColor(r.dayScore)).border(2.dp, Color.White, CircleShape), contentAlignment = Alignment.Center) {
-                Text(pointNo(r.point.name), color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp)
+            Box(Modifier.size(42.dp).clip(CircleShape).background(Night).border(2.5.dp, scoreColor(r.dayScore), CircleShape), contentAlignment = Alignment.Center) {
+                Text(pointNo(r.point.name), color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp)
             }
-            Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(r.point.name, color = Foam, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
+                    Text(r.point.name, color = Foam, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp)
                     Spacer(Modifier.width(8.dp))
                     ScorePill(r.dayScore)
                 }
                 Text(r.point.target.ifBlank { r.point.note }, color = Mist, fontSize = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
-            IconButton(onClick = onFav) {
-                Icon(if (fav) Icons.Default.Favorite else Icons.Default.FavoriteBorder, "즐겨찾기", tint = if (fav) Coral else Foam)
+            Box(Modifier.size(40.dp).clip(CircleShape).border(1.dp, Line, CircleShape).clickable(onClick = onFav), contentAlignment = Alignment.Center) {
+                Icon(if (fav) Icons.Default.Favorite else Icons.Default.FavoriteBorder, "즐겨찾기", tint = if (fav) Coral else Foam, modifier = Modifier.size(21.dp))
             }
         }
-        Box(Modifier.fillMaxWidth().height(110.dp).clip(RoundedCornerShape(14.dp))) {
-            SeaScene(Modifier.fillMaxSize(), seed = r.point.id.hashCode() and 0xff, dusk = true, islandScale = 1.2f)
-        }
+        Photo(R.drawable.dudo_island, Modifier.fillMaxWidth().height(96.dp).clip(RoundedCornerShape(12.dp)))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            StatTile(Icons.Default.Straighten, "수심", r.point.depth, Modifier.weight(1f))
-            StatTile(Icons.Default.Terrain, "지형", r.point.terrain, Modifier.weight(1f))
-            StatTile(Icons.Default.Waves, "성격", r.profile.tideType, Modifier.weight(1f))
+            SideTile(Icons.Outlined.LocationOn, "수심", r.point.depth, Modifier.weight(1f))
+            SideTile(Icons.Default.Terrain, "지형", r.point.terrain, Modifier.weight(1f))
+            SideTile(Icons.Default.Waves, "성격", r.profile.tideType, Modifier.weight(1f))
         }
-        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Panel2).padding(10.dp)) {
+        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Panel2).border(1.dp, Line, RoundedCornerShape(12.dp)).padding(10.dp)) {
             Text("주요 어종", color = Mist, fontSize = 12.sp)
-            Spacer(Modifier.height(6.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+            Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
                 r.point.species.take(4).forEach { s ->
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        FishIcon(s, 26.dp)
+                        FishImg(s, 30.dp)
                         Text(s, color = Foam, fontSize = 12.sp)
                     }
                 }
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            InfoBox(Icons.Default.Schedule, "추천 시간", "%02d:00 ~ %02d:00".format(r.bestWindow.first, r.bestWindow.second), Modifier.weight(1f))
-            InfoBox(Icons.Default.DarkMode, "물때", c?.let { mulText(it) } ?: "–", Modifier.weight(1f))
-            val cond = r.best.danger ?: r.best.let { b -> "바람 %.1fm/s".format(b.windSpeed) + (b.wave?.let { " · 파고 %.1fm".format(it) } ?: "") }
-            InfoBox(Icons.Default.Waves, "주요 조건", cond, Modifier.weight(1.2f))
+            val second = r.rankSlots.filter { kotlin.math.abs(it.slot.startHour - r.bestWindow.first) >= 3 }.maxByOrNull { it.score }
+            SideTile(Icons.Default.Schedule, "추천 시간", "%02d:00 ~ %02d:00".format(r.bestWindow.first, r.bestWindow.second) +
+                (second?.let { "\n%02d:00 ~ %02d:00".format(it.slot.startHour, it.slot.endHour) } ?: ""), Modifier.weight(1.1f), lines = 2)
+            SideTile(Icons.Default.DarkMode, "물때", c?.let { mulText(it) } ?: "–", Modifier.weight(0.9f), lines = 2)
+            val cond = r.best.danger ?: r.best.let { b -> "바람 %.1fm/s".format(b.windSpeed) + (b.wave?.let { "\n파고 %.1fm".format(it) } ?: "") }
+            SideTile(Icons.Default.Waves, "주요 조건", cond, Modifier.weight(1.1f), lines = 2)
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 6.dp)) {
             Row(
-                Modifier.weight(1f).height(48.dp).clip(RoundedCornerShape(14.dp)).border(1.dp, Line, RoundedCornerShape(14.dp)).clickable(onClick = onFav),
+                Modifier.weight(1f).height(50.dp).clip(RoundedCornerShape(14.dp)).border(1.dp, Line, RoundedCornerShape(14.dp)).clickable(onClick = onFav),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center
             ) {
-                Icon(if (fav) Icons.Default.Favorite else Icons.Default.FavoriteBorder, null, tint = if (fav) Coral else Foam, modifier = Modifier.size(18.dp))
-                Text(" 즐겨찾기", color = Foam, fontWeight = FontWeight.Bold)
+                Icon(if (fav) Icons.Default.Favorite else Icons.Default.FavoriteBorder, null, tint = if (fav) Coral else Foam, modifier = Modifier.size(19.dp))
+                Text("  즐겨찾기", color = Foam, fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }
             Row(
-                Modifier.weight(1.8f).height(48.dp).clip(RoundedCornerShape(14.dp))
-                    .background(Brush.horizontalGradient(listOf(Color(0xFF1E88E5), Color(0xFF1565C0)))).clickable(onClick = onOpen),
+                Modifier.weight(1.9f).height(50.dp).clip(RoundedCornerShape(14.dp))
+                    .background(Brush.horizontalGradient(listOf(Color(0xFF2A8CF0), Color(0xFF1764C8)))).clickable(onClick = onOpen),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center
             ) {
-                Icon(Icons.Default.LocationOn, null, tint = Color.White, modifier = Modifier.size(18.dp))
-                Text(" 포인트 자세히 보기", color = Color.White, fontWeight = FontWeight.ExtraBold)
+                Icon(Icons.Default.Navigation, null, tint = Color.White, modifier = Modifier.size(18.dp).rotate(45f))
+                Text("  이 포인트 자세히 보기", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp)
             }
         }
-    }
-}
-
-@Composable
-private fun InfoBox(icon: ImageVector, label: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier.clip(RoundedCornerShape(12.dp)).background(Panel2).padding(9.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, null, tint = Mist, modifier = Modifier.size(14.dp))
-            Text(" $label", color = Mist, fontSize = 11.sp)
-        }
-        Text(value, color = Foam, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 3.dp))
     }
 }
 
 // ───────────────────────── 조황 기록 ─────────────────────────
 
-private val SERIES = listOf("감성돔" to Aqua, "벵에돔" to Color(0xFF4C8DFF), "참돔" to Color(0xFFFF6B7A), "기타" to Mist)
+private val SERIES = listOf("감성돔" to Color(0xFF3FE0E6), "벵에돔" to Color(0xFF4C8DFF), "참돔" to Color(0xFFFF6B7A), "기타" to Color(0xFF8AA0B4))
 
 @Composable
 fun LogTab(vm: MainViewModel, onAdd: () -> Unit, onBack: () -> Unit) {
     val st by vm.state.collectAsState()   // 기록이 추가·삭제되면 다시 그려지도록
     var sp by remember { mutableStateOf<Species?>(null) }
     var mineOnly by remember { mutableStateOf(false) }
-    var shown by remember { mutableStateOf(15) }
+    var shown by remember { mutableStateOf(10) }
     val all = remember(st.results, st.conditions) { vm.allRecords() }
     val recs = all.filter { (!mineOnly || it.byUser) && (sp == null || sp!!.label in it.catches.keys) }
     Column(Modifier.fillMaxSize().background(Night)) {
         CenterBar("조황 기록", onBack) {
-            IconButton(onClick = onAdd) { Icon(Icons.Default.Add, "조황 기록하기", tint = Aqua) }
+            IconButton(onClick = onAdd) { Icon(Icons.Default.Add, "조황 기록하기", tint = Aqua, modifier = Modifier.size(30.dp)) }
         }
-        LazyColumn(contentPadding = PaddingValues(bottom = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        LazyColumn(contentPadding = PaddingValues(bottom = 20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             item { SpeciesChips(sp, { sp = it }) }
             item {
-                Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                    FishChip("모든 기록", !mineOnly) { mineOnly = false }
-                    FishChip("내 기록", mineOnly) { mineOnly = true }
-                }
-            }
-            item {
-                val mine = recs.filter { !it.id.startsWith("band_") }.sumOf { r -> if (sp == null) r.catches.values.sum() else r.catches[sp!!.label] ?: 0 }
+                val catches = recs.filter { !it.id.startsWith("band_") }.sumOf { r -> if (sp == null) r.catches.values.sum() else r.catches[sp!!.label] ?: 0 }
                 val topSp = recs.flatMap { it.catches.keys }.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key
                 Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    LogStat("기록", "${recs.size}건", if (mine > 0) "확인된 조과 ${mine}마리" else null, Modifier.weight(1f))
-                    LogStat("주요 어종", topSp ?: "–", null, Modifier.weight(1f))
-                    LogStat("최근 기록", recs.firstOrNull()?.date?.let { "${it.monthValue}월 ${it.dayOfMonth}일" } ?: "–", null, Modifier.weight(1f))
+                    LogStat("총 조과", if (catches > 0) "${catches}마리" else "${recs.size}건", Modifier.weight(1f))
+                    LogStat("주요 어종", topSp ?: "–", Modifier.weight(1f))
+                    LogStat("최근 기록", recs.firstOrNull()?.date?.let { "${it.monthValue}월 ${it.dayOfMonth}일" } ?: "–", Modifier.weight(1f))
                 }
             }
             item { MonthlyChart(recs, sp) }
-            item { SectionTitle("최근 조황 기록") }
+            item {
+                Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("최근 조황 기록", fontSize = 19.sp, fontWeight = FontWeight.ExtraBold, color = Foam, modifier = Modifier.weight(1f))
+                    Text(if (mineOnly) "내 기록" else "전체", color = if (mineOnly) Aqua else Mist, fontSize = 13.sp,
+                        modifier = Modifier.clickable { mineOnly = !mineOnly }.padding(horizontal = 6.dp))
+                    Row(Modifier.clickable { shown = recs.size }, verticalAlignment = Alignment.CenterVertically) {
+                        Text("전체보기", color = Mist, fontSize = 13.sp)
+                        Icon(Icons.Default.ChevronRight, null, tint = Mist, modifier = Modifier.size(18.dp))
+                    }
+                }
+            }
             if (recs.isEmpty()) item {
-                Text("기록이 없어요. 가운데 낚시 버튼이나 아래 '조황 기록하기'로 남겨 보세요.", color = Mist, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 16.dp))
+                Text("기록이 없어요. 아래 '조황 기록하기'로 남겨 보세요.", color = Mist, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 16.dp))
             }
             items(recs.take(shown)) { r ->
                 LogCard(r, vm.pointName(r.pointId), onDelete = if (r.byUser) ({ vm.deleteCatch(r.id) }) else null)
@@ -652,12 +751,12 @@ fun LogTab(vm: MainViewModel, onAdd: () -> Unit, onBack: () -> Unit) {
             }
             item {
                 Row(
-                    Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(54.dp).clip(RoundedCornerShape(50))
-                        .background(Brush.horizontalGradient(listOf(Color(0xFF5BE7EC), Color(0xFF2CC5D2)))).clickable(onClick = onAdd),
+                    Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(56.dp).clip(RoundedCornerShape(50))
+                        .background(Brush.horizontalGradient(listOf(Color(0xFF8CF5F2), Color(0xFF3CCFDC)))).clickable(onClick = onAdd),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center
                 ) {
-                    Icon(Icons.Default.Add, null, tint = Night)
-                    Text("  조황 기록하기", color = Night, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                    Icon(Icons.Default.Add, null, tint = Night, modifier = Modifier.size(26.dp))
+                    Text("  조황 기록하기", color = Night, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp)
                 }
             }
         }
@@ -665,20 +764,20 @@ fun LogTab(vm: MainViewModel, onAdd: () -> Unit, onBack: () -> Unit) {
 }
 
 @Composable
-private fun LogStat(label: String, value: String, sub: String?, modifier: Modifier) {
-    Column(modifier.clip(RoundedCornerShape(14.dp)).background(Panel).border(1.dp, Line, RoundedCornerShape(14.dp)).padding(12.dp)) {
+private fun LogStat(label: String, value: String, modifier: Modifier) {
+    Column(modifier.clip(RoundedCornerShape(14.dp)).background(Panel).border(1.dp, Line, RoundedCornerShape(14.dp)).padding(horizontal = 14.dp, vertical = 12.dp)) {
         Text(label, color = Mist, fontSize = 12.sp)
+        Spacer(Modifier.height(4.dp))
         Text(value, color = Foam, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        if (sub != null) Text(sub, color = Aqua, fontSize = 10.sp)
     }
 }
 
-/** 최근 12개월 어종별 조황 기록 일수 */
+/** 최근 12개월 어종별 조황 기록 수 – 선 + 옅은 면 */
 @Composable
 private fun MonthlyChart(recs: List<CatchRecord>, sp: Species?) {
     val end = YearMonth.now(ZoneId.of("Asia/Seoul"))
     val months = (11 downTo 0).map { end.minusMonths(it.toLong()) }
-    val series = if (sp != null) listOf(sp.label to Aqua) else SERIES
+    val series = if (sp != null) listOf(sp.label to Color(0xFF3FE0E6)) else SERIES
     val data = series.map { (name, color) ->
         Triple(name, color, months.map { m ->
             recs.count { r ->
@@ -689,33 +788,38 @@ private fun MonthlyChart(recs: List<CatchRecord>, sp: Species?) {
             }.toFloat()
         })
     }
-    val maxV = (data.maxOfOrNull { d -> d.third.maxOrNull() ?: 0f } ?: 0f).coerceAtLeast(4f)
-    NavyCard(Modifier.padding(horizontal = 16.dp)) {
+    val maxV = (data.maxOfOrNull { d -> d.third.maxOrNull() ?: 0f } ?: 0f).coerceAtLeast(4f).let { kotlin.math.ceil(it / 5f) * 5f }
+    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("월별 조황 추이", color = Foam, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, modifier = Modifier.weight(1f))
-            Text("최근 12개월 · 기록 수", color = Mist, fontSize = 11.sp)
+            Text("월별 조황 추이", color = Foam, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp, modifier = Modifier.weight(1f))
+            Text("${end.year}년 ${end.monthValue}월까지", color = Mist, fontSize = 13.sp)
+            Icon(Icons.Default.ChevronRight, null, tint = Mist, modifier = Modifier.size(18.dp))
         }
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             data.forEach { (n, c, _) ->
-                Row(verticalAlignment = Alignment.CenterVertically) { Box(Modifier.size(8.dp).clip(CircleShape).background(c)); Text(" $n", color = Mist, fontSize = 11.sp) }
-            }
-        }
-        Row {
-            Column(Modifier.height(130.dp).padding(end = 4.dp), verticalArrangement = Arrangement.SpaceBetween) {
-                listOf(maxV, maxV / 2, 0f).forEach { Text("%.0f".format(it), color = Mist, fontSize = 10.sp) }
-            }
-            Canvas(Modifier.weight(1f).height(130.dp)) {
-                val w = size.width; val h = size.height
-                listOf(0f, 0.5f, 1f).forEach { f -> drawLine(Line, Offset(0f, h * f), Offset(w, h * f), strokeWidth = 1f) }
-                data.forEach { (_, color, vals) ->
-                    val pts = vals.mapIndexed { i, v -> Offset(w * i / (vals.size - 1), h - h * v / maxV) }
-                    val path = Path().apply { pts.forEachIndexed { i, p -> if (i == 0) moveTo(p.x, p.y) else lineTo(p.x, p.y) } }
-                    drawPath(path, color, style = Stroke(width = 2.2.dp.toPx(), cap = StrokeCap.Round))
-                    pts.forEach { drawCircle(color, 2.6.dp.toPx(), it) }
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 10.dp)) {
+                    Box(Modifier.size(8.dp).clip(CircleShape).background(c)); Text(" $n", color = Foam.copy(alpha = 0.85f), fontSize = 11.sp)
                 }
             }
         }
-        Row(Modifier.fillMaxWidth().padding(start = 18.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row {
+            Column(Modifier.height(120.dp).width(22.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                listOf(maxV, maxV * 2 / 3, maxV / 3, 0f).forEach { Text("%.0f".format(it), color = Mist, fontSize = 10.sp) }
+            }
+            Canvas(Modifier.weight(1f).height(120.dp)) {
+                val w = size.width; val h = size.height
+                listOf(0f, 1f / 3, 2f / 3, 1f).forEach { f -> drawLine(Line, Offset(0f, h * f), Offset(w, h * f), strokeWidth = 1f) }
+                data.forEach { (_, color, vals) ->
+                    val pts = vals.mapIndexed { i, v -> Offset(w * i / (vals.size - 1), h - h * v / maxV) }
+                    val line = Path().apply { pts.forEachIndexed { i, p -> if (i == 0) moveTo(p.x, p.y) else lineTo(p.x, p.y) } }
+                    val area = Path().apply { addPath(line); lineTo(w, h); lineTo(0f, h); close() }
+                    drawPath(area, Brush.verticalGradient(listOf(color.copy(alpha = 0.28f), Color.Transparent)))
+                    drawPath(line, color, style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round))
+                    pts.forEach { drawCircle(color, 2.8.dp.toPx(), it) }
+                }
+            }
+        }
+        Row(Modifier.fillMaxWidth().padding(start = 22.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             months.filterIndexed { i, _ -> i % 2 == 1 }.forEach { Text("${it.monthValue}월", color = Mist, fontSize = 10.sp) }
         }
     }
@@ -737,38 +841,44 @@ private fun LogCard(r: CatchRecord, pointName: String?, onDelete: (() -> Unit)?)
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(r.date.format(KMD), color = Foam, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-            Spacer(Modifier.width(10.dp))
-            Icon(Icons.Default.LocationOn, null, tint = Mist, modifier = Modifier.size(14.dp))
-            Text(" $where", color = Mist, fontSize = 12.sp, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(if (r.byUser) "내 기록" else r.source, color = Mist, fontSize = 10.sp, maxLines = 1)
+            Text(r.date.format(KMD), color = Foam, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            Spacer(Modifier.width(12.dp))
+            Icon(Icons.Outlined.LocationOn, null, tint = Foam, modifier = Modifier.size(15.dp))
+            Text(" $where", color = Foam.copy(alpha = 0.9f), fontSize = 13.sp, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (onDelete != null) Text("삭제", color = Bad, fontSize = 12.sp, modifier = Modifier.clickable(onClick = onDelete))
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            FishThumb(main, Modifier.width(118.dp).height(78.dp).clip(RoundedCornerShape(12.dp)))
+            val ph = photoRes(main)
+            if (ph != null) Photo(ph, Modifier.width(138.dp).height(76.dp).clip(RoundedCornerShape(10.dp)), main)
+            else FishThumb(main, Modifier.width(138.dp).height(76.dp).clip(RoundedCornerShape(10.dp)))
             Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    r.catches.keys.forEach { s ->
-                        Row(
-                            Modifier.clip(RoundedCornerShape(50)).border(1.dp, Line, RoundedCornerShape(50)).padding(horizontal = 9.dp, vertical = 3.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(s, color = Foam, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                            Text(" ${com.dudo.fishing.scoring.Factors.qtyText(r, s)}", color = Aqua, fontSize = 12.sp)
-                        }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                r.catches.keys.take(2).forEach { s ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(s, color = Foam, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold,
+                            modifier = Modifier.clip(RoundedCornerShape(50)).border(1.dp, Color.White.copy(alpha = 0.25f), RoundedCornerShape(50)).padding(horizontal = 12.dp, vertical = 4.dp))
+                        Spacer(Modifier.weight(1f))
+                        Text(com.dudo.fishing.scoring.Factors.qtyText(r, s), color = Foam, fontSize = 12.sp, fontWeight = FontWeight.Bold,
+                            modifier = Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.08f)).padding(horizontal = 10.dp, vertical = 4.dp))
                     }
                 }
-                Text("%02d~%02d시".format(r.startHour, r.endHour), color = Mist, fontSize = 11.sp)
-                val cond = listOfNotNull(
-                    r.windSpeed?.let { "바람 %.1fm/s".format(it) },
-                    r.wave?.let { "파고 %.1fm".format(it) },
-                    r.waterTemp?.let { "수온 %.1f°".format(it) },
-                )
-                if (cond.isNotEmpty()) Text(cond.joinToString(" · "), color = Mist, fontSize = 11.sp)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    r.windSpeed?.let { MiniCond("💨", "%.1fm/s".format(it)) }
+                    r.wave?.let { MiniCond("🌊", "파고 %.1fm".format(it)) }
+                    r.waterTemp?.let { MiniCond("🌡", "%.1f°".format(it)) }
+                    if (r.windSpeed == null && r.wave == null && r.waterTemp == null) MiniCond("🕒", "%02d~%02d시".format(r.startHour, r.endHour))
+                }
             }
         }
-        if (r.note.isNotBlank()) Text(r.note, color = Mist, fontSize = 12.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
-        if (onDelete != null) Text("삭제", color = Bad, fontSize = 12.sp, modifier = Modifier.clickable(onClick = onDelete))
+        if (r.note.isNotBlank()) Text(r.note, color = Mist, fontSize = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+@Composable
+private fun MiniCond(icon: String, text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(icon, fontSize = 12.sp)
+        Text(" $text", color = Foam.copy(alpha = 0.9f), fontSize = 11.sp)
     }
 }
 
@@ -817,7 +927,7 @@ fun MoreTab(vm: MainViewModel, onSettings: () -> Unit, onBack: () -> Unit) {
         CenterBar("더보기", onBack)
         Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(Modifier.fillMaxWidth().height(150.dp).clip(RoundedCornerShape(18.dp))) {
-                SeaScene(Modifier.fillMaxSize(), seed = 11, dusk = true)
+                Photo(R.drawable.dudo_hero, Modifier.fillMaxSize())
                 Box(Modifier.fillMaxSize().background(Night.copy(alpha = 0.35f)))
                 Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
                     BrandBlock(44.dp)
