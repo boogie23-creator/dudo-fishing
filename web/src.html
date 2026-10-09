@@ -384,6 +384,27 @@ function historyReasons(p,sp,cond,h){
   if(poorN)out.push([`비슷한 물때에 이쪽 부진 기록 ${poorN}건`,-Math.max(2,Math.min(8,r0(poorT*12)))]);
   return out;
 }
+// 밴드 선장 조황 사진 수(마릿수 대용, 2020~2026 1,747일): 오늘과 계절·바람·파도가 비슷했던 날들이
+// 같은 달 평균보다 많이 나왔으면 올리고 적게 나왔으면 내린다. 역검증에서 바람+파도 유사도가 가장 잘 맞음(순위상관 0.28), 물때 유사도는 효과 없어 제외.
+const BAND_DOY=BAND_DAYS.days.map(r=>{const d=r[0],t=Date.UTC(Math.floor(d/1e4),Math.floor(d/100)%100-1,d%100);return Math.round((t-Date.UTC(Math.floor(d/1e4),0,1))/864e5)+1});
+function bandAnalog(cond){
+  if(cond._ba!==undefined)return cond._ba;
+  let ws=0,ux=0,uy=0,n=0;const wv=[];
+  for(let h=5;h<=12;h++){const w=cond.weather[h];if(!w)continue;ws+=w.wind;ux+=w.wind*Math.sin(w.dir*Math.PI/180);uy+=w.wind*Math.cos(w.dir*Math.PI/180);n++;if(w.wave!=null)wv.push(w.wave)}
+  if(!n){const w=cond.weather.def;if(!w)return cond._ba=null;ws=w.wind;ux=w.wind*Math.sin(w.dir*Math.PI/180);uy=w.wind*Math.cos(w.dir*Math.PI/180);n=1;if(w.wave!=null)wv.push(w.wave)}
+  const W=ws/n, D=((Math.atan2(ux,uy)*180/Math.PI)+360)%360, V=wv.length?wv.reduce((a,b)=>a+b)/wv.length:null;
+  const [y0,m0,d0]=cond.date.split("-").map(Number); const doy=Math.round((Date.UTC(y0,m0-1,d0)-Date.UTC(y0,0,1))/864e5)+1;
+  let num=0,den=0;
+  BAND_DAYS.days.forEach((r,i)=>{
+    let dd=Math.abs(doy-BAND_DOY[i]);dd=Math.min(dd,365-dd);
+    let s=Math.exp(-((dd/30)**2))*Math.exp(-(((r[1]/10-W)/2)**2));
+    if(W>2.5&&r[1]>25){let a=Math.abs(D-r[2]*10)%360;a=Math.min(a,360-a);s*=.4+.6*(1+Math.cos(a*Math.PI/180))/2}
+    if(V!=null&&r[3]>=0)s*=Math.exp(-(((r[3]/10-V)/.4)**2));
+    if(s<1e-4)return; num+=s*r[4]/100; den+=s});
+  if(den<2)return cond._ba=null;
+  const p=num/den-BAND_DAYS.center, pts=Math.max(-8,Math.min(5,Math.round(p*BAND_DAYS.k)));
+  return cond._ba=[`바람·파도 비슷한 날 밴드 조황 (평소의 ${Math.round(Math.exp(p)*100)}%, ${Math.round(den)}일 기준)`,pts];
+}
 function dayReason(sp,cond,h){
   let good=0,poor=0,ng=0,np=0;
   for(const r of RECORDS){
@@ -531,6 +552,7 @@ function scoreHourAt(p,sp,cond,h){
   }
   R.push(...historyReasons(p,sp,cond,h));
   const dr=dayReason(sp,cond,h); if(dr)R.push(dr);
+  if(sp==="감성돔"){const ba=bandAnalog(cond); if(ba)R.push(ba)}
   let score=toScore(R.reduce((s,x)=>s+x[1],0)); if(danger)score=Math.min(score,15);
   return {h,score,reasons:R,danger,phase,wind,wdir,wave,bite};
 }

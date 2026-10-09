@@ -4,12 +4,14 @@ root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 src = open(os.path.join(root, 'web/src.html'), encoding='utf-8').read()
 shape = json.load(open(os.path.join(root, 'web/shape.json'), encoding='utf-8'))
 pts = json.load(open(os.path.join(root, 'app/src/main/assets/points.json'), encoding='utf-8'))['points']
+band = json.load(open(os.path.join(root, 'app/src/main/assets/band_days.json'), encoding='utf-8'))
 recs = json.load(open(os.path.join(root, 'app/src/main/assets/catches.json'), encoding='utf-8'))['records']
 kp = ['id','name','lat','lng','facingDeg','depthMin','depthMax','depth','terrain','species','target','targetDistance']
 kr = ['date','startHour','endHour','pointId','sideFacingDeg','catches','rating','source']
 data = ("const SHAPE=" + json.dumps(shape, ensure_ascii=False) + ";\n"
         "const POINTS=" + json.dumps([{**{k: p[k] for k in kp}, **{k: p[k] for k in ('localBias','localNote','altSpots','tideType') if k in p}} for p in pts], ensure_ascii=False) + ";\n"
-        "const RECORDS=" + json.dumps([{k: r[k] for k in kr if k in r} for r in recs], ensure_ascii=False) + ";")
+        "const RECORDS=" + json.dumps([{k: r[k] for k in kr if k in r} for r in recs], ensure_ascii=False) + ";\n"
+        "const BAND_DAYS=" + json.dumps({k: band[k] for k in ('center','k','days')}, separators=(',',':')) + ";")
 page = src.replace('/*DATA*/', data)
 if len(sys.argv) > 1:   # 아티팩트용 (문서 골격 없이)
     open(sys.argv[1], 'w', encoding='utf-8').write(page)
